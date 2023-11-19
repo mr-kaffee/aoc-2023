@@ -1,1 +1,3 @@
 gen/**
+inputs/**
+!inputs/README.md
