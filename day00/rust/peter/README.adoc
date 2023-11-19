@@ -1,0 +1,50 @@
+== Day 00: Hello World
+
+https://rust-lang.org[Rust] *Hello World*, https://adventofcode.com/2023/[AoC|2023] starts.
+
+It will be another year of Rust solutions for me. It is just so much fun, that I am not tempted to try another language.
+
+I will again try to not use any external dependencies and create fast solutions.
+
+
+=== General solution structure 
+
+The general structure of my solutions will be as follows:
+
+```
++- src
+|  +- lib.rs    // the actual implementation
+|  +- main.rs   // the code to run the solution
++- Cargo.toml   // cargo manifest
++- README.adoc  // documentation of the solution
+```
+
+The solution is run using `cargo run` or `cargo run --release`. Sometimes there will be features for solution variants, that will be run with `cargo run --features [some feature] --release`.
+
+Typically, there will also be tests which can be executed using `cargo test` or `cargo test --release`
+
+
+=== Hello World implementation
+
+The implementation will typically consist of the parts detailed below.
+
+Some meta and type information:
+[source,rust,numbered]
+----
+include::src/lib.rs[tags=prelude]
+----
+
+Some code to parse the input (in this example, this also includes a simple `doctest`):
+[source,rust,numbered]
+----
+include::src/lib.rs[tags=parse]
+----
+
+The implementation of the solution functions `star_1` (and for most days `star_2`):
+[source,rust,numbered]
+----
+include::src/lib.rs[tags=star_1]
+----
+
+
+=== Hello World tests

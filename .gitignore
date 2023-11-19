@@ -1,3 +1,13 @@
+# exclude generated documentation
 gen/**
+
+# exclude input files
 inputs/**
 !inputs/README.md
+
+# exclude rust build output
+**/target
+**/Cargo.lock
+
+# exclude VS Code config
+**/.vscode
