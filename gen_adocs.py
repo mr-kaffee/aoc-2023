@@ -1,8 +1,6 @@
 """
-Generates static HTML site from solutions and README.adoc files
+Generates asciidoc documentation from solutions and README.adoc files
 """
-__version__ = "0.1"
-__author__ = "Peter Wieland"
 
 
 import os
@@ -15,6 +13,7 @@ from urllib.parse import quote
 README_FILE = "README.adoc"
 DAY_DIR_PREFIX = "day"
 GEN_ADOC_DIR = os.path.join("gen", "adoc")
+REPO_BASE_DIR = "github.com/mr-kaffee/aoc-2023/tree/main/"
 
 
 @dataclass
@@ -73,13 +72,14 @@ def list_solutions(project_dir=os.path.abspath(sys.path[0])):
     return solutions
 
 
-def write_adoc_files(sols, out_dir: str=GEN_ADOC_DIR):
+def write_adoc_files(sols, out_dir: str=GEN_ADOC_DIR, repo_base_dir: str=REPO_BASE_DIR):
     """
     Write an ADOC file per user and one summary ADOC file.
 
     Parameters:
     sols (list[Solution]): list of solutions
     out_dir (str, optional): the folder to generate the ADOC files in. Defaults to GEN_ADOC_DIR
+    repo_base_dir (str, optional): the base address of the repository
     """
 
     # create lists per user
@@ -122,9 +122,10 @@ def write_adoc_files(sols, out_dir: str=GEN_ADOC_DIR):
                         if not sol.readme_file or os.path.isabs(sol.readme_file) \
                         else os.path.join(sol.dir, sol.readme_file)
                     if readme_file:
-                        f_usr.write(f"include::{readme_file}[leveloffset=0]\n")
+                        f_usr.write(f"include::{readme_file}[leveloffset=0]\n\n")
                     else:
-                        f_usr.write(f"== Undocumented {sol.lang} solution for day {sol.day}\n")
+                        f_usr.write(f"== Undocumented {sol.lang} solution for day {sol.day}\n\n")
+                        f_usr.write(f"link:https://{quote(repo_base_dir)}day{sol.day:02d}/{quote(sol.lang)}/{quote(sol.user)}/[]\n\n")
                     f_usr.write("link:#top[Top]\n")
 
         f_sum.write("|===\n")
@@ -136,6 +137,7 @@ def write_adoc_files(sols, out_dir: str=GEN_ADOC_DIR):
             if cur_lang != sol.lang:
                 if cur_lang != None:
                     f_sum.write("|===\n\n")
+                cur_day = None
                 f_sum.write(f"=== {sol.lang}\n\n")
                 f_sum.write("|===\n")
 
@@ -154,6 +156,7 @@ def write_adoc_files(sols, out_dir: str=GEN_ADOC_DIR):
             if cur_day != sol.day:
                 if cur_day != None:
                     f_sum.write("|===\n\n")
+                cur_lang = None
                 f_sum.write(f"=== Day {sol.day}\n\n")
                 f_sum.write("|===\n")
 
@@ -168,4 +171,3 @@ def write_adoc_files(sols, out_dir: str=GEN_ADOC_DIR):
 
 sols = list_solutions()
 write_adoc_files(sols)
-subprocess.run(["asciidoctor", "-a", "toc=right", "-a", "Source-highlighter=rouge", "-D", "gen/site", "gen/adoc/*.adoc"])

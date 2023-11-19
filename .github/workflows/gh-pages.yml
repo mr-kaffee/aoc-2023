@@ -21,7 +21,7 @@ jobs:
           version: 1.0
 
       - name: Generate site
-        run: python3 ./makedocs.py
+        run: ./makedocs
 
       - name: Deploy
         uses: peaceiris/actions-gh-pages@v3

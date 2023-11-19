@@ -1,0 +1,10 @@
+#!/bin/bash
+
+# remove generated files
+rm -rf gen/*
+
+# generate ADOC files
+python3 gen_adocs.py
+
+# convert ADOC files to HTML site
+asciidoctor -a toc=right -a source-highlighter=rouge -D gen/site gen/adoc/*.adoc
