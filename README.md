@@ -18,6 +18,8 @@ All code in this repository is licensed under the terms of the *MIT License*. An
 
 The repository follows the structure detailed below. There is one top-level folder `day[xx]` for each day, a subfolder `[language]` for each language used to write solutions and a subfolder `[user]` for each contributor to this repository (please consider using a name that allows others to identify you, e.g., your github or advent of code user name)
 
+If you have code that is re-used for several days, you may place it in the top level `libs` folder.
+
 ```
 +- README.md
 +- inputs
@@ -39,6 +41,11 @@ The repository follows the structure detailed below. There is one top-level fold
 +- day02
 +- day03
 +- ...
++- libs
+   +- [language]
+   |  +- [user]
+   |     +- [library code]
+   +- ...
 ```
 ### Hello World
 

@@ -48,3 +48,9 @@ include::src/lib.rs[tags=star_1]
 
 
 === Hello World tests
+
+And there are typically some tests (mostly based on the example data given in the puzzle inputs):
+[source,rust,numbered]
+----
+include::src/lib.rs[tags=tests]
+----
