@@ -1,0 +1,19 @@
+{
+    "name": "AOC 2023",
+    "dockerComposeFile": ["docker-compose.yml"],
+    "service": "aoc-2023",
+    "workspaceFolder": "/workspace",
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "rust-lang.rust-analyzer",
+                "asciidoctor.asciidoctor-vscode",
+                "formulahendry.code-runner",
+                "streetsidesoftware.code-spell-checker",
+                "vadimcn.vscode-lldb",
+                "tamasfe.even-better-toml",
+                "mhutchie.git-graph"
+            ] 
+        }
+    }
+}
