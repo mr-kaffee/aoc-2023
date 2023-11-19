@@ -16,7 +16,7 @@ WORKDIR /workspace
 
 RUN git config --global --add safe.directory /workspace
 
-# Prepare NGINX to serve /aoc-rust
+# Prepare NGINX
 EXPOSE 8080
 COPY nginx.conf /etc/nginx/nginx.conf
 
