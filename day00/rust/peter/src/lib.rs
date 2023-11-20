@@ -1,7 +1,7 @@
 // tag::prelude[]
 pub const IDENTIFIER: &str = "2023/00";
 
-pub type InputType = &'static str;
+pub type InputType = str;
 pub type Sol1Type = usize;
 // end::prelude[]
 
@@ -12,21 +12,21 @@ pub const FERRIS: &str = r"    _~^~^~_
   \ '-----' /";
 
 /// Parse the puzzle input.
-/// 
+///
 /// # Examples
 /// ```
 /// # use mr_kaffee_2023_00::*;
 /// let input = parse_input();
 /// assert_eq!(FERRIS, input, "Expect input to be ferris");
 /// ```
-pub fn parse_input() -> InputType {
+pub fn parse_input() -> &'static str {
     FERRIS
 }
 // end::parse[]
 
 // tag::star_1[]
-pub fn star_1(input: &str) -> Sol1Type {
-    println!("{}", input);
+pub fn star_1<T: AsRef<InputType>>(input: T) -> Sol1Type {
+    println!("{}", input.as_ref());
     0
 }
 // end::star_1[]
@@ -40,6 +40,14 @@ mod tests {
     /// This is a repetition of the doctest for the [`parse_input`] function.
     pub fn test_parse_input() {
         assert_eq!(FERRIS, parse_input());
+    }
+
+    #[test]
+    pub fn test_star_1() {
+        // the function star_1 can be called with a String ...
+        assert_eq!(0, star_1("owned".to_string()));
+        // ... or with a &str argument
+        assert_eq!(0, star_1("reference"));
     }
 
     #[should_panic]

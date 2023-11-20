@@ -10,6 +10,9 @@ RUN apt-get update && apt-get install -y \
 
 # Install nightly rust toolchain
 RUN rustup install nightly
+RUN rustup component add rustfmt
+RUN rustup component add rust-analyzer
+RUN rustup component add clippy
 
 # Create a directory for your Rust application
 WORKDIR /workspace
