@@ -12,7 +12,7 @@ from urllib.parse import quote
 
 README_FILE = "README.adoc"
 DAY_DIR_PREFIX = "day"
-GEN_ADOC_DIR = os.path.join("gen", "adoc")
+GEN_ADOC_DIR = os.path.join("site", "gen", "adoc")
 REPO_BASE_DIR = "github.com/mr-kaffee/aoc-2023/tree/main/"
 
 

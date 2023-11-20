@@ -1,5 +1,5 @@
 # exclude generated documentation
-gen/**
+site/gen/**
 
 # exclude input files
 inputs/**
