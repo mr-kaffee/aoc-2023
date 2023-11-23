@@ -1,0 +1,1 @@
+This folder is supposed to contain Advent of Code inputs in files named `input[xx]` where `[xx]` stands for the two digit number of the day with leading zeros. The input files are not supposed to be included in the git repository. Every user can place his personal inputs in this folder and use them to run solutions of any user on his inputs.

@@ -3,3 +3,7 @@
 
 # exclude generated documentation
 site/gen/**
+
+# exclude input files
+inputs/**
+!inputs/README.md
