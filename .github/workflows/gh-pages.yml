@@ -1,0 +1,35 @@
+name: GitHub Pages
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    concurrency:
+      group: ${{ github.workflow }}-${{ github.ref }}
+    steps:
+      - uses: actions/checkout@v3
+      - uses: awalsh128/cache-apt-pkgs-action@latest
+        with:
+          packages: asciidoctor ruby-rouge
+          version: 1.0
+
+      - name: Generate site
+        run: ./makedocs
+
+      - name: Deploy
+        uses: peaceiris/actions-gh-pages@v3
+        if: github.ref == 'refs/heads/main'
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./site/gen/out
+    env:
+      AOC_YEAR: ${{ vars.AOC_YEAR }}
+      REPO_BASE_DIR: ${{ vars.REPO_BASE_DIR }}
+      REPO_MAIN_BRANCH: ${{ vars.REPO_MAIN_BRANCH }}
