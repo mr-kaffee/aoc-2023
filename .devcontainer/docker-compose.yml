@@ -1,0 +1,20 @@
+version: '3'
+services:
+  aoc-2023:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      - REPO_BASE_DIR=${REPO_BASE_DIR}
+      - REPO_MAIN_BRANCH=${REPO_MAIN_BRANCH}
+      - AOC_YEAR=${AOC_YEAR}
+    ports:
+      - "${WEBSERVER_HOST_PORT}:8080"
+    volumes:
+      - ..:/workspace
+      - user-home:/home/docker  # home directory in separate volume for persistence
+    command: tail -f /dev/null  # keep the container running
+    entrypoint: [ "/workspace/.devcontainer/entrypoint.sh" ]
+
+volumes:
+  user-home:
