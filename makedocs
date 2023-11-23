@@ -1,0 +1,14 @@
+#!/bin/bash
+
+# remove generated files
+rm -rf site/gen/*
+
+# generate ADOC files
+python3 site/gen_adocs.py
+
+# convert ADOC files to HTML site
+asciidoctor -a linkcss -a copycss -a toc=right -a source-highlighter=rouge -a docinfo=shared-footer,shared-header -a docinfodir=../../docinfo/ -a nofooter -a repository=$REPO_BASE_DIR -a aocyear=$AOC_YEAR -D site/gen/out site/gen/adoc/*.adoc
+
+# copy static content
+shopt -s dotglob
+cp -r site/static/* site/gen/out

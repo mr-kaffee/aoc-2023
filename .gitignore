@@ -1,2 +1,5 @@
 # exclude VS Code config
 **/.vscode
+
+# exclude generated documentation
+site/gen/**
