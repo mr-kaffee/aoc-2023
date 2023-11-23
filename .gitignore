@@ -7,3 +7,7 @@ site/gen/**
 # exclude input files
 inputs/**
 !inputs/README.md
+
+# exclude rust build output
+**/target
+**/Cargo.lock
