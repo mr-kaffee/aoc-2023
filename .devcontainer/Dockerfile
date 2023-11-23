@@ -13,6 +13,11 @@ RUN apt-get update && apt-get install -y \
     asciidoctor \
     ruby-rouge
 
+# install web server
+RUN apt-get update && apt-get install -y nginx
+EXPOSE 8080
+COPY nginx.conf /etc/nginx/nginx.conf
+
 # Disable host key checking for SSH to avoid known_hosts issues
 RUN echo "StrictHostKeyChecking no" >> /etc/ssh/ssh_config
 
