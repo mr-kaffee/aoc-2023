@@ -1,19 +1,19 @@
-# Use the official Rust image as the base image
+# Use the latest Ubuntu image as starting point
 FROM ubuntu:latest
 
-# install basic tooling
+# Install basic tooling
 RUN apt-get update && apt-get install -y \
     build-essential \
     git \
     curl \
     python3
 
-# install asciidoctor tooling
+# Install asciidoctor tooling
 RUN apt-get update && apt-get install -y \
     asciidoctor \
     ruby-rouge
 
-# install web server
+# Install web server
 RUN apt-get update && apt-get install -y nginx
 EXPOSE 8080
 COPY nginx.conf /etc/nginx/nginx.conf
@@ -21,30 +21,32 @@ COPY nginx.conf /etc/nginx/nginx.conf
 # Disable host key checking for SSH to avoid known_hosts issues
 RUN echo "StrictHostKeyChecking no" >> /etc/ssh/ssh_config
 
-# create user 'docker' with sudo privileges
+# Install Java JRE AND SDK
+RUN apt-get update && apt-get install -y default-jre default-jdk
+
+# Create user 'docker' with sudo privileges
 RUN useradd -ms /bin/bash docker \
     && apt-get update \
     && apt-get install -y sudo \
     && echo 'docker ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
 USER docker
 
-# create sym link ~/.vscode-server
-RUN sudo mkdir /opt/vscode-server \
-    && sudo chmod 777 /opt/vscode-server \
-    && ln -s /opt/vscode-server /home/docker/.vscode-server
-
-# install rust using rustup
-ENV RUSTUP_HOME /opt/rustup
-ENV CARGO_HOME /opt/cargo
-RUN sudo mkdir /opt/rustup \
-    && sudo chmod 777 /opt/rustup \
-    && sudo mkdir /opt/cargo \
-    && sudo chmod 777 opt/cargo \
-    && curl https://sh.rustup.rs -sSf | sh -s -- --default-toolchain nightly -y \
+# Install rust (nightly and stable) using rustup
+RUN curl https://sh.rustup.rs -sSf | sh -s -- --default-toolchain nightly -y \
     && curl https://sh.rustup.rs -sSf | sh -s -- --default-toolchain stable -y
-ENV PATH="$CARGO_HOME/bin:$PATH"
-RUN echo "source $CARGO_HOME/env" >> $HOME/.bashrc
 
+# Install kotlin using sdkman
+RUN curl -s "https://get.sdkman.io" | bash \
+    && chmod 755 $HOME/.sdkman/bin/sdkman-init.sh \
+    && bash -c "source $HOME/.sdkman/bin/sdkman-init.sh && sdk install kotlin"
+
+# Setup git environment and checker
+COPY check-git.sh /home/docker/check-git.sh
+RUN echo "$HOME/check-git.sh" >> /home/docker/.bashrc \
+    && git config --global core.editor "code --wait" \
+    && git config --global --add safe.directory "/workspace"
+
+# Set environment variables
 ARG REPO_BASE_DIR
 ARG REPO_MAIN_BRANCH
 ARG AOC_YEAR
