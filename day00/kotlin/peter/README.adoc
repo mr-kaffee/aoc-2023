@@ -1,0 +1,21 @@
+== Day 00: Hello World in Kotlin
+
+=== The code
+
+This is a simple Kotlin template.
+
+It reads the input in a list of lines:
+[source,kotlin,numbered]
+----
+include::solution.kt[tags=read_input]
+----
+
+And it does something incredibly meaningful with the input:
+[source,kotlin,numbered]
+----
+include::solution.kt[tags=solve]
+----
+
+=== Run it
+
+The solutions can be run out of VS Code using the https://marketplace.visualstudio.com/items?itemName=formulahendry.code-runner[Code Runner] extension via the `Ctrl+Alt+N` shortcut or in the terminal using `kotlinc solution.kt -include-runtime -d solution.jar && java -jar solution.jar`.
