@@ -123,7 +123,7 @@ def write_adoc_files(sols, year: int=AOC_YEAR, out_dir: str=GEN_ADOC_DIR, repo_b
                 f_usr.write("[[top]]\n")
                 f_usr.write(f"= Solutions by {user}\n\n")
                 for sol in sorted(user_sols, key=lambda sol: (sol.day, sol.lang)):
-                    f_usr.write(f"\n[[sol-{sol.day}]]\n")
+                    f_usr.write(f"\n[[sol-{sol.lang}-{sol.day}]]\n")
 
                     readme_file = sol.readme_file \
                         if not sol.readme_file or os.path.isabs(sol.readme_file) \
@@ -148,7 +148,7 @@ def write_adoc_files(sols, year: int=AOC_YEAR, out_dir: str=GEN_ADOC_DIR, repo_b
                 f_sum.write(f"=== {sol.lang}\n\n")
                 f_sum.write("|===\n")
 
-            f_sum.write(f"| Day {sol.day if sol.day != cur_day else '':2} | link:user-{quote(sol.user)}.html#sol-{sol.day}[{sol.user}]\n")
+            f_sum.write(f"| Day {sol.day if sol.day != cur_day else '':2} | link:user-{quote(sol.user)}.html#sol-{sol.lang}-{sol.day}[{sol.user}]\n")
 
             cur_lang = sol.lang
             cur_day = sol.day
@@ -167,7 +167,7 @@ def write_adoc_files(sols, year: int=AOC_YEAR, out_dir: str=GEN_ADOC_DIR, repo_b
                 f_sum.write(f"=== Day {sol.day}\n\n")
                 f_sum.write("|===\n")
 
-            f_sum.write(f"| {sol.lang if sol.lang != cur_lang else '':10} | link:user-{quote(sol.user)}.html#sol-{sol.day}[{sol.user}]\n")
+            f_sum.write(f"| {sol.lang if sol.lang != cur_lang else '':10} | link:user-{quote(sol.user)}.html#sol-{sol.lang}-{sol.day}[{sol.user}]\n")
 
             cur_day = sol.day
             cur_lang = sol.lang

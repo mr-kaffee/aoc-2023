@@ -1,7 +1,5 @@
 #!/bin/bash
 
-git config --global --add safe.directory /workspace
-
 # start web server
 sudo nginx
 
