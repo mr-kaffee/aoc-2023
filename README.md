@@ -6,7 +6,7 @@ Documented results can be found on [aoc-2023.die-wielands.net](https://aoc-2023.
 
 ## Join Coding
 
-Feel free to clone the repository and submit PRs for your solutions. Please add documentation in a `README.adoc` file per day and adjust the VS code `.devcontainer` configuration to make sure your code can be executed in the development container if needed.
+Feel free to fork/clone the repository and submit PRs for your solutions. Please add documentation in a `README.adoc` file per day and adjust the VS code `.devcontainer` configuration to make sure your code can be executed in the development container if needed.
 
 If you want, you may join the [private leaderboard](https://adventofcode.com/2023/leaderboard/private/view/878630) using the code `878630-dafd1c4f` - but keep in mind: advent of code should be first and foremost a fun event and a learning opportunity.
 
