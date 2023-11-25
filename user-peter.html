@@ -23,7 +23,13 @@
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
 <ul class="sectlevel1">
-<li><a href="#sol-0">Day 00: Hello World</a>
+<li><a href="#sol-kotlin-0">Day 00: Hello World in Kotlin</a>
+<ul class="sectlevel2">
+<li><a href="#_the_code">The code</a></li>
+<li><a href="#_run_it">Run it</a></li>
+</ul>
+</li>
+<li><a href="#sol-rust-0">Day 00: Hello World in Rust</a>
 <ul class="sectlevel2">
 <li><a href="#_general_solution_structure">General solution structure</a></li>
 <li><a href="#_hello_world_implementation">Hello World implementation</a></li>
@@ -35,7 +41,75 @@
 </div>
 <div id="content">
 <div class="sect1">
-<h2 id="sol-0">Day 00: Hello World</h2>
+<h2 id="sol-kotlin-0">Day 00: Hello World in Kotlin</h2>
+<div class="sectionbody">
+<div class="sect2">
+<h3 id="_the_code">The code</h3>
+<div class="paragraph">
+<p>This is a simple Kotlin template.</p>
+</div>
+<div class="paragraph">
+<p>It reads the input in a list of lines:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight"><code data-lang="kotlin"><table class="linenotable"><tbody><tr><td class="linenos gl"><pre class="lineno">1
+2
+3
+4
+5
+</pre></td><td class="code"><pre><span class="k">fun</span> <span class="nf">readLines</span><span class="p">():</span> <span class="nc">List</span><span class="p">&lt;</span><span class="nc">String</span><span class="p">&gt;</span> <span class="p">{</span>
+    <span class="kd">var</span> <span class="py">lines</span> <span class="p">=</span> <span class="n">mutableListOf</span><span class="p">&lt;</span><span class="nc">String</span><span class="p">&gt;()</span>
+    <span class="nc">File</span><span class="p">(</span><span class="s">"../../../inputs/input00"</span><span class="p">).</span><span class="nf">forEachLine</span><span class="p">()</span> <span class="p">{</span> <span class="n">lines</span><span class="p">.</span><span class="nf">add</span><span class="p">(</span><span class="n">it</span><span class="p">)</span> <span class="p">}</span>
+    <span class="k">return</span> <span class="n">lines</span>
+<span class="p">}</span>
+</pre></td></tr></tbody></table></code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>And it does something incredibly meaningful with the input:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight"><code data-lang="kotlin"><table class="linenotable"><tbody><tr><td class="linenos gl"><pre class="lineno"> 1
+ 2
+ 3
+ 4
+ 5
+ 6
+ 7
+ 8
+ 9
+10
+11
+</pre></td><td class="code"><pre><span class="k">fun</span> <span class="nf">main</span><span class="p">()</span> <span class="p">{</span>
+    <span class="kd">val</span> <span class="py">start</span> <span class="p">=</span> <span class="nc">System</span><span class="p">.</span><span class="nf">currentTimeMillis</span><span class="p">()</span>
+
+    <span class="kd">val</span> <span class="py">lines</span> <span class="p">=</span> <span class="nf">readLines</span><span class="p">()</span>
+    <span class="k">for</span> <span class="p">(</span><span class="n">line</span> <span class="k">in</span> <span class="n">lines</span><span class="p">)</span> <span class="p">{</span>
+        <span class="nf">println</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
+    <span class="p">}</span>
+
+    <span class="kd">val</span> <span class="py">elapsed</span> <span class="p">=</span> <span class="nc">System</span><span class="p">.</span><span class="nf">currentTimeMillis</span><span class="p">()</span> <span class="p">-</span> <span class="n">start</span>
+    <span class="nf">println</span><span class="p">(</span><span class="s">"Solved puzzle in ${elapsed}ms."</span><span class="p">)</span>
+<span class="p">}</span>
+</pre></td></tr></tbody></table></code></pre>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_run_it">Run it</h3>
+<div class="paragraph">
+<p>The solutions can be run out of VS Code using the <a href="https://marketplace.visualstudio.com/items?itemName=formulahendry.code-runner">Code Runner</a> extension via the <code>Ctrl+Alt+N</code> shortcut or in the terminal using <code>kotlinc solution.kt -include-runtime -d solution.jar &amp;&amp; java -jar solution.jar</code>.</p>
+</div>
+<div class="paragraph">
+<p><a href="#top">Top</a></p>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="sol-rust-0">Day 00: Hello World in Rust</h2>
 <div class="sectionbody">
 <div class="paragraph">
 <p><a href="https://rust-lang.org">Rust</a> <strong>Hello World</strong>, <a href="https://adventofcode.com/2023/">AoC|2023</a> starts.</p>
@@ -214,7 +288,7 @@
 </div>
 <div id="footer">
     <div id="footer-text">
-        Generated from <a href="https://github.com/mr-kaffee/aoc-2023/">github.com/mr-kaffee/aoc-2023/</a> on 2023-11-23 07:14:52 UTC
+        Generated from <a href="https://github.com/mr-kaffee/aoc-2023/">github.com/mr-kaffee/aoc-2023/</a> on 2023-11-25 10:25:17 UTC
         with <a href="https://asciidoctor.org">asciidoctor</a>.
     </div>
 </div>
