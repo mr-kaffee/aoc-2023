@@ -2,9 +2,7 @@ import java.io.File
 
 // tag::read_input[]
 fun readLines(): List<String> {
-    var lines = mutableListOf<String>()
-    File("../../../inputs/input00").forEachLine() { lines.add(it) }
-    return lines
+    return File("../../../inputs/input00").useLines() { it.toList() }
 }
 // end::read_input[]
 

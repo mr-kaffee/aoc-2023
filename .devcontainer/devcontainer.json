@@ -1,6 +1,8 @@
 {
     "name": "AOC 2023",
-    "dockerComposeFile": ["docker-compose.yml"],
+    "dockerComposeFile": [
+        "docker-compose.yml"
+    ],
     "service": "aoc-2023",
     "workspaceFolder": "/workspace",
     "customizations": {
@@ -15,7 +17,12 @@
                 "mhutchie.git-graph",
                 "ms-azuretools.vscode-docker",
                 "ms-python.python",
-                "fwcd.kotlin"
+                "fwcd.kotlin",
+                "ms-vscode.cpptools",
+                "xaver.clang-format",
+                "llvm-vs-code-extensions.vscode-clangd",
+                "twxs.cmake",
+                "ms-vscode.cmake-tools"
             ]
         }
     }

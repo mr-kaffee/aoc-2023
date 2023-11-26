@@ -11,3 +11,7 @@ inputs/**
 # exclude rust build output
 **/target
 **/Cargo.lock
+
+# exclude C++ temporary / build output
+**/build
+**/.cache

@@ -1,0 +1,25 @@
+== Day 00: Hello World in C++
+
+=== The code
+
+This is a simple C++ template.
+
+It reads the input in a list of lines using a `FileHandler` class implementing _RAII_.
+[source,cpp,numbered]
+----
+include::solution.cpp[tags=fileHandler]
+----
+
+And it does something incredibly meaningful with the input:
+[source,cpp,numbered]
+----
+include::solution.cpp[tags=solve]
+----
+
+=== Run it with CMake
+
+I use CMake and its integration in VS Code to build (`F7`) and run (`Shift+F5`) the solution with this simple `CMakeLists.txt`
+[source,cmake,numbered]
+----
+include::CMakeLists.txt[]
+----
