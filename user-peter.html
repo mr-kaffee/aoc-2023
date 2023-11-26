@@ -23,9 +23,15 @@
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
 <ul class="sectlevel1">
-<li><a href="#sol-kotlin-0">Day 00: Hello World in Kotlin</a>
+<li><a href="#sol-cpp-0">Day 00: Hello World in C++</a>
 <ul class="sectlevel2">
 <li><a href="#_the_code">The code</a></li>
+<li><a href="#_run_it_with_cmake">Run it with CMake</a></li>
+</ul>
+</li>
+<li><a href="#sol-kotlin-0">Day 00: Hello World in Kotlin</a>
+<ul class="sectlevel2">
+<li><a href="#_the_code_2">The code</a></li>
 <li><a href="#_run_it">Run it</a></li>
 </ul>
 </li>
@@ -41,10 +47,145 @@
 </div>
 <div id="content">
 <div class="sect1">
-<h2 id="sol-kotlin-0">Day 00: Hello World in Kotlin</h2>
+<h2 id="sol-cpp-0">Day 00: Hello World in C++</h2>
 <div class="sectionbody">
 <div class="sect2">
 <h3 id="_the_code">The code</h3>
+<div class="paragraph">
+<p>This is a simple C++ template.</p>
+</div>
+<div class="paragraph">
+<p>It reads the input in a list of lines using a <code>FileHandler</code> class implementing <em>RAII</em>.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight"><code data-lang="cpp"><table class="linenotable"><tbody><tr><td class="linenos gl"><pre class="lineno"> 1
+ 2
+ 3
+ 4
+ 5
+ 6
+ 7
+ 8
+ 9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+</pre></td><td class="code"><pre><span class="k">class</span> <span class="nc">FileHandler</span> <span class="p">{</span>
+<span class="nl">public:</span>
+  <span class="n">FileHandler</span><span class="p">(</span><span class="n">string</span> <span class="k">const</span> <span class="o">&amp;</span><span class="n">filename</span><span class="p">)</span> <span class="o">:</span> <span class="n">_file</span><span class="p">{</span><span class="n">filename</span><span class="p">}</span> <span class="p">{}</span>
+  <span class="o">~</span><span class="n">FileHandler</span><span class="p">()</span> <span class="p">{</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">_file</span><span class="p">.</span><span class="n">is_open</span><span class="p">())</span> <span class="p">{</span>
+      <span class="n">_file</span><span class="p">.</span><span class="n">close</span><span class="p">();</span>
+    <span class="p">}</span>
+  <span class="p">}</span>
+
+  <span class="n">vector</span><span class="o">&lt;</span><span class="n">string</span><span class="o">&gt;</span> <span class="n">readLines</span><span class="p">()</span> <span class="p">{</span>
+    <span class="n">vector</span><span class="o">&lt;</span><span class="n">string</span><span class="o">&gt;</span> <span class="n">lines</span><span class="p">{};</span>
+    <span class="n">string</span> <span class="n">line</span><span class="p">{};</span>
+    <span class="k">while</span> <span class="p">(</span><span class="n">getline</span><span class="p">(</span><span class="n">_file</span><span class="p">,</span> <span class="n">line</span><span class="p">))</span> <span class="p">{</span>
+      <span class="n">lines</span><span class="p">.</span><span class="n">push_back</span><span class="p">(</span><span class="n">line</span><span class="p">);</span>
+    <span class="p">}</span>
+    <span class="k">return</span> <span class="n">lines</span><span class="p">;</span>
+  <span class="p">}</span>
+
+<span class="nl">private:</span>
+  <span class="n">ifstream</span> <span class="n">_file</span><span class="p">;</span>
+<span class="p">};</span>
+</pre></td></tr></tbody></table></code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>And it does something incredibly meaningful with the input:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight"><code data-lang="cpp"><table class="linenotable"><tbody><tr><td class="linenos gl"><pre class="lineno"> 1
+ 2
+ 3
+ 4
+ 5
+ 6
+ 7
+ 8
+ 9
+10
+11
+12
+13
+</pre></td><td class="code"><pre><span class="kt">int</span> <span class="nf">main</span><span class="p">()</span> <span class="p">{</span>
+  <span class="k">auto</span> <span class="n">start</span> <span class="o">=</span> <span class="n">Clock</span><span class="o">::</span><span class="n">now</span><span class="p">();</span>
+
+  <span class="k">auto</span> <span class="n">lines</span> <span class="o">=</span> <span class="n">FileHandler</span><span class="p">{</span><span class="s">"input00"</span><span class="p">}.</span><span class="n">readLines</span><span class="p">();</span>
+  <span class="k">for</span> <span class="p">(</span><span class="k">auto</span> <span class="k">const</span> <span class="o">&amp;</span><span class="n">line</span> <span class="o">:</span> <span class="n">lines</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="n">line</span> <span class="o">&lt;&lt;</span> <span class="sc">'\n'</span><span class="p">;</span>
+  <span class="p">}</span>
+
+  <span class="n">Duration</span> <span class="n">d</span> <span class="o">=</span> <span class="n">Clock</span><span class="o">::</span><span class="n">now</span><span class="p">()</span> <span class="o">-</span> <span class="n">start</span><span class="p">;</span>
+  <span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="s">"Solved puzzle in "</span> <span class="o">&lt;&lt;</span> <span class="n">d</span><span class="p">.</span><span class="n">count</span><span class="p">()</span> <span class="o">&lt;&lt;</span> <span class="n">DURATION_UNIT</span> <span class="o">&lt;&lt;</span> <span class="sc">'\n'</span><span class="p">;</span>
+
+  <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></td></tr></tbody></table></code></pre>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_run_it_with_cmake">Run it with CMake</h3>
+<div class="paragraph">
+<p>I use CMake and its integration in VS Code to build (<code>F7</code>) and run (<code>Shift+F5</code>) the solution with this simple <code>CMakeLists.txt</code></p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight"><code data-lang="cmake"><table class="linenotable"><tbody><tr><td class="linenos gl"><pre class="lineno"> 1
+ 2
+ 3
+ 4
+ 5
+ 6
+ 7
+ 8
+ 9
+10
+11
+12
+13
+</pre></td><td class="code"><pre><span class="nb">cmake_minimum_required</span><span class="p">(</span>VERSION 3.12<span class="p">)</span>
+
+<span class="nb">set</span><span class="p">(</span>AOC_DAY <span class="s2">"00"</span><span class="p">)</span>
+
+<span class="nb">project</span><span class="p">(</span>peter_day<span class="si">${</span><span class="nv">AOC_DAY</span><span class="si">}</span> VERSION 0.1.0<span class="p">)</span>
+
+<span class="nb">set</span><span class="p">(</span>CMAKE_CXX_STANDARD 20<span class="p">)</span>
+<span class="nb">set</span><span class="p">(</span>CMAKE_CXX_STANDARD_REQUIRED True<span class="p">)</span>
+
+<span class="c1"># copy input to build folder</span>
+<span class="nb">file</span><span class="p">(</span>COPY <span class="s2">"../../../inputs/input</span><span class="si">${</span><span class="nv">AOC_DAY</span><span class="si">}</span><span class="s2">"</span> DESTINATION <span class="s2">"</span><span class="si">${</span><span class="nv">CMAKE_BINARY_DIR</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+
+<span class="nb">add_executable</span><span class="p">(</span>solution solution.cpp<span class="p">)</span>
+</pre></td></tr></tbody></table></code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p><a href="#top">Top</a></p>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="sol-kotlin-0">Day 00: Hello World in Kotlin</h2>
+<div class="sectionbody">
+<div class="sect2">
+<h3 id="_the_code_2">The code</h3>
 <div class="paragraph">
 <p>This is a simple Kotlin template.</p>
 </div>
@@ -56,12 +197,8 @@
 <pre class="rouge highlight"><code data-lang="kotlin"><table class="linenotable"><tbody><tr><td class="linenos gl"><pre class="lineno">1
 2
 3
-4
-5
 </pre></td><td class="code"><pre><span class="k">fun</span> <span class="nf">readLines</span><span class="p">():</span> <span class="nc">List</span><span class="p">&lt;</span><span class="nc">String</span><span class="p">&gt;</span> <span class="p">{</span>
-    <span class="kd">var</span> <span class="py">lines</span> <span class="p">=</span> <span class="n">mutableListOf</span><span class="p">&lt;</span><span class="nc">String</span><span class="p">&gt;()</span>
-    <span class="nc">File</span><span class="p">(</span><span class="s">"../../../inputs/input00"</span><span class="p">).</span><span class="nf">forEachLine</span><span class="p">()</span> <span class="p">{</span> <span class="n">lines</span><span class="p">.</span><span class="nf">add</span><span class="p">(</span><span class="n">it</span><span class="p">)</span> <span class="p">}</span>
-    <span class="k">return</span> <span class="n">lines</span>
+    <span class="k">return</span> <span class="nc">File</span><span class="p">(</span><span class="s">"../../../inputs/input00"</span><span class="p">).</span><span class="nf">useLines</span><span class="p">()</span> <span class="p">{</span> <span class="n">it</span><span class="p">.</span><span class="nf">toList</span><span class="p">()</span> <span class="p">}</span>
 <span class="p">}</span>
 </pre></td></tr></tbody></table></code></pre>
 </div>
@@ -288,7 +425,7 @@
 </div>
 <div id="footer">
     <div id="footer-text">
-        Generated from <a href="https://github.com/mr-kaffee/aoc-2023/">github.com/mr-kaffee/aoc-2023/</a> on 2023-11-25 12:05:31 UTC
+        Generated from <a href="https://github.com/mr-kaffee/aoc-2023/">github.com/mr-kaffee/aoc-2023/</a> on 2023-11-26 19:53:26 UTC
         with <a href="https://asciidoctor.org">asciidoctor</a>.
     </div>
 </div>
