@@ -24,6 +24,12 @@ RUN echo "StrictHostKeyChecking no" >> /etc/ssh/ssh_config
 # Install Java JRE AND SDK
 RUN apt-get update && apt-get install -y default-jre default-jdk
 
+# Install C++ tooling
+RUN apt-get update && apt-get install -y \
+    clang \
+    clang-format \
+    cmake
+
 # Create user 'docker' with sudo privileges
 RUN useradd -ms /bin/bash docker \
     && apt-get update \
