@@ -2,16 +2,10 @@
 FROM ubuntu:latest
 
 # Install basic tooling
-RUN apt-get update && apt-get install -y \
-    build-essential \
-    git \
-    curl \
-    python3
+RUN apt-get update && apt-get install -y build-essential git curl python3 sudo
 
 # Install asciidoctor tooling
-RUN apt-get update && apt-get install -y \
-    asciidoctor \
-    ruby-rouge
+RUN apt-get update && apt-get install -y asciidoctor ruby-rouge
 
 # Install web server
 RUN apt-get update && apt-get install -y nginx
@@ -25,15 +19,10 @@ RUN echo "StrictHostKeyChecking no" >> /etc/ssh/ssh_config
 RUN apt-get update && apt-get install -y default-jre default-jdk
 
 # Install C++ tooling
-RUN apt-get update && apt-get install -y \
-    clang \
-    clang-format \
-    cmake
+RUN apt-get update && apt-get install -y clang clang-format gdb cmake
 
 # Create user 'docker' with sudo privileges
 RUN useradd -ms /bin/bash docker \
-    && apt-get update \
-    && apt-get install -y sudo \
     && echo 'docker ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
 USER docker
 
