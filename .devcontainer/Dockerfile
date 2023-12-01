@@ -41,6 +41,23 @@ RUN echo "$HOME/check-git.sh" >> /home/docker/.bashrc \
     && git config --global core.editor "code --wait" \
     && git config --global --add safe.directory "/workspace"
 
+USER root
+
+# XDG utils allows to open web pages on host
+RUN apt-get update && apt-get install -y xdg-utils
+
+# Install Haskell pre-conditions
+RUN apt-get update && \
+    apt-get install -y libffi-dev libffi8ubuntu1 libgmp-dev libgmp10 libncurses-dev libncurses5 libtinfo5
+
+USER docker
+
+# Install Haskell
+RUN export BOOTSTRAP_HASKELL_NONINTERACTIVE=1 && \
+    export BOOTSTRAP_HASKELL_INSTALL_HLS=1 && \
+    export BOOTSTRAP_HASKELL_ADJUST_BASHRC=1 && \
+    curl --proto '=https' --tlsv1.2 -sSf https://get-ghcup.haskell.org | bash
+
 # Set environment variables
 ARG REPO_BASE_DIR
 ARG REPO_MAIN_BRANCH
