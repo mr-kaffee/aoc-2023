@@ -1,0 +1,9 @@
+[package]
+name = "mr-kaffee-2023-01"
+description = "Solution to AoC 2023/1, http://adventofcode.com/2023/day/1/"
+authors = ["Peter Wieland <peter@die-wielands.net>"]
+license = "MIT"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]

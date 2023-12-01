@@ -1,0 +1,46 @@
+== Day 1: Trebuchet?! ==
+
+https://rust-lang.org[Rust] solution to https://adventofcode.com/2023/day/1[AoC|2023|1].
+
+=== Input ===
+
+No separate input processing today. Just operate on the raw character data.
+
+=== Star 1 ===
+
+The solution consists of two parts:
+
+1. A `map_1` function, that returns for any `&str` the value of the digit at its head wrapped in an `Option` or `None` if there is no digit.
+2. A `score`function which calculates the score for a line by finding the first and last digit. The `map_1` function is passed as an argument.
+3. A `star` function which calculates the solution by summing over the scores for each line. This function takes as well `map_1` as an argument.
+
+[source,rust,numbered]
+----
+include::src/lib.rs[tags=star_1]
+----
+
+Catches for the 1st star:
+
+* There may be lines with only one digit. In that case, it is the first and the last digit.
+
+=== Star 2 ===
+
+All that is needed for the second star is to extend `map_1` function to `map_2`
+
+[source,rust,numbered]
+----
+include::src/lib.rs[tags=star_2]
+----
+
+Catches for the 2nd star:
+
+* Textual representation of digits may overlap like in *oneight* (this is not an issue when searching from the end of the string, my initial solution just searched for all digits in a line and skipped characters belonging to one digit for the next step)
+
+=== Tests ===
+
+Just check the scores for the sample data.
+
+[source,rust,numbered]
+----
+include::src/lib.rs[tags=tests]
+----
