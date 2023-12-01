@@ -1,0 +1,23 @@
+== Haskell | Day 1: Trebuchet?!
+
+The solution is run with `runhaskell solution.hs` (or alternatively compiled with `ghc solution.hs` which creates an binary `solution`).
+
+=== Star 1
+
+The solution consists in summing the scores for every line.
+
+The scores for a line are calculated in the `score1` function
+
+[source,haskell,numbered]
+----
+include::solution.hs[tags=star1]
+----
+
+=== Star 2
+
+The solution for the second star uses a `score2` function which looks for digits spelled out in addition to simple digits. Not very elegant, but it works and is what I am able to do with my current Haskell skills.
+
+[source,haskell,numbered]
+----
+include::solution.hs[tags=star2]
+----
