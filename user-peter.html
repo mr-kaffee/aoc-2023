@@ -56,11 +56,17 @@
 <li><a href="#_tests">Tests</a></li>
 </ul>
 </li>
+<li><a href="#sol-haskell-2">Haskell | Day 2: Cube Conundrum</a>
+<ul class="sectlevel2">
+<li><a href="#_star_1_3">Star 1</a></li>
+<li><a href="#_star_2_3">Star 2</a></li>
+</ul>
+</li>
 <li><a href="#sol-rust-2">Rust | Day 2: Cube Conundrum</a>
 <ul class="sectlevel2">
 <li><a href="#_input_2">Input</a></li>
-<li><a href="#_star_1_3">Star 1</a></li>
-<li><a href="#_star_2_3">Star 2</a></li>
+<li><a href="#_star_1_4">Star 1</a></li>
+<li><a href="#_star_2_4">Star 2</a></li>
 <li><a href="#_tests_2">Tests</a></li>
 </ul>
 </li>
@@ -716,6 +722,138 @@ zoneight234
 </div>
 </div>
 <div class="sect1">
+<h2 id="sol-haskell-2">Haskell | Day 2: Cube Conundrum</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>I struggled a bit parsing the input.</p>
+</div>
+<div class="paragraph">
+<p>What eventually helped was to realize, that every pair of a count and a color can be considered independently. There is no need to group them to draws with cubes of different colors. In other words: the colors can be considered independently.</p>
+</div>
+<div class="sect2">
+<h3 id="_star_1_3">Star 1</h3>
+<div class="paragraph">
+<p>I have two helper functions to separate the ID from the draws and to choose one argument out of three given a color string:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight"><code data-lang="haskell"><table class="linenotable"><tbody><tr><td class="linenos gl"><pre class="lineno"> 1
+ 2
+ 3
+ 4
+ 5
+ 6
+ 7
+ 8
+ 9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+</pre></td><td class="code"><pre><span class="c1">-- depending on the fourth argument, return one of the first three</span>
+<span class="c1">-- to choose, only the first letter of the fourth argument is considered,</span>
+<span class="c1">-- which is expected to be one of 'r' (return first), 'g' (return second),</span>
+<span class="c1">-- or 'b' (return third)</span>
+<span class="n">choose</span> <span class="o">::</span> <span class="n">a</span> <span class="o">-&gt;</span> <span class="n">a</span> <span class="o">-&gt;</span> <span class="n">a</span> <span class="o">-&gt;</span> <span class="kt">String</span> <span class="o">-&gt;</span> <span class="n">a</span>
+<span class="n">choose</span> <span class="n">r</span> <span class="n">g</span> <span class="n">b</span> <span class="p">(</span><span class="sc">'r'</span> <span class="o">:</span> <span class="kr">_</span><span class="p">)</span> <span class="o">=</span> <span class="n">r</span>
+<span class="n">choose</span> <span class="n">r</span> <span class="n">g</span> <span class="n">b</span> <span class="p">(</span><span class="sc">'g'</span> <span class="o">:</span> <span class="kr">_</span><span class="p">)</span> <span class="o">=</span> <span class="n">g</span>
+<span class="n">choose</span> <span class="n">r</span> <span class="n">g</span> <span class="n">b</span> <span class="p">(</span><span class="sc">'b'</span> <span class="o">:</span> <span class="kr">_</span><span class="p">)</span> <span class="o">=</span> <span class="n">b</span>
+
+<span class="c1">-- extract Game id: ...draws... into (id, ...draws...)</span>
+<span class="n">splitId</span> <span class="o">::</span> <span class="kt">String</span> <span class="o">-&gt;</span> <span class="p">(</span><span class="kt">Int</span><span class="p">,</span> <span class="kt">String</span><span class="p">)</span>
+<span class="n">splitId</span> <span class="n">line</span><span class="o">@</span><span class="p">(</span><span class="n">x</span> <span class="o">:</span> <span class="n">xs</span><span class="p">)</span>
+  <span class="o">|</span> <span class="n">isDigit</span> <span class="n">x</span> <span class="o">=</span> <span class="n">splitId'</span> <span class="mi">0</span> <span class="n">line</span>
+  <span class="o">|</span> <span class="n">otherwise</span> <span class="o">=</span> <span class="n">splitId</span> <span class="n">xs</span>
+  <span class="kr">where</span>
+    <span class="n">splitId'</span> <span class="o">::</span> <span class="kt">Int</span> <span class="o">-&gt;</span> <span class="kt">String</span> <span class="o">-&gt;</span> <span class="p">(</span><span class="kt">Int</span><span class="p">,</span> <span class="kt">String</span><span class="p">)</span>
+    <span class="n">splitId'</span> <span class="n">id</span> <span class="p">(</span><span class="n">x</span> <span class="o">:</span> <span class="n">xs</span><span class="p">)</span>
+      <span class="o">|</span> <span class="n">isDigit</span> <span class="n">x</span> <span class="o">=</span> <span class="n">splitId'</span> <span class="p">(</span><span class="mi">10</span> <span class="o">*</span> <span class="n">id</span> <span class="o">+</span> <span class="p">(</span><span class="n">ord</span> <span class="n">x</span> <span class="o">-</span> <span class="n">ord</span> <span class="sc">'0'</span><span class="p">))</span> <span class="n">xs</span>
+    <span class="n">splitId'</span> <span class="n">id</span> <span class="p">(</span><span class="sc">':'</span> <span class="o">:</span> <span class="sc">' '</span> <span class="o">:</span> <span class="n">xs</span><span class="p">)</span> <span class="o">=</span> <span class="p">(</span><span class="n">id</span><span class="p">,</span> <span class="n">xs</span><span class="p">)</span>
+</pre></td></tr></tbody></table></code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>With this, the solution to star1 looks as follows (see explanation in the comments):</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight"><code data-lang="haskell"><table class="linenotable"><tbody><tr><td class="linenos gl"><pre class="lineno"> 1
+ 2
+ 3
+ 4
+ 5
+ 6
+ 7
+ 8
+ 9
+10
+</pre></td><td class="code"><pre><span class="c1">-- sum over ids of all lines which respect the limits</span>
+<span class="n">star1</span> <span class="o">::</span> <span class="kt">String</span> <span class="o">-&gt;</span> <span class="kt">Int</span>
+<span class="n">star1</span> <span class="o">=</span> <span class="n">sum</span> <span class="o">.</span> <span class="n">map</span> <span class="n">fst</span> <span class="o">.</span> <span class="n">filter</span> <span class="p">(</span><span class="n">allSmaller</span> <span class="mi">12</span> <span class="mi">13</span> <span class="mi">14</span> <span class="o">.</span> <span class="n">words</span> <span class="o">.</span> <span class="n">snd</span><span class="p">)</span> <span class="o">.</span> <span class="n">map</span> <span class="n">splitId</span> <span class="o">.</span> <span class="n">lines</span>
+  <span class="kr">where</span>
+    <span class="c1">-- essentially a foldl which consumes two elements (count and color) at once</span>
+    <span class="n">allSmaller</span> <span class="o">::</span> <span class="kt">Int</span> <span class="o">-&gt;</span> <span class="kt">Int</span> <span class="o">-&gt;</span> <span class="kt">Int</span> <span class="o">-&gt;</span> <span class="p">[</span><span class="kt">String</span><span class="p">]</span> <span class="o">-&gt;</span> <span class="kt">Bool</span>
+    <span class="n">allSmaller</span> <span class="kr">_</span> <span class="kr">_</span> <span class="kr">_</span> <span class="kt">[]</span> <span class="o">=</span> <span class="kt">True</span>
+    <span class="n">allSmaller</span> <span class="n">r</span> <span class="n">g</span> <span class="n">b</span> <span class="p">(</span><span class="n">n</span> <span class="o">:</span> <span class="n">c</span> <span class="o">:</span> <span class="n">xs</span><span class="p">)</span>
+      <span class="o">|</span> <span class="n">read</span> <span class="n">n</span> <span class="o">&gt;</span> <span class="n">choose</span> <span class="n">r</span> <span class="n">g</span> <span class="n">b</span> <span class="n">c</span> <span class="o">=</span> <span class="kt">False</span>
+      <span class="o">|</span> <span class="n">otherwise</span> <span class="o">=</span> <span class="n">allSmaller</span> <span class="n">r</span> <span class="n">g</span> <span class="n">b</span> <span class="n">xs</span>
+</pre></td></tr></tbody></table></code></pre>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_star_2_3">Star 2</h3>
+<div class="paragraph">
+<p>Star 2 is quite similar besides there is just mapping, no filtering:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight"><code data-lang="haskell"><table class="linenotable"><tbody><tr><td class="linenos gl"><pre class="lineno"> 1
+ 2
+ 3
+ 4
+ 5
+ 6
+ 7
+ 8
+ 9
+10
+11
+12
+13
+14
+15
+</pre></td><td class="code"><pre><span class="c1">-- sum of product of maximum for every color for every line</span>
+<span class="n">star2</span> <span class="o">::</span> <span class="kt">String</span> <span class="o">-&gt;</span> <span class="kt">Int</span>
+<span class="n">star2</span> <span class="o">=</span> <span class="n">sum</span> <span class="o">.</span> <span class="n">map</span> <span class="p">(</span><span class="n">prod'</span> <span class="o">.</span> <span class="n">maxByColor</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="o">.</span> <span class="n">words</span> <span class="o">.</span> <span class="n">snd</span> <span class="o">.</span> <span class="n">splitId</span><span class="p">)</span> <span class="o">.</span> <span class="n">lines</span>
+  <span class="kr">where</span>
+    <span class="n">prod'</span> <span class="o">::</span> <span class="p">(</span><span class="kt">Int</span><span class="p">,</span> <span class="kt">Int</span><span class="p">,</span> <span class="kt">Int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kt">Int</span>
+    <span class="n">prod'</span> <span class="p">(</span><span class="n">r</span><span class="p">,</span> <span class="n">g</span><span class="p">,</span> <span class="n">b</span><span class="p">)</span> <span class="o">=</span> <span class="n">r</span> <span class="o">*</span> <span class="n">g</span> <span class="o">*</span> <span class="n">b</span>
+    <span class="c1">-- essentially a foldl which consumes two elements (count and color) at once</span>
+    <span class="n">maxByColor</span> <span class="o">::</span> <span class="p">(</span><span class="kt">Int</span><span class="p">,</span> <span class="kt">Int</span><span class="p">,</span> <span class="kt">Int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="p">[</span><span class="kt">String</span><span class="p">]</span> <span class="o">-&gt;</span> <span class="p">(</span><span class="kt">Int</span><span class="p">,</span> <span class="kt">Int</span><span class="p">,</span> <span class="kt">Int</span><span class="p">)</span>
+    <span class="n">maxByColor</span> <span class="p">(</span><span class="n">r</span><span class="p">,</span> <span class="n">g</span><span class="p">,</span> <span class="n">b</span><span class="p">)</span> <span class="kt">[]</span> <span class="o">=</span> <span class="p">(</span><span class="n">r</span><span class="p">,</span> <span class="n">g</span><span class="p">,</span> <span class="n">b</span><span class="p">)</span>
+    <span class="n">maxByColor</span> <span class="p">(</span><span class="n">r</span><span class="p">,</span> <span class="n">g</span><span class="p">,</span> <span class="n">b</span><span class="p">)</span> <span class="p">(</span><span class="n">n'</span> <span class="o">:</span> <span class="n">c</span> <span class="o">:</span> <span class="n">xs</span><span class="p">)</span> <span class="o">=</span>
+      <span class="kr">let</span> <span class="n">n</span> <span class="o">=</span> <span class="n">read</span> <span class="n">n'</span>
+       <span class="kr">in</span> <span class="kr">case</span> <span class="n">choose</span> <span class="mi">1</span> <span class="mi">2</span> <span class="mi">3</span> <span class="n">c</span> <span class="kr">of</span>
+            <span class="mi">1</span> <span class="o">-&gt;</span> <span class="n">maxByColor</span> <span class="p">(</span><span class="n">max</span> <span class="n">r</span> <span class="n">n</span><span class="p">,</span> <span class="n">g</span><span class="p">,</span> <span class="n">b</span><span class="p">)</span> <span class="n">xs</span>
+            <span class="mi">2</span> <span class="o">-&gt;</span> <span class="n">maxByColor</span> <span class="p">(</span><span class="n">r</span><span class="p">,</span> <span class="n">max</span> <span class="n">g</span> <span class="n">n</span><span class="p">,</span> <span class="n">b</span><span class="p">)</span> <span class="n">xs</span>
+            <span class="mi">3</span> <span class="o">-&gt;</span> <span class="n">maxByColor</span> <span class="p">(</span><span class="n">r</span><span class="p">,</span> <span class="n">g</span><span class="p">,</span> <span class="n">max</span> <span class="n">b</span> <span class="n">n</span><span class="p">)</span> <span class="n">xs</span>
+</pre></td></tr></tbody></table></code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p><a href="#top">Top</a></p>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
 <h2 id="sol-rust-2">Rust | Day 2: Cube Conundrum</h2>
 <div class="sectionbody">
 <div class="paragraph">
@@ -803,7 +941,7 @@ zoneight234
 </div>
 </div>
 <div class="sect2">
-<h3 id="_star_1_3">Star 1</h3>
+<h3 id="_star_1_4">Star 1</h3>
 <div class="paragraph">
 <p>iter (enumerated) &#8230;&#8203; filter &#8230;&#8203; map &#8230;&#8203; sum</p>
 </div>
@@ -836,7 +974,7 @@ zoneight234
 </div>
 </div>
 <div class="sect2">
-<h3 id="_star_2_3">Star 2</h3>
+<h3 id="_star_2_4">Star 2</h3>
 <div class="paragraph">
 <p>iter &#8230;&#8203; map (nested iter &#8230;&#8203; fold) &#8230;&#8203; map &#8230;&#8203; sum</p>
 </div>
@@ -957,7 +1095,7 @@ Game 5: 6 red, 1 blue, 3 green; 2 blue, 1 red, 2 green
 </div>
 <div id="footer">
     <div id="footer-text">
-        Generated from <a href="https://github.com/mr-kaffee/aoc-2023/">github.com/mr-kaffee/aoc-2023/</a> on 2023-12-02 16:52:44 UTC
+        Generated from <a href="https://github.com/mr-kaffee/aoc-2023/">github.com/mr-kaffee/aoc-2023/</a> on 2023-12-02 20:34:23 UTC
         with <a href="https://asciidoctor.org">asciidoctor</a>.
     </div>
 </div>
