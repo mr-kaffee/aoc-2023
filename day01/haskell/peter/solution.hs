@@ -1,4 +1,5 @@
 import Data.Char (isDigit, ord)
+import Data.List (findIndex, isPrefixOf)
 
 -- read input and output star1 and star2 solutions
 main = do
@@ -19,39 +20,20 @@ score1 xs = 10 * score1' xs + score1' (reverse xs)
     score1' (x : xs)
       | isDigit x = ord x - ord '0'
       | otherwise = score1' xs
+
 -- end::star1[]
 
 -- tag::star2[]
 -- scoring function for star2
 score2 :: String -> Int
-score2 xs = 10 * score2' xs + score2'' (reverse xs)
+score2 xs = 10 * score2' id xs + score2' reverse (reverse xs)
   where
-    score2' :: String -> Int
-    score2' (x : xs)
-      | isDigit x = ord x - ord '0'
-    score2' ('z' : 'e' : 'r' : 'o' : xs) = 0
-    score2' ('o' : 'n' : 'e' : xs) = 1
-    score2' ('t' : 'w' : 'o' : xs) = 2
-    score2' ('t' : 'h' : 'r' : 'e' : 'e' : xs) = 3
-    score2' ('f' : 'o' : 'u' : 'r' : xs) = 4
-    score2' ('f' : 'i' : 'v' : 'e' : xs) = 5
-    score2' ('s' : 'i' : 'x' : xs) = 6
-    score2' ('s' : 'e' : 'v' : 'e' : 'n' : xs) = 7
-    score2' ('e' : 'i' : 'g' : 'h' : 't' : xs) = 8
-    score2' ('n' : 'i' : 'n' : 'e' : xs) = 9
-    score2' (x : xs) = score2' xs
-    score2'' :: String -> Int
-    score2'' (x : xs)
-      | isDigit x = ord x - ord '0'
-    score2'' ('o' : 'r' : 'e' : 'z' : xs) = 0
-    score2'' ('e' : 'n' : 'o' : xs) = 1
-    score2'' ('o' : 'w' : 't' : xs) = 2
-    score2'' ('e' : 'e' : 'r' : 'h' : 't' : xs) = 3
-    score2'' ('r' : 'u' : 'o' : 'f' : xs) = 4
-    score2'' ('e' : 'v' : 'i' : 'f' : xs) = 5
-    score2'' ('x' : 'i' : 's' : xs) = 6
-    score2'' ('n' : 'e' : 'v' : 'e' : 's' : xs) = 7
-    score2'' ('t' : 'h' : 'g' : 'i' : 'e' : xs) = 8
-    score2'' ('e' : 'n' : 'i' : 'n' : xs) = 9
-    score2'' (x : xs) = score2'' xs
+    score2' :: (String -> String) -> String -> Int
+    score2' _ (x : xs) | isDigit x = ord x - ord '0'
+    score2' f line@(x : xs) = case findIndex ((`isPrefixOf` line) . f) digits of
+      Just digit -> digit
+      Nothing -> score2' f xs
+      where
+        digits = ["zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine"]
+
 -- end::star2[]
