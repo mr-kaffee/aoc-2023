@@ -148,7 +148,8 @@ def write_adoc_files(sols, year: int=AOC_YEAR, out_dir: str=GEN_ADOC_DIR, repo_b
                 f_sum.write(f"=== {sol.lang}\n\n")
                 f_sum.write("|===\n")
 
-            f_sum.write(f"| Day {sol.day if sol.day != cur_day else '':2} | link:user-{quote(sol.user)}.html#sol-{sol.lang}-{sol.day}[{sol.user}]\n")
+            day_label = f"Day {sol.day:2}"
+            f_sum.write(f"| {day_label if sol.day != cur_day else ''} | link:user-{quote(sol.user)}.html#sol-{sol.lang}-{sol.day}[{sol.user}]\n")
 
             cur_lang = sol.lang
             cur_day = sol.day
