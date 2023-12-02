@@ -15,7 +15,7 @@ include::solution.hs[tags=star1]
 
 === Star 2
 
-The solution for the second star uses a `score2` function which looks for digits spelled out in addition to simple digits. Not very elegant, but it works and is what I am able to do with my current Haskell skills.
+The solution for the second star uses a `score2` function which looks for digits spelled out in addition to simple digits.
 
 [source,haskell,numbered]
 ----
