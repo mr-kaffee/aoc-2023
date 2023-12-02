@@ -1,0 +1,28 @@
+== Haskell | Day 2: Cube Conundrum
+
+I struggled a bit parsing the input.
+
+What eventually helped was to realize, that every pair of a count and a color can be considered independently. There is no need to group them to draws with cubes of different colors. In other words: the colors can be considered independently.
+
+=== Star 1
+
+I have two helper functions to separate the ID from the draws and to choose one argument out of three given a color string:
+
+[source,haskell,numbered]
+----
+include::solution.hs[tags=helpers]
+----
+
+With this, the solution to star1 looks as follows (see explanation in the comments):
+[source,haskell,numbered]
+----
+include::solution.hs[tags=star1]
+----
+
+=== Star 2
+
+Star 2 is quite similar besides there is just mapping, no filtering:
+[source,haskell,numbered]
+----
+include::solution.hs[tags=star2]
+----
