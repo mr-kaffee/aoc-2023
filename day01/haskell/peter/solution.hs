@@ -29,10 +29,11 @@ score2 :: String -> Int
 score2 xs = 10 * score2' id xs + score2' reverse (reverse xs)
   where
     score2' :: (String -> String) -> String -> Int
-    score2' _ (x : xs) | isDigit x = ord x - ord '0'
-    score2' f line@(x : xs) = case findIndex ((`isPrefixOf` line) . f) digits of
-      Just digit -> digit
-      Nothing -> score2' f xs
+    score2' f (x : xs)
+      | isDigit x = ord x - ord '0'
+      | otherwise = case findIndex ((`isPrefixOf` (x : xs)) . f) digits of
+          Just digit -> digit
+          Nothing -> score2' f xs
       where
         digits = ["zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine"]
 

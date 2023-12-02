@@ -1,0 +1,39 @@
+== Rust | Day 2: Cube Conundrum
+
+https://rust-lang.org[Rust] solution to https://adventofcode.com/2023/day/2[AoC|2023|2].
+
+=== Input
+
+As it is the case quite often, parsing the input was the biggest part of today's puzzle. Maybe I should stop separate parsing the input and solving the challenge and just do it in one pass?
+
+[source,rust,numbered]
+----
+include::src/lib.rs[tags=input]
+----
+
+=== Star 1
+
+iter (enumerated) ... filter ... map ... sum
+
+[source,rust,numbered]
+----
+include::src/lib.rs[tags=star_1]
+----
+
+=== Star 2
+
+iter ... map (nested iter ... fold) ... map ... sum
+
+[source,rust,numbered]
+----
+include::src/lib.rs[tags=star_2]
+----
+
+=== Tests
+
+I proudly announce: all tests passed the first time I executed (normally, I never miss any occasion to do stupid mistakes)
+
+[source,rust,numbered]
+----
+include::src/lib.rs[tags=tests]
+----
