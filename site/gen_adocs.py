@@ -131,8 +131,9 @@ def write_adoc_files(sols, year: int=AOC_YEAR, out_dir: str=GEN_ADOC_DIR, repo_b
                     if readme_file:
                         f_usr.write(f"include::{readme_file}[leveloffset=0]\n\n")
                     else:
-                        f_usr.write(f"== Undocumented {sol.lang} solution for day {sol.day}\n\n")
-                        f_usr.write(f"link:https://{quote(repo_branch_dir)}day{sol.day:02d}/{quote(sol.lang)}/{quote(sol.user)}/[]\n\n")
+                        f_usr.write(f"== {sol.lang} | Solution for day {sol.day}\n\n")
+                        f_usr.write("There is no documentation for this solution.\n")
+                        f_usr.write(f"You can still link:https://{quote(repo_branch_dir)}day{sol.day:02d}/{quote(sol.lang)}/{quote(sol.user)}/[browse the code directly on GitHub].\n\n")
                     f_usr.write("link:#top[Top]\n")
 
         f_sum.write("|===\n")
