@@ -1395,7 +1395,7 @@ Game 5: 6 red, 1 blue, 3 green; 2 blue, 1 red, 2 green
 <div class="sect2">
 <h3 id="_star_1_6">Star 1</h3>
 <div class="paragraph">
-<p>I build an iterator which yields for every line the number of items that appear in both lists on the scratch card using set intersection. Then I apply the scoring function to those numbers and take the sum:</p>
+<p>I build an iterator which yields for every line the number of items that appear in both lists on the scratch card using a hash set. Then I apply the scoring function to those numbers and take the sum:</p>
 </div>
 <div class="listingblock">
 <div class="content">
@@ -1422,9 +1422,9 @@ Game 5: 6 red, 1 blue, 3 green; 2 blue, 1 red, 2 green
     <span class="n">data</span><span class="nf">.lines</span><span class="p">()</span>
         <span class="nf">.map</span><span class="p">(|</span><span class="n">line</span><span class="p">|</span> <span class="n">line</span><span class="nf">.split_once</span><span class="p">(</span><span class="sc">':'</span><span class="p">)</span><span class="nf">.unwrap</span><span class="p">()</span><span class="na">.1</span><span class="nf">.split_once</span><span class="p">(</span><span class="s">" | "</span><span class="p">)</span><span class="nf">.unwrap</span><span class="p">())</span>
         <span class="nf">.map</span><span class="p">(|(</span><span class="n">w</span><span class="p">,</span> <span class="n">a</span><span class="p">)|</span> <span class="p">{</span>
-            <span class="n">w</span><span class="nf">.split_ascii_whitespace</span><span class="p">()</span>
-                <span class="py">.collect</span><span class="p">::</span><span class="o">&lt;</span><span class="n">HashSet</span><span class="o">&lt;</span><span class="n">_</span><span class="o">&gt;&gt;</span><span class="p">()</span>
-                <span class="nf">.intersection</span><span class="p">(</span><span class="o">&amp;</span><span class="n">a</span><span class="nf">.split_ascii_whitespace</span><span class="p">()</span><span class="py">.collect</span><span class="p">::</span><span class="o">&lt;</span><span class="n">HashSet</span><span class="o">&lt;</span><span class="n">_</span><span class="o">&gt;&gt;</span><span class="p">())</span>
+            <span class="k">let</span> <span class="n">values</span> <span class="o">=</span> <span class="n">w</span><span class="nf">.split_ascii_whitespace</span><span class="p">()</span><span class="py">.collect</span><span class="p">::</span><span class="o">&lt;</span><span class="n">HashSet</span><span class="o">&lt;</span><span class="n">_</span><span class="o">&gt;&gt;</span><span class="p">();</span>
+            <span class="n">a</span><span class="nf">.split_ascii_whitespace</span><span class="p">()</span>
+                <span class="nf">.filter</span><span class="p">(|</span><span class="n">value</span><span class="p">|</span> <span class="n">values</span><span class="nf">.contains</span><span class="p">(</span><span class="n">value</span><span class="p">))</span>
                 <span class="nf">.count</span><span class="p">()</span>
         <span class="p">})</span>
 <span class="p">}</span>
@@ -1560,7 +1560,7 @@ Card 6: 31 18 13 56 72 | 74 77 10 23 35 67 36 11
 </div>
 <div id="footer">
     <div id="footer-text">
-        Generated from <a href="https://github.com/mr-kaffee/aoc-2023/">github.com/mr-kaffee/aoc-2023/</a> on 2023-12-04 06:08:31 UTC
+        Generated from <a href="https://github.com/mr-kaffee/aoc-2023/">github.com/mr-kaffee/aoc-2023/</a> on 2023-12-04 16:41:12 UTC
         with <a href="https://asciidoctor.org">asciidoctor</a>.
     </div>
 </div>
