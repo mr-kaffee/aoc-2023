@@ -17,9 +17,9 @@ pub fn count_winners(data: &str) -> impl Iterator<Item = SolT> + '_ {
     data.lines()
         .map(|line| line.split_once(':').unwrap().1.split_once(" | ").unwrap())
         .map(|(w, a)| {
-            w.split_ascii_whitespace()
-                .collect::<HashSet<_>>()
-                .intersection(&a.split_ascii_whitespace().collect::<HashSet<_>>())
+            let values = w.split_ascii_whitespace().collect::<HashSet<_>>();
+            a.split_ascii_whitespace()
+                .filter(|value| values.contains(value))
                 .count()
         })
 }
