@@ -15,11 +15,15 @@ pub fn parse_input() -> String {
 // tag::star_1[]
 pub fn count_winners(data: &str) -> impl Iterator<Item = SolT> + '_ {
     data.lines()
-        .map(|line| line.split_once(':').unwrap().1.split_once(" | ").unwrap())
-        .map(|(w, a)| {
-            let values = w.split_ascii_whitespace().collect::<HashSet<_>>();
-            a.split_ascii_whitespace()
-                .filter(|value| values.contains(value))
+        .map(|line| {
+            line.split_once(':')
+                .and_then(|(_, tail)| tail.split_once('|'))
+                .unwrap()
+        })
+        .map(|(lhs, rhs)| {
+            let lhs = lhs.split_ascii_whitespace().collect::<HashSet<_>>();
+            rhs.split_ascii_whitespace()
+                .filter(|value| lhs.contains(value))
                 .count()
         })
 }

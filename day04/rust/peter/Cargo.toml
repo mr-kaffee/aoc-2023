@@ -1,6 +1,6 @@
 [package]
 name = "mr-kaffee-2023-04"
-description = "Solution to AoC 2023/3, http://adventofcode.com/2023/day/4/"
+description = "Solution to AoC 2023/4, http://adventofcode.com/2023/day/4/"
 authors = ["Peter Wieland <peter@die-wielands.net>"]
 license = "MIT"
 version = "0.1.0"
