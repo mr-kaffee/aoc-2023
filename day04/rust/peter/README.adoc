@@ -1,0 +1,36 @@
+== Rust | Day 4: Scratchcards
+
+https://rust-lang.org[Rust] solution to https://adventofcode.com/2023/day/4[AoC|2023|4].
+
+=== Input
+
+Today, I directly operate on the input as `&str`, no pre-processing.
+
+=== Star 1
+
+I build an iterator which yields for every line the number of items that appear in both lists on the scratch card using set intersection. Then I apply the scoring function to those numbers and take the sum:
+
+[source,rust,numbered]
+----
+include::src/lib.rs[tags=star_1]
+----
+
+=== Star 2
+
+I pass through all cards once to update the number of subsequent cards (in a nested fold). Since the outer fold does not know the total number of cards, I need to initialize enough counters with `1` (initially, every card is available once). 
+
+A key statement from the puzzle description for the algorithm to work is "Cards will never make you copy a card past the end of the table."
+
+[source,rust,numbered]
+----
+include::src/lib.rs[tags=star_2]
+----
+
+=== Tests
+
+Nothing special here.
+
+[source,rust,numbered]
+----
+include::src/lib.rs[tags=tests]
+----

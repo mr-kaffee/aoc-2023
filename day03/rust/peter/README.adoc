@@ -4,7 +4,7 @@ https://rust-lang.org[Rust] solution to https://adventofcode.com/2023/day/3[AoC|
 
 === Input ===
 
-I just read the input as slice of bytes and determine the width of the grid as the position of the first line break (`\n`)
+I just read the input bytes into a `Vec<u8>` and determine the width of the grid as the position of the first line break (`\n`)
 
 === Star 1 ===
 
