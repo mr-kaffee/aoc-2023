@@ -1,21 +1,21 @@
-== Rust | Day 3: Gear Ratios ==
+== Rust | Day 3: Gear Ratios
 
 https://rust-lang.org[Rust] solution to https://adventofcode.com/2023/day/3[AoC|2023|3].
 
-=== Input ===
+=== Input
 
-I just read the input bytes into a `Vec<u8>` and determine the width of the grid as the position of the first line break (`\n`)
+I just read the input into a grid. To simplify handling at the boundary, a layer of empty space (`'.'`) is added around the original data.
 
-=== Star 1 ===
+=== Star 1
 
-I created a helper function `numbers` that returns an iterator over all numbers in the input data with the help of the `next_number` function. Actually, the iterator returns a tuple with the number's value, its position, and its length (number of digits).
+I created a helper function `numbers` that returns an iterator over all numbers in the input data with the help of the `next_number` function. Actually, the iterator returns a tuple with the number's value, its position in the grid, and its length (number of digits).
 
 [source,rust,numbered]
 ----
 include::src/lib.rs[tags=numbers]
 ----
 
-For every number, we need to check all adjacent positions in the input data, so I created another helper function `run_around`, which iterates over all valid adjacent positions (by chaining iterators looking above, to the right, below, and to the left):
+For every number, we need to check all adjacent positions in the input data, so I created another helper function `run_around`, which iterates over all adjacent positions (by chaining iterators looking above, to the right, below, and to the left):
 
 [source,rust,numbered]
 ----
@@ -29,7 +29,7 @@ With those helpers in place, the solution for the first star is obtained by filt
 include::src/lib.rs[tags=star_1]
 ----
 
-=== Star 2 ===
+=== Star 2
 
 The second star makes use of the same helper functions as the first star. I first iterate through all the numbers to create a map of the positions of the gear ratio symbols '*' to lists of adjacent numbers. Then I iterate through this map, filter out all entries that do not have exactly two numbers in the list, map to the product of those two numbers, and take the sum.
 
@@ -38,7 +38,7 @@ The second star makes use of the same helper functions as the first star. I firs
 include::src/lib.rs[tags=star_2]
 ----
 
-=== Tests ===
+=== Tests
 
 As usual.
 

@@ -130,3 +130,4 @@ pub mod euclid {
 }
 
 pub mod letters;
+pub mod grids;
