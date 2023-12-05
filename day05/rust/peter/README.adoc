@@ -1,0 +1,55 @@
+== Day 5: If You Give A Seed A Fertilizer
+
+https://rust-lang.org[Rust] solution to https://adventofcode.com/2023/day/5[AoC|2023|5].
+
+=== Input
+
+Again a day of quite complicated input parsing that might not be strictly necessary.
+
+The parsed input is a struct with a field `seeds` representing the seeds to be planted and a field 'maps'. The latter is a hash map that maps a source item type (seed, soil, ...) to a target item type and the mapping that explains which type of target item type to use with each source item type.
+
+[source,rust,numbered]
+----
+include::src/lib.rs[tags=input]
+----
+
+=== Star 1
+
+What you see here is my solution for star 1 refactored to be re-usable for star 2.
+
+It consists of a generic function `star` that iterates through all mappings until an item type is reached that cannot be further mapped. It then contains the last element produced by the iteration (should be `"location"`) and extracts the minimum.
+
+The initial value, the function to produce the next value and the function to extract the minimum are specific for `star_1` and `star_2` and passed as parameters.
+
+The step function for `star_1` simply checks for every item whether it is contained in any of the mapping ranges. If so, the mapping is applied, otherwise, the unmodified item is returned.
+
+[source,rust,numbered]
+----
+include::src/lib.rs[tags=star_1]
+----
+
+=== Star 2
+
+The general structure of the solution for `star_2` is the same as the structure for `star_1`. 
+
+The initial value is now ranges, i.e., we need to interpret two consecutive seed values as range start and range length.
+
+The step function finds for every range an overlapping mapping. If there is one, we distinguish the cases when 
+
+* the range is contained in the mapping; then the full range is transformed and added to the result
+* the range is not fully contained in the mapping but overlaps; then the part contained in the mapping is transformed and added to the result, the part not contained in the mapping is processed as additional range
+* the range is not overlapping with any mapping; then it is added to the result as is.
+
+[source,rust,numbered]
+----
+include::src/lib.rs[tags=star_2]
+----
+
+=== Tests
+
+Tests are as usual.
+
+[source,rust,numbered]
+----
+include::src/lib.rs[tags=tests]
+----
