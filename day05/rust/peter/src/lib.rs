@@ -2,12 +2,14 @@ use input::*;
 use std::{collections::HashMap, fs::read_to_string, iter::successors};
 
 // tag::prelude[]
-pub const IDENTIFIER: &str = "2023/04";
+pub const IDENTIFIER: &str = "2023/05";
 
 pub type SolT = i64;
 // end::prelude[]
 
 // tag::input[]
+type Map = (SolT, SolT, SolT);
+
 pub mod input {
     use crate::*;
     use std::collections::HashMap;
@@ -15,10 +17,10 @@ pub mod input {
     #[derive(Debug)]
     pub struct PuzzleData {
         pub seeds: Vec<SolT>,
-        pub maps: HashMap<String, (String, Vec<(SolT, SolT, SolT)>)>,
+        pub maps: HashMap<String, (String, Vec<Map>)>,
     }
 
-    fn parse_ranges(ranges: &str) -> (SolT, SolT, SolT) {
+    fn parse_ranges(ranges: &str) -> Map {
         let mut numbers = ranges.split_ascii_whitespace().map(|r| r.parse().unwrap());
         (
             numbers.next().unwrap(),
@@ -27,7 +29,7 @@ pub mod input {
         )
     }
 
-    fn parse_group(group: &str) -> (String, (String, Vec<(SolT, SolT, SolT)>)) {
+    fn parse_group(group: &str) -> (String, (String, Vec<Map>)) {
         let mut lines = group.lines();
 
         let mut header = lines.next().unwrap().split(&['-', ' ']);
@@ -67,7 +69,7 @@ pub fn parse_input() -> PuzzleData {
 
 // tag::star_1[]
 fn star<T, R, S, M>(
-    maps: &HashMap<String, (String, Vec<(SolT, SolT, SolT)>)>,
+    maps: &HashMap<String, (String, Vec<Map>)>,
     seeds: T,
     mut step: S,
     mut minimize: M,
@@ -75,7 +77,7 @@ fn star<T, R, S, M>(
 where
     R: ?Sized,
     T: AsRef<R>,
-    S: FnMut(&R, &[(SolT, SolT, SolT)]) -> T,
+    S: FnMut(&R, &[Map]) -> T,
     M: FnMut(T) -> Option<SolT>,
 {
     successors(Some(("seed", seeds)), |(src, items)| {
@@ -87,7 +89,7 @@ where
     .unwrap()
 }
 
-fn step_1(items: &[SolT], map: &[(SolT, SolT, SolT)]) -> Vec<i64> {
+fn step_1(items: &[SolT], map: &[Map]) -> Vec<i64> {
     items
         .iter()
         .map(|&item| {
@@ -100,14 +102,14 @@ fn step_1(items: &[SolT], map: &[(SolT, SolT, SolT)]) -> Vec<i64> {
 }
 
 pub fn star_1(data: &PuzzleData) -> SolT {
-    star(&data.maps, data.seeds.to_owned(), step_1, |items| {
+    star(&data.maps, data.seeds.clone(), step_1, |items| {
         items.into_iter().min()
     })
 }
 // end::star_1[]
 
 // tag::star_2[]
-fn step_2(ranges: &[(SolT, SolT)], map: &[(SolT, SolT, SolT)]) -> Vec<(SolT, SolT)> {
+fn step_2(ranges: &[(SolT, SolT)], map: &[Map]) -> Vec<(SolT, SolT)> {
     ranges.iter().fold(Vec::new(), |mut result, &rng| {
         let mut rng = Some(rng);
         while let Some((rng_0, rng_n)) = rng {
