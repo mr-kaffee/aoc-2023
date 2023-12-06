@@ -1,0 +1,30 @@
+== Rust | Day 6: Wait For It
+
+https://rust-lang.org[Rust] solution to https://adventofcode.com/2023/day/6[AoC|2023|6].
+
+=== Star 1
+
+I went the obvious way and did a linear search for the first star.
+
+[source,rust,numbered]
+----
+include::src/lib.rs[tags=star_1]
+----
+
+=== Star 2
+
+A smarter solution to the same problem: bisection (using the fact that the optimal button press time is known), of course solved with an iterator (who wants to see `while` loops)
+
+[source,rust,numbered]
+----
+include::src/lib.rs[tags=star_2]
+----
+
+=== Tests
+
+Not worth mentioning
+
+[source,rust,numbered]
+----
+include::src/lib.rs[tags=tests]
+----
