@@ -7,3 +7,10 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+
+[features]
+
+play_1_smart = []
+play_2_naive = []
+
+bench = []

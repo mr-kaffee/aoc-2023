@@ -20,6 +20,11 @@ A smarter solution to the same problem: bisection (using the fact that the optim
 include::src/lib.rs[tags=star_2]
 ----
 
+Later on, I realized that the second part is much more tractable than what I believed and the solution for part 1 is actually good enough. I created features to enable the following variants:
+
+* `cargo run --release --features play_1_smart` uses the solution for the second part also for the first part (and uses about the same time)
+* `cargo run --release --features play_2_naive` uses the solution for the first part also for the second part (and still finishes in a couple of milliseconds)
+
 === Tests
 
 Not worth mentioning
