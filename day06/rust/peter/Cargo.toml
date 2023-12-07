@@ -14,6 +14,7 @@ criterion = "0.3"
 
 [features]
 
+play_math = []
 play_1_smart = []
 play_2_naive = []
 
