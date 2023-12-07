@@ -21,7 +21,7 @@ The idea is to put the hands in a format so that we can sort a vector of hands t
 
 In the cards array, I cannot use the raw bytes, since that would result in a wrong lexicographically ordering. So I map the raw bytes to an ordinal value using `map_cards`.
 
-The most tricky part is to determine the type of the hand. The algorithm (implemented in `HandType::from(&[u8; 5])`) is as follows: count the number of occurrences for every card type in a hand (into a hash set), sort the number of occurrences (neglecting the card type) and choose the hand type based on the two biggest number of occurrences (for part 1, the number of jokers is always 0).
+The most tricky part is to determine the type of the hand. The algorithm (implemented in `HandType::from(&[u8; 5])`) is as follows: count the number of occurrences for every card type in a hand (into an array), extract the two biggest numbers (neglecting the card type) and choose the hand based on those (for part 1, the number of jokers is always 0).
 
 With this, we can sort the hands by rank and calculate the score with a `fold`.
 
