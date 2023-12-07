@@ -2121,15 +2121,19 @@ humidity-to-location map:
 21
 22
 23
+24
+25
 </pre></td><td class="code"><pre><span class="k">pub</span> <span class="k">fn</span> <span class="nf">play_naive</span><span class="p">((</span><span class="n">time</span><span class="p">,</span> <span class="n">dist</span><span class="p">):</span> <span class="p">(</span><span class="n">SolT</span><span class="p">,</span> <span class="n">SolT</span><span class="p">))</span> <span class="k">-&gt;</span> <span class="n">SolT</span> <span class="p">{</span>
     <span class="c1">// distance: (time - b) * b</span>
     <span class="p">(</span><span class="mi">0</span><span class="o">..=</span><span class="n">time</span><span class="p">)</span><span class="nf">.filter</span><span class="p">(|</span><span class="o">&amp;</span><span class="n">b</span><span class="p">|</span> <span class="p">(</span><span class="n">time</span> <span class="o">-</span> <span class="n">b</span><span class="p">)</span> <span class="o">*</span> <span class="n">b</span> <span class="o">&gt;</span> <span class="n">dist</span><span class="p">)</span><span class="nf">.count</span><span class="p">()</span> <span class="k">as</span> <span class="n">_</span>
 <span class="p">}</span>
 
 <span class="k">pub</span> <span class="k">fn</span> <span class="nf">star_1</span><span class="p">(</span><span class="n">s</span><span class="p">:</span> <span class="o">&amp;</span><span class="nb">str</span><span class="p">)</span> <span class="k">-&gt;</span> <span class="n">SolT</span> <span class="p">{</span>
-    <span class="nd">#[cfg(not(feature</span> <span class="nd">=</span> <span class="s">"play_1_smart"</span><span class="nd">))]</span>
+    <span class="nd">#[cfg(feature</span> <span class="nd">=</span> <span class="s">"play_math"</span><span class="nd">)]</span>
+    <span class="k">const</span> <span class="n">PLAY</span><span class="p">:</span> <span class="k">fn</span><span class="p">((</span><span class="n">SolT</span><span class="p">,</span> <span class="n">SolT</span><span class="p">))</span> <span class="k">-&gt;</span> <span class="n">SolT</span> <span class="o">=</span> <span class="n">play_math</span><span class="p">;</span>
+    <span class="nd">#[cfg(all(not(feature</span> <span class="nd">=</span> <span class="s">"play_math"</span><span class="nd">),</span> <span class="nd">not(feature</span> <span class="nd">=</span> <span class="s">"play_1_smart"</span><span class="nd">)))]</span>
     <span class="k">const</span> <span class="n">PLAY</span><span class="p">:</span> <span class="k">fn</span><span class="p">((</span><span class="n">SolT</span><span class="p">,</span> <span class="n">SolT</span><span class="p">))</span> <span class="k">-&gt;</span> <span class="n">SolT</span> <span class="o">=</span> <span class="n">play_naive</span><span class="p">;</span>
-    <span class="nd">#[cfg(feature</span> <span class="nd">=</span> <span class="s">"play_1_smart"</span><span class="nd">)]</span>
+    <span class="nd">#[cfg(all(not(feature</span> <span class="nd">=</span> <span class="s">"play_math"</span><span class="nd">),</span> <span class="nd">feature</span> <span class="nd">=</span> <span class="s">"play_1_smart"</span><span class="nd">))]</span>
     <span class="k">const</span> <span class="n">PLAY</span><span class="p">:</span> <span class="k">fn</span><span class="p">((</span><span class="n">SolT</span><span class="p">,</span> <span class="n">SolT</span><span class="p">))</span> <span class="k">-&gt;</span> <span class="n">SolT</span> <span class="o">=</span> <span class="n">play_smart</span><span class="p">;</span>
 
     <span class="k">let</span> <span class="k">mut</span> <span class="n">lines</span> <span class="o">=</span> <span class="n">s</span><span class="nf">.lines</span><span class="p">()</span><span class="nf">.map</span><span class="p">(|</span><span class="n">line</span><span class="p">|</span> <span class="p">{</span>
@@ -2190,6 +2194,20 @@ humidity-to-location map:
 33
 34
 35
+36
+37
+38
+39
+40
+41
+42
+43
+44
+45
+46
+47
+48
+49
 </pre></td><td class="code"><pre><span class="k">fn</span> <span class="n">bisect</span><span class="o">&lt;</span><span class="n">F</span><span class="p">:</span> <span class="nf">Fn</span><span class="p">(</span><span class="n">SolT</span><span class="p">)</span> <span class="k">-&gt;</span> <span class="nb">bool</span><span class="o">&gt;</span><span class="p">(</span><span class="n">bs</span><span class="p">:</span> <span class="p">(</span><span class="n">SolT</span><span class="p">,</span> <span class="n">SolT</span><span class="p">),</span> <span class="n">test</span><span class="p">:</span> <span class="n">F</span><span class="p">)</span> <span class="k">-&gt;</span> <span class="p">(</span><span class="n">SolT</span><span class="p">,</span> <span class="n">SolT</span><span class="p">)</span> <span class="p">{</span>
     <span class="nf">successors</span><span class="p">(</span><span class="nf">Some</span><span class="p">(</span><span class="n">bs</span><span class="p">),</span> <span class="p">|</span><span class="o">&amp;</span><span class="p">(</span><span class="n">b_l</span><span class="p">,</span> <span class="n">b_r</span><span class="p">)|</span> <span class="p">{</span>
         <span class="k">let</span> <span class="n">b</span> <span class="o">=</span> <span class="p">(</span><span class="n">b_l</span> <span class="o">+</span> <span class="n">b_r</span><span class="p">)</span> <span class="o">&gt;&gt;</span> <span class="mi">1</span><span class="p">;</span>
@@ -2212,10 +2230,24 @@ humidity-to-location map:
     <span class="n">b_r</span> <span class="o">-</span> <span class="n">b_l</span> <span class="o">-</span> <span class="mi">1</span>
 <span class="p">}</span>
 
+<span class="k">pub</span> <span class="k">fn</span> <span class="nf">play_math</span><span class="p">((</span><span class="n">time</span><span class="p">,</span> <span class="n">dist</span><span class="p">):</span> <span class="p">(</span><span class="n">SolT</span><span class="p">,</span> <span class="n">SolT</span><span class="p">))</span> <span class="k">-&gt;</span> <span class="n">SolT</span> <span class="p">{</span>
+    <span class="c1">// distance: (time - b) * b &gt; dist</span>
+    <span class="c1">// b^2 - time * b + dist = 0</span>
+    <span class="c1">// b = (time +/- sqrt(time^2 - 4 dist)) / 2</span>
+
+    <span class="k">let</span> <span class="n">sqrt_d</span> <span class="o">=</span> <span class="p">((</span><span class="n">time</span> <span class="o">*</span> <span class="n">time</span> <span class="o">-</span> <span class="mi">4</span> <span class="o">*</span> <span class="n">dist</span><span class="p">)</span> <span class="k">as</span> <span class="nb">f64</span><span class="p">)</span><span class="nf">.sqrt</span><span class="p">();</span>
+    <span class="k">let</span> <span class="n">b1</span> <span class="o">=</span> <span class="p">(((</span><span class="n">time</span> <span class="k">as</span> <span class="nb">f64</span><span class="p">)</span> <span class="o">-</span> <span class="n">sqrt_d</span><span class="p">)</span> <span class="o">/</span> <span class="mf">2.0</span><span class="p">)</span><span class="nf">.floor</span><span class="p">()</span> <span class="k">as</span> <span class="n">SolT</span><span class="p">;</span>
+    <span class="k">let</span> <span class="n">b2</span> <span class="o">=</span> <span class="p">(((</span><span class="n">time</span> <span class="k">as</span> <span class="nb">f64</span><span class="p">)</span> <span class="o">+</span> <span class="n">sqrt_d</span><span class="p">)</span> <span class="o">/</span> <span class="mf">2.0</span><span class="p">)</span><span class="nf">.ceil</span><span class="p">()</span> <span class="k">as</span> <span class="n">SolT</span><span class="p">;</span>
+
+    <span class="n">b2</span> <span class="o">-</span> <span class="n">b1</span> <span class="o">-</span> <span class="mi">1</span>
+<span class="p">}</span>
+
 <span class="k">pub</span> <span class="k">fn</span> <span class="nf">star_2</span><span class="p">(</span><span class="n">s</span><span class="p">:</span> <span class="o">&amp;</span><span class="nb">str</span><span class="p">)</span> <span class="k">-&gt;</span> <span class="n">SolT</span> <span class="p">{</span>
-    <span class="nd">#[cfg(feature</span> <span class="nd">=</span> <span class="s">"play_2_naive"</span><span class="nd">)]</span>
+    <span class="nd">#[cfg(feature</span> <span class="nd">=</span> <span class="s">"play_math"</span><span class="nd">)]</span>
+    <span class="k">const</span> <span class="n">PLAY</span><span class="p">:</span> <span class="k">fn</span><span class="p">((</span><span class="n">SolT</span><span class="p">,</span> <span class="n">SolT</span><span class="p">))</span> <span class="k">-&gt;</span> <span class="n">SolT</span> <span class="o">=</span> <span class="n">play_math</span><span class="p">;</span>
+    <span class="nd">#[cfg(all(not(feature</span> <span class="nd">=</span> <span class="s">"play_math"</span><span class="nd">),</span> <span class="nd">feature</span> <span class="nd">=</span> <span class="s">"play_2_naive"</span><span class="nd">))]</span>
     <span class="k">const</span> <span class="n">PLAY</span><span class="p">:</span> <span class="k">fn</span><span class="p">((</span><span class="n">SolT</span><span class="p">,</span> <span class="n">SolT</span><span class="p">))</span> <span class="k">-&gt;</span> <span class="n">SolT</span> <span class="o">=</span> <span class="n">play_naive</span><span class="p">;</span>
-    <span class="nd">#[cfg(not(feature</span> <span class="nd">=</span> <span class="s">"play_2_naive"</span><span class="nd">))]</span>
+    <span class="nd">#[cfg(all(not(feature</span> <span class="nd">=</span> <span class="s">"play_math"</span><span class="nd">),</span> <span class="nd">not(feature</span> <span class="nd">=</span> <span class="s">"play_2_naive"</span><span class="nd">)))]</span>
     <span class="k">const</span> <span class="n">PLAY</span><span class="p">:</span> <span class="k">fn</span><span class="p">((</span><span class="n">SolT</span><span class="p">,</span> <span class="n">SolT</span><span class="p">))</span> <span class="k">-&gt;</span> <span class="n">SolT</span> <span class="o">=</span> <span class="n">play_smart</span><span class="p">;</span>
 
     <span class="k">let</span> <span class="k">mut</span> <span class="n">values</span> <span class="o">=</span> <span class="n">s</span><span class="nf">.lines</span><span class="p">()</span><span class="nf">.map</span><span class="p">(|</span><span class="n">line</span><span class="p">|</span> <span class="p">{</span>
@@ -2684,7 +2716,7 @@ QQQJA 483
 </div>
 <div id="footer">
     <div id="footer-text">
-        Generated from <a href="https://github.com/mr-kaffee/aoc-2023/">github.com/mr-kaffee/aoc-2023/</a> on 2023-12-07 12:23:22 UTC
+        Generated from <a href="https://github.com/mr-kaffee/aoc-2023/">github.com/mr-kaffee/aoc-2023/</a> on 2023-12-07 15:10:08 UTC
         with <a href="https://asciidoctor.org">asciidoctor</a>.
     </div>
 </div>
