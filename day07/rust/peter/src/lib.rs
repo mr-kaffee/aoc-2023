@@ -1,5 +1,5 @@
 use input::*;
-use std::{collections::HashMap, fs::read_to_string};
+use std::fs::read_to_string;
 
 // tag::prelude[]
 pub const IDENTIFIER: &str = "2023/07";
@@ -70,20 +70,27 @@ pub enum HandType {
 
 impl From<&[u8; 5]> for HandType {
     fn from(cards: &[u8; 5]) -> Self {
-        let mut map = cards.iter().fold(HashMap::new(), |mut map, &card| {
-            *map.entry(card).or_insert(0) += 1;
+        let map = cards.iter().fold([0; 15], |mut map, &card| {
+            map[card as usize] += 1;
             map
         });
-        let jokers = map.remove(&0).unwrap_or(0);
-        let mut counts = map.into_values().collect::<Vec<_>>();
-        counts.sort_unstable();
-        match (counts.pop().unwrap_or(0), counts.pop().unwrap_or(0)) {
-            (a, _) if a + jokers == 5 => Self::FiveOfAKind,
-            (a, _) if a + jokers == 4 => Self::FourOfAKind,
-            (a, b) if a + jokers >= 3 && b + jokers >= 2 && a + b + jokers == 5 => Self::FullHouse,
-            (a, _) if a + jokers == 3 => Self::ThreeOfAKind,
-            (a, b) if a + jokers >= 2 && b + jokers >= 2 && a + b + jokers == 4 => Self::TwoPair,
-            (a, _) if a + jokers == 2 => Self::OnePair,
+
+        let jokers = map[0];
+        let (a, b) = map[2..]
+            .iter()
+            .fold((0, 0), |(a, b), &v| match (v > a, v > b) {
+                (true, _) => (v, a),
+                (_, true) => (a, v),
+                _ => (a, b),
+            });
+
+        match (a + jokers, a + b + jokers) {
+            (5, _) => Self::FiveOfAKind,
+            (4, _) => Self::FourOfAKind,
+            (_, 5) => Self::FullHouse,
+            (3, _) => Self::ThreeOfAKind,
+            (_, 4) => Self::TwoPair,
+            (2, _) => Self::OnePair,
             _ => Self::HighCard,
         }
     }
@@ -95,11 +102,14 @@ pub fn star(PuzzleData(input): &PuzzleData, joker: bool) -> SolT {
         .map(|(cards, bid)| (map_cards(cards, joker), *bid))
         .map(|(cards, bid)| ((HandType::from(&cards), cards), bid))
         .collect::<Vec<_>>();
+
     hands.sort_unstable();
+
     hands
         .iter()
         .enumerate()
-        .fold(0, |score, (pos, (_, bid))| score + (pos + 1) * bid)
+        .map(|(pos, (_, bid))| (pos + 1) * bid)
+        .sum()
 }
 
 pub fn star_1(input: &PuzzleData) -> SolT {
@@ -158,7 +168,8 @@ QQQJA 483
         for (cards, _) in data.iter() {
             assert!(
                 HandType::from(&map_cards(cards, true)) >= HandType::from(&map_cards(cards, false)),
-                "Hand got worse with jokers: {:?}", cards
+                "Hand got worse with jokers: {:?}",
+                cards
             )
         }
     }
