@@ -2,7 +2,7 @@
 FROM ubuntu:latest
 
 # Install basic tooling
-RUN apt-get update && apt-get install -y build-essential git curl python3 sudo
+RUN apt-get update && apt-get install -y build-essential git curl python3 sudo gnuplot
 
 # Install asciidoctor tooling
 RUN apt-get update && apt-get install -y asciidoctor ruby-rouge
