@@ -25,6 +25,15 @@ Later on, I realized that the second part is much more tractable than what I bel
 * `cargo run --release --features play_1_smart` uses the solution for the second part also for the first part (and uses about the same time)
 * `cargo run --release --features play_2_naive` uses the solution for the first part also for the second part (and still finishes in a couple of milliseconds)
 
+=== Benchmarks
+
+And because I was curious on how the code really performs, I also created a `Criterion.rs` bench for the first time:
+
+[source,rust,numbered]
+----
+include::benches/day06.rs[]
+----
+
 === Tests
 
 Not worth mentioning
