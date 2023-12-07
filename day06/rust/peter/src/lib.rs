@@ -17,9 +17,11 @@ pub fn play_naive((time, dist): (SolT, SolT)) -> SolT {
 }
 
 pub fn star_1(s: &str) -> SolT {
-    #[cfg(not(feature = "play_1_smart"))]
+    #[cfg(feature = "play_math")]
+    const PLAY: fn((SolT, SolT)) -> SolT = play_math;
+    #[cfg(all(not(feature = "play_math"), not(feature = "play_1_smart")))]
     const PLAY: fn((SolT, SolT)) -> SolT = play_naive;
-    #[cfg(feature = "play_1_smart")]
+    #[cfg(all(not(feature = "play_math"), feature = "play_1_smart"))]
     const PLAY: fn((SolT, SolT)) -> SolT = play_smart;
 
     let mut lines = s.lines().map(|line| {
@@ -59,10 +61,24 @@ pub fn play_smart((time, dist): (SolT, SolT)) -> SolT {
     b_r - b_l - 1
 }
 
+pub fn play_math((time, dist): (SolT, SolT)) -> SolT {
+    // distance: (time - b) * b > dist
+    // b^2 - time * b + dist = 0
+    // b = (time +/- sqrt(time^2 - 4 dist)) / 2
+
+    let sqrt_d = ((time * time - 4 * dist) as f64).sqrt();
+    let b1 = (((time as f64) - sqrt_d) / 2.0).floor() as SolT;
+    let b2 = (((time as f64) + sqrt_d) / 2.0).ceil() as SolT;
+
+    b2 - b1 - 1
+}
+
 pub fn star_2(s: &str) -> SolT {
-    #[cfg(feature = "play_2_naive")]
+    #[cfg(feature = "play_math")]
+    const PLAY: fn((SolT, SolT)) -> SolT = play_math;
+    #[cfg(all(not(feature = "play_math"), feature = "play_2_naive"))]
     const PLAY: fn((SolT, SolT)) -> SolT = play_naive;
-    #[cfg(not(feature = "play_2_naive"))]
+    #[cfg(all(not(feature = "play_math"), not(feature = "play_2_naive")))]
     const PLAY: fn((SolT, SolT)) -> SolT = play_smart;
 
     let mut values = s.lines().map(|line| {
