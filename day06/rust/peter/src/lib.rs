@@ -1,5 +1,3 @@
-#![cfg_attr(feature = "bench", feature(test))]
-
 use std::{fs::read_to_string, iter::successors};
 
 // tag::prelude[]
@@ -48,8 +46,7 @@ fn bisect<F: Fn(SolT) -> bool>(bs: (SolT, SolT), test: F) -> (SolT, SolT) {
             Some((b, b_r))
         }
     })
-    .skip_while(|(b_l, b_r)| b_r - b_l > 1)
-    .next()
+    .find(|(b_l, b_r)| b_r - b_l <= 1)
     .unwrap()
 }
 
@@ -70,7 +67,7 @@ pub fn star_2(s: &str) -> SolT {
 
     let mut values = s.lines().map(|line| {
         line.bytes()
-            .filter(|b| (b'0'..=b'9').contains(b))
+            .filter(u8::is_ascii_digit)
             .fold(0, |val, b| 10 * val + (b - b'0') as SolT)
     });
     PLAY((values.next().unwrap(), values.next().unwrap()))
@@ -93,28 +90,7 @@ Distance:  9  40  200
 
     #[test]
     pub fn test_star_2() {
-        assert_eq!(71503, star_2(&CONTENT));
+        assert_eq!(71_503, star_2(&CONTENT));
     }
 }
 // end::tests[]
-
-#[cfg(feature = "bench")]
-#[cfg(test)]
-mod benches {
-    extern crate test;
-
-    use super::*;
-    use test::Bencher;
-
-    #[bench]
-    fn bench_star_1(b: &mut Bencher) {
-        let data = parse_input();
-        b.iter(|| star_1(&data));
-    }
-
-    #[bench]
-    fn bench_star_2(b: &mut Bencher) {
-        let data = parse_input();
-        b.iter(|| star_2(&data));
-    }
-}

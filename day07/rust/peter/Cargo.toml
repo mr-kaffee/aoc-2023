@@ -1,6 +1,6 @@
 [package]
-name = "mr-kaffee-2023-06"
-description = "Solution to AoC 2023/6, http://adventofcode.com/2023/day/6/"
+name = "mr-kaffee-2023-07"
+description = "Solution to AoC 2023/7, http://adventofcode.com/2023/day/7/"
 authors = ["Peter Wieland <peter@die-wielands.net>"]
 license = "MIT"
 version = "0.1.0"
@@ -12,11 +12,6 @@ criterion = "0.3"
 
 [dependencies]
 
-[features]
-
-play_1_smart = []
-play_2_naive = []
-
 [[bench]]
-name = "day06"
+name = "day07"
 harness = false

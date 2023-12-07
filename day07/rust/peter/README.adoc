@@ -1,0 +1,49 @@
+== Rust | Day 7: Camel Cards
+
+https://rust-lang.org[Rust] solution to https://adventofcode.com/2023/day/7[AoC|2023|7].
+
+I still prefer https://adventofcode.com/2019/day/22[Space Cards] over Camel Cards ;)
+
+=== Input
+
+The input is a vector of pairs of cards (as byte array) and bids.
+
+[source,rust,numbered]
+----
+include::src/lib.rs[tags=input]
+----
+
+=== Star 1
+
+I refactored my solution a bit to be usable for both parts. The `joker` parameter that appears as argument in some of the functions is set to false for the first part.
+
+The idea is to put the hands in a format so that we can sort a vector of hands to get them sorted by rank. This is achieved by representing hands as a pair of a hand type and a cards array.
+
+In the cards array, I cannot use the raw bytes, since that would result in a wrong lexicographically ordering. So I map the raw bytes to an ordinal value using `map_cards`.
+
+The most tricky part is to determine the type of the hand. The algorithm (implemented in `HandType::from(&[u8; 5])`) is as follows: count the number of occurrences for every card type in a hand (into a hash set), sort the number of occurrences (neglecting the card type) and choose the hand type based on the two biggest number of occurrences (for part 1, the number of jokers is always 0).
+
+With this, we can sort the hands by rank and calculate the score with a `fold`.
+
+[source,rust,numbered]
+----
+include::src/lib.rs[tags=star_1]
+----
+
+=== Star 2
+
+In the second part, the symbol `J` no longer signifies a Jack but a Joker that can stand in for any card but has a lower ordinal number than any other card. This is implemented in `map_cards` in the line `b'J' if joker => 0` and with the guard conditions in the `match` statement in `HandType::from(&[u8; 5])`.
+
+[source,rust,numbered]
+----
+include::src/lib.rs[tags=star_2]
+----
+
+=== Tests
+
+One special test today verifies that a hand does not get worse with jokers (on the actual input data)
+
+[source,rust,numbered]
+----
+include::src/lib.rs[tags=tests]
+----
