@@ -9,3 +9,7 @@ edition = "2021"
 [dependencies]
 
 mr-kaffee-utils = { path = "../../../libs/rust/peter/utils/" }
+
+[features]
+
+check-periodicity = []

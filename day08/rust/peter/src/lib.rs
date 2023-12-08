@@ -76,10 +76,18 @@ pub fn star_2(PuzzleData(dirs, map): &PuzzleData) -> SolT {
     map.keys()
         .filter(|key| key.ends_with('A'))
         .map(|&node| {
-            map_iter(dirs, map, node)
-                .find(|&(_, node)| node.ends_with('Z'))
-                .map(|(steps, _)| steps)
-                .unwrap()
+            let mut it = map_iter(dirs, map, node)
+                .step_by(dirs.len()) // only find result that used all dirs
+                .filter(|(_, node)| node.ends_with('Z'));
+            let (steps_0, node_0) = it.next().unwrap();
+            if cfg!(feature = "check-periodicity") {
+                // the solution assumes periodicity, so let's check it
+                let (steps_1, node_1) = it.next().unwrap();
+                if steps_1 != 2 * steps_0 || node_1 != node_0 {
+                    panic!("Periodicity assumption not satisfied!");
+                }
+            }
+            steps_0
         })
         .fold(1, |result, steps| result * steps / gcd(result, steps))
 }
@@ -136,6 +144,47 @@ XXX = (XXX, XXX)
     #[test]
     pub fn test_star_2() {
         assert_eq!(6, star_2(&CONTENT_2.into()));
+    }
+
+    pub fn do_understand(data: &str, n: usize) {
+        let PuzzleData(dirs, map) = data.into();
+        for node in map
+            .keys()
+            .filter(|node| node.ends_with('A'))
+            .map(|node| *node)
+        {
+            println!("Node {}", node);
+            let mut base = None;
+            for (pos, node) in map_iter(dirs, &map, node)
+                .step_by(dirs.len())
+                .filter(|&(_, x)| x.ends_with('Z'))
+                .take(n)
+            {
+                let base = *base.get_or_insert(pos);
+                println!(
+                    "    reached {} at step {} = {} * {} + {} = {} * {} + {}",
+                    node,
+                    pos,
+                    pos / base,
+                    base,
+                    pos % base,
+                    pos / dirs.len(),
+                    dirs.len(),
+                    pos % dirs.len()
+                );
+            }
+        }
+    }
+
+    #[test]
+    pub fn test_understand() {
+        println!("\nSample data 2");
+        println!("=============");
+        do_understand(CONTENT_2, 4);
+
+        println!("\nPuzzle input");
+        println!("============");
+        do_understand(&read_input(), 2);
     }
 }
 // end::tests[]
