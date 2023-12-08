@@ -2878,7 +2878,13 @@ QQQJA 483
 <div class="sect2">
 <h3 id="_star_2_10">Star 2</h3>
 <div class="paragraph">
-<p>Once it was clear that the destination nodes are final destinations in the sense that any further step (no matter whether it is left or right) will stay at the same node, the solution was obvious. Just see how many steps it takes for every starting node to reach the destination and take the least common multiple. I guess the step sizes are all prime in which case the LCM would just be the product, but I did not verify.</p>
+<p>The solution is based on a periodicity assumption: Let <code>r</code> be the number of directions given in the puzzle input. Given any start node <code>A</code>, let <code>n_A</code> be the smallest number such that <code>n_A</code> is an integer multiple of <code>r</code> and a target node <code>Z</code> is reached after <code>n_A</code> steps. Then this situation will repeat exactly every <code>n_A</code> steps.</p>
+</div>
+<div class="paragraph">
+<p>In that case, the solution is the least common multiple (LCM) of all <code>n_A</code> for any possible start node <code>A</code> (for my puzzle, it turned out that any <code>n_A</code> is a prime number multiplied by <code>r</code>, so the LCM calculation could be replaced by simpler multiplications).</p>
+</div>
+<div class="paragraph">
+<p>The periodicity assumption is essentially a guess, it cannot be derived from the puzzle description. With the feature <code>check-periodicity</code> enabled, the code will verify it (at the cost of doubling the execution time for part 2).</p>
 </div>
 <div class="listingblock">
 <div class="content">
@@ -2893,14 +2899,30 @@ QQQJA 483
  9
 10
 11
+12
+13
+14
+15
+16
+17
+18
+19
 </pre></td><td class="code"><pre><span class="k">pub</span> <span class="k">fn</span> <span class="nf">star_2</span><span class="p">(</span><span class="nf">PuzzleData</span><span class="p">(</span><span class="n">dirs</span><span class="p">,</span> <span class="n">map</span><span class="p">):</span> <span class="o">&amp;</span><span class="n">PuzzleData</span><span class="p">)</span> <span class="k">-&gt;</span> <span class="n">SolT</span> <span class="p">{</span>
     <span class="n">map</span><span class="nf">.keys</span><span class="p">()</span>
         <span class="nf">.filter</span><span class="p">(|</span><span class="n">key</span><span class="p">|</span> <span class="n">key</span><span class="nf">.ends_with</span><span class="p">(</span><span class="sc">'A'</span><span class="p">))</span>
         <span class="nf">.map</span><span class="p">(|</span><span class="o">&amp;</span><span class="n">node</span><span class="p">|</span> <span class="p">{</span>
-            <span class="nf">map_iter</span><span class="p">(</span><span class="n">dirs</span><span class="p">,</span> <span class="n">map</span><span class="p">,</span> <span class="n">node</span><span class="p">)</span>
-                <span class="nf">.find</span><span class="p">(|</span><span class="o">&amp;</span><span class="p">(</span><span class="n">_</span><span class="p">,</span> <span class="n">node</span><span class="p">)|</span> <span class="n">node</span><span class="nf">.ends_with</span><span class="p">(</span><span class="sc">'Z'</span><span class="p">))</span>
-                <span class="nf">.map</span><span class="p">(|(</span><span class="n">steps</span><span class="p">,</span> <span class="n">_</span><span class="p">)|</span> <span class="n">steps</span><span class="p">)</span>
-                <span class="nf">.unwrap</span><span class="p">()</span>
+            <span class="k">let</span> <span class="k">mut</span> <span class="n">it</span> <span class="o">=</span> <span class="nf">map_iter</span><span class="p">(</span><span class="n">dirs</span><span class="p">,</span> <span class="n">map</span><span class="p">,</span> <span class="n">node</span><span class="p">)</span>
+                <span class="nf">.step_by</span><span class="p">(</span><span class="n">dirs</span><span class="nf">.len</span><span class="p">())</span> <span class="c1">// only find result that used all dirs</span>
+                <span class="nf">.filter</span><span class="p">(|(</span><span class="n">_</span><span class="p">,</span> <span class="n">node</span><span class="p">)|</span> <span class="n">node</span><span class="nf">.ends_with</span><span class="p">(</span><span class="sc">'Z'</span><span class="p">));</span>
+            <span class="k">let</span> <span class="p">(</span><span class="n">steps_0</span><span class="p">,</span> <span class="n">node_0</span><span class="p">)</span> <span class="o">=</span> <span class="n">it</span><span class="nf">.next</span><span class="p">()</span><span class="nf">.unwrap</span><span class="p">();</span>
+            <span class="k">if</span> <span class="nd">cfg!</span><span class="p">(</span><span class="n">feature</span> <span class="o">=</span> <span class="s">"check-periodicity"</span><span class="p">)</span> <span class="p">{</span>
+                <span class="c1">// the solution assumes periodicity, so let's check it</span>
+                <span class="k">let</span> <span class="p">(</span><span class="n">steps_1</span><span class="p">,</span> <span class="n">node_1</span><span class="p">)</span> <span class="o">=</span> <span class="n">it</span><span class="nf">.next</span><span class="p">()</span><span class="nf">.unwrap</span><span class="p">();</span>
+                <span class="k">if</span> <span class="n">steps_1</span> <span class="o">!=</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">steps_0</span> <span class="p">||</span> <span class="n">node_1</span> <span class="o">!=</span> <span class="n">node_0</span> <span class="p">{</span>
+                    <span class="nd">panic!</span><span class="p">(</span><span class="s">"Periodicity assumption not satisfied!"</span><span class="p">);</span>
+                <span class="p">}</span>
+            <span class="p">}</span>
+            <span class="n">steps_0</span>
         <span class="p">})</span>
         <span class="nf">.fold</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="p">|</span><span class="n">result</span><span class="p">,</span> <span class="n">steps</span><span class="p">|</span> <span class="n">result</span> <span class="o">*</span> <span class="n">steps</span> <span class="o">/</span> <span class="nf">gcd</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="n">steps</span><span class="p">))</span>
 <span class="p">}</span>
@@ -2910,6 +2932,9 @@ QQQJA 483
 </div>
 <div class="sect2">
 <h3 id="_tests_8">Tests</h3>
+<div class="paragraph">
+<p>The special "test" <code>test_understand</code> is used to get insight into to puzzle data and verify periodicity. It is supposed to run with the <code>--nocapture</code> option, because printing to <code>stdout</code> is really all it does.</p>
+</div>
 <div class="listingblock">
 <div class="content">
 <pre class="rouge highlight"><code data-lang="rust"><table class="linenotable"><tbody><tr><td class="linenos gl"><pre class="lineno"> 1
@@ -2964,6 +2989,47 @@ QQQJA 483
 50
 51
 52
+53
+54
+55
+56
+57
+58
+59
+60
+61
+62
+63
+64
+65
+66
+67
+68
+69
+70
+71
+72
+73
+74
+75
+76
+77
+78
+79
+80
+81
+82
+83
+84
+85
+86
+87
+88
+89
+90
+91
+92
+93
 </pre></td><td class="code"><pre><span class="nd">#[cfg(test)]</span>
 <span class="k">mod</span> <span class="n">tests</span> <span class="p">{</span>
     <span class="k">use</span> <span class="nn">std</span><span class="p">::</span><span class="nn">collections</span><span class="p">::</span><span class="n">HashMap</span><span class="p">;</span>
@@ -3015,6 +3081,47 @@ XXX = (XXX, XXX)
     <span class="k">pub</span> <span class="k">fn</span> <span class="nf">test_star_2</span><span class="p">()</span> <span class="p">{</span>
         <span class="nd">assert_eq!</span><span class="p">(</span><span class="mi">6</span><span class="p">,</span> <span class="nf">star_2</span><span class="p">(</span><span class="o">&amp;</span><span class="n">CONTENT_2</span><span class="nf">.into</span><span class="p">()));</span>
     <span class="p">}</span>
+
+    <span class="k">pub</span> <span class="k">fn</span> <span class="nf">do_understand</span><span class="p">(</span><span class="n">data</span><span class="p">:</span> <span class="o">&amp;</span><span class="nb">str</span><span class="p">,</span> <span class="n">n</span><span class="p">:</span> <span class="nb">usize</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">let</span> <span class="nf">PuzzleData</span><span class="p">(</span><span class="n">dirs</span><span class="p">,</span> <span class="n">map</span><span class="p">)</span> <span class="o">=</span> <span class="n">data</span><span class="nf">.into</span><span class="p">();</span>
+        <span class="k">for</span> <span class="n">node</span> <span class="k">in</span> <span class="n">map</span>
+            <span class="nf">.keys</span><span class="p">()</span>
+            <span class="nf">.filter</span><span class="p">(|</span><span class="n">node</span><span class="p">|</span> <span class="n">node</span><span class="nf">.ends_with</span><span class="p">(</span><span class="sc">'A'</span><span class="p">))</span>
+            <span class="nf">.map</span><span class="p">(|</span><span class="n">node</span><span class="p">|</span> <span class="o">*</span><span class="n">node</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="nd">println!</span><span class="p">(</span><span class="s">"Node {}"</span><span class="p">,</span> <span class="n">node</span><span class="p">);</span>
+            <span class="k">let</span> <span class="k">mut</span> <span class="n">base</span> <span class="o">=</span> <span class="nb">None</span><span class="p">;</span>
+            <span class="k">for</span> <span class="p">(</span><span class="n">pos</span><span class="p">,</span> <span class="n">node</span><span class="p">)</span> <span class="k">in</span> <span class="nf">map_iter</span><span class="p">(</span><span class="n">dirs</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">map</span><span class="p">,</span> <span class="n">node</span><span class="p">)</span>
+                <span class="nf">.step_by</span><span class="p">(</span><span class="n">dirs</span><span class="nf">.len</span><span class="p">())</span>
+                <span class="nf">.filter</span><span class="p">(|</span><span class="o">&amp;</span><span class="p">(</span><span class="n">_</span><span class="p">,</span> <span class="n">x</span><span class="p">)|</span> <span class="n">x</span><span class="nf">.ends_with</span><span class="p">(</span><span class="sc">'Z'</span><span class="p">))</span>
+                <span class="nf">.take</span><span class="p">(</span><span class="n">n</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="k">let</span> <span class="n">base</span> <span class="o">=</span> <span class="o">*</span><span class="n">base</span><span class="nf">.get_or_insert</span><span class="p">(</span><span class="n">pos</span><span class="p">);</span>
+                <span class="nd">println!</span><span class="p">(</span>
+                    <span class="s">"    reached {} at step {} = {} * {} + {} = {} * {} + {}"</span><span class="p">,</span>
+                    <span class="n">node</span><span class="p">,</span>
+                    <span class="n">pos</span><span class="p">,</span>
+                    <span class="n">pos</span> <span class="o">/</span> <span class="n">base</span><span class="p">,</span>
+                    <span class="n">base</span><span class="p">,</span>
+                    <span class="n">pos</span> <span class="o">%</span> <span class="n">base</span><span class="p">,</span>
+                    <span class="n">pos</span> <span class="o">/</span> <span class="n">dirs</span><span class="nf">.len</span><span class="p">(),</span>
+                    <span class="n">dirs</span><span class="nf">.len</span><span class="p">(),</span>
+                    <span class="n">pos</span> <span class="o">%</span> <span class="n">dirs</span><span class="nf">.len</span><span class="p">()</span>
+                <span class="p">);</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+
+    <span class="nd">#[test]</span>
+    <span class="k">pub</span> <span class="k">fn</span> <span class="nf">test_understand</span><span class="p">()</span> <span class="p">{</span>
+        <span class="nd">println!</span><span class="p">(</span><span class="s">"</span><span class="se">\n</span><span class="s">Sample data 2"</span><span class="p">);</span>
+        <span class="nd">println!</span><span class="p">(</span><span class="s">"============="</span><span class="p">);</span>
+        <span class="nf">do_understand</span><span class="p">(</span><span class="n">CONTENT_2</span><span class="p">,</span> <span class="mi">4</span><span class="p">);</span>
+
+        <span class="nd">println!</span><span class="p">(</span><span class="s">"</span><span class="se">\n</span><span class="s">Puzzle input"</span><span class="p">);</span>
+        <span class="nd">println!</span><span class="p">(</span><span class="s">"============"</span><span class="p">);</span>
+        <span class="nf">do_understand</span><span class="p">(</span><span class="nf">puzzle</span><span class="p">()</span><span class="py">.input</span><span class="p">,</span> <span class="mi">2</span><span class="p">);</span>
+    <span class="p">}</span>
 <span class="p">}</span>
 </pre></td></tr></tbody></table></code></pre>
 </div>
@@ -3028,7 +3135,7 @@ XXX = (XXX, XXX)
 </div>
 <div id="footer">
     <div id="footer-text">
-        Generated from <a href="https://github.com/mr-kaffee/aoc-2023/">github.com/mr-kaffee/aoc-2023/</a> on 2023-12-08 07:19:24 UTC
+        Generated from <a href="https://github.com/mr-kaffee/aoc-2023/">github.com/mr-kaffee/aoc-2023/</a> on 2023-12-08 12:51:43 UTC
         with <a href="https://asciidoctor.org">asciidoctor</a>.
     </div>
 </div>
