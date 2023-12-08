@@ -22,7 +22,11 @@ include::src/lib.rs[tags=star_1]
 
 === Star 2
 
-Once it was clear that the destination nodes are final destinations in the sense that any further step (no matter whether it is left or right) will stay at the same node, the solution was obvious. Just see how many steps it takes for every starting node to reach the destination and take the least common multiple. I guess the step sizes are all prime in which case the LCM would just be the product, but I did not verify.
+The solution is based on a periodicity assumption: Let `r` be the number of directions given in the puzzle input. Given any start node `A`, let `n_A` be the smallest number such that `n_A` is an integer multiple of `r` and a target node `Z` is reached after `n_A` steps. Then this situation will repeat exactly every `n_A` steps. 
+
+In that case, the solution is the least common multiple (LCM) of all `n_A` for any possible start node `A` (for my puzzle, it turned out that any `n_A` is a prime number multiplied by `r`, so the LCM calculation could be replaced by simpler multiplications).
+
+The periodicity assumption is essentially a guess, it cannot be derived from the puzzle description. With the feature `check-periodicity` enabled, the code will verify it (at the cost of doubling the execution time for part 2).
 
 [source,rust,numbered]
 ----
@@ -30,6 +34,8 @@ include::src/lib.rs[tags=star_2]
 ----
 
 === Tests
+
+The special "test" `test_understand` is used to get insight into to puzzle data and verify periodicity. It is supposed to run with the `--nocapture` option, because printing to `stdout` is really all it does.
 
 [source,rust,numbered]
 ----
