@@ -55,6 +55,7 @@ pub mod permutations {
 }
 
 pub mod euclid {
+    use std::ops::Rem;
 
     /// Calculate multiplicate inverse of `a` modulo `m`
     /// with the [Extended Euclidean Algorithm](https://en.wikipedia.org/wiki/Extended_Euclidean_algorithm)
@@ -110,9 +111,26 @@ pub mod euclid {
         }
     }
 
+    pub trait Zero {
+        const ZERO: Self;
+    }
+
+    macro_rules! impl_zero {
+        ($($t:ty),+) => {$(
+            impl Zero for $t {
+                const ZERO: Self = 0;
+            }
+        )*};
+    }
+
+    impl_zero!(usize, u8, u16, u32, u64, isize, i8, i16, i32, i64);
+
     /// Calculate greatest common divisor
-    pub fn gcd(mut a: i64, mut b: i64) -> i64 {
-        while b != 0 {
+    pub fn gcd<T>(mut a: T, mut b: T) -> T
+    where
+        T: Eq + Rem<T, Output = T> + Zero + Copy,
+    {
+        while b != T::ZERO {
             (a, b) = (b, a % b);
         }
         a
@@ -129,5 +147,5 @@ pub mod euclid {
     }
 }
 
-pub mod letters;
 pub mod grids;
+pub mod letters;
