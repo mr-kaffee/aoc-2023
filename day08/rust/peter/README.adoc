@@ -1,0 +1,37 @@
+== Day 8: Haunted Wasteland
+
+https://rust-lang.org[Rust] solution to https://adventofcode.com/2023/day/8[AoC|2023|8].
+
+=== Input
+
+The input is parsed into a tuple of a byte array representing directions and a hash map representing the map.
+
+[source,rust,numbered]
+----
+include::src/lib.rs[tags=input]
+----
+
+=== Star 1
+
+The iterator returned by `map_iter` navigates the map step by step. The solution just iterates until `ZZZ` is reached.
+
+[source,rust,numbered]
+----
+include::src/lib.rs[tags=star_1]
+----
+
+=== Star 2
+
+Once it was clear that the destination nodes are final destinations in the sense that any further step (no matter whether it is left or right) will stay at the same node, the solution was obvious. Just see how many steps it takes for every starting node to reach the destination and take the least common multiple. I guess the step sizes are all prime in which case the LCM would just be the product, but I did not verify.
+
+[source,rust,numbered]
+----
+include::src/lib.rs[tags=star_2]
+----
+
+=== Tests
+
+[source,rust,numbered]
+----
+include::src/lib.rs[tags=tests]
+----
