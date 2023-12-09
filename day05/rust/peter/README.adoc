@@ -1,4 +1,4 @@
-== Day 5: If You Give A Seed A Fertilizer
+== Rust | Day 5: If You Give A Seed A Fertilizer
 
 https://rust-lang.org[Rust] solution to https://adventofcode.com/2023/day/5[AoC|2023|5].
 
