@@ -1,4 +1,4 @@
-== Day 8: Haunted Wasteland
+== Rust | Day 8: Haunted Wasteland
 
 https://rust-lang.org[Rust] solution to https://adventofcode.com/2023/day/8[AoC|2023|8].
 

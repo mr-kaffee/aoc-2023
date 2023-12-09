@@ -1,0 +1,41 @@
+== Rust | Day 9: Mirage Maintenance
+
+https://rust-lang.org[Rust] solution to https://adventofcode.com/2023/day/9[AoC|2023|9].
+
+=== Input
+
+Lines of lists into `Vec<Vec<...>>`:
+
+[source,rust,numbered]
+----
+include::src/lib.rs[tags=input]
+----
+
+=== Star 1
+
+I wanted to avoid to allocate a new vector in every iteration step, so I do the processing in place. This results in a `successors` iterator with side effects on the mutable `values` vector. Maybe a while loop would be cleaner in that case, but I had to give in to my iterator fetish.
+
+The tail values of all iterations equally contribute to the prediction in a simple sum.
+
+[source,rust,numbered]
+----
+include::src/lib.rs[tags=star_1]
+----
+
+=== Star 2
+
+I was expecting much more complicated. It took a short moment to get the signs right, but essentially, just a duplication of part 1.
+
+The head values of all iterations contribute to the prediction through an alternating sum. The head of the original data contributes positively.
+
+[source,rust,numbered]
+----
+include::src/lib.rs[tags=star_2]
+----
+
+=== Tests
+
+[source,rust,numbered]
+----
+include::src/lib.rs[tags=tests]
+----
