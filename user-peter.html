@@ -126,6 +126,14 @@
 <li><a href="#_tests_9">Tests</a></li>
 </ul>
 </li>
+<li><a href="#sol-rust-10">Rust | Day 10: Pipe Maze</a>
+<ul class="sectlevel2">
+<li><a href="#_input_9">Input</a></li>
+<li><a href="#_star_1_12">Star 1</a></li>
+<li><a href="#_star_2_12">Star 2</a></li>
+<li><a href="#_tests_10">Tests</a></li>
+</ul>
+</li>
 </ul>
 </div>
 </div>
@@ -3410,10 +3418,440 @@ XXX = (XXX, XXX)
 </div>
 </div>
 </div>
+<div class="sect1">
+<h2 id="sol-rust-10">Rust | Day 10: Pipe Maze</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p><a href="https://rust-lang.org">Rust</a> solution to <a href="https://adventofcode.com/2023/day/10">AoC|2023|10</a>.</p>
+</div>
+<div class="paragraph">
+<p>I was a little bit scared when one of the first words I read in the description was "maze"&#8230;&#8203;</p>
+</div>
+<div class="sect2">
+<h3 id="_input_9">Input</h3>
+<div class="paragraph">
+<p>I use my utility <code>Grid</code> implementation. A layer of '.' is added around the original grid avoid special treatment of elements on the boundary.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight"><code data-lang="rust"><table class="linenotable"><tbody><tr><td class="linenos gl"><pre class="lineno"> 1
+ 2
+ 3
+ 4
+ 5
+ 6
+ 7
+ 8
+ 9
+10
+11
+12
+13
+14
+15
+</pre></td><td class="code"><pre><span class="k">pub</span> <span class="k">mod</span> <span class="n">input</span> <span class="p">{</span>
+    <span class="k">use</span> <span class="nn">mr_kaffee_utils</span><span class="p">::</span><span class="nn">grids</span><span class="p">::{</span><span class="n">Grid</span><span class="p">,</span> <span class="n">MakeGrid</span><span class="p">};</span>
+
+    <span class="nd">#[derive(Debug)]</span>
+    <span class="k">pub</span> <span class="k">struct</span> <span class="nf">PuzzleData</span><span class="p">(</span><span class="k">pub</span> <span class="n">Grid</span><span class="p">);</span>
+
+    <span class="k">impl</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span> <span class="nb">From</span><span class="o">&lt;&amp;</span><span class="n">T</span><span class="o">&gt;</span> <span class="k">for</span> <span class="n">PuzzleData</span>
+    <span class="k">where</span>
+        <span class="n">T</span><span class="p">:</span> <span class="nb">AsRef</span><span class="o">&lt;</span><span class="p">[</span><span class="nb">u8</span><span class="p">]</span><span class="o">&gt;</span> <span class="o">+</span> <span class="o">?</span><span class="nb">Sized</span><span class="p">,</span>
+    <span class="p">{</span>
+        <span class="k">fn</span> <span class="nf">from</span><span class="p">(</span><span class="n">s</span><span class="p">:</span> <span class="o">&amp;</span><span class="n">T</span><span class="p">)</span> <span class="k">-&gt;</span> <span class="k">Self</span> <span class="p">{</span>
+            <span class="k">Self</span><span class="p">(</span><span class="n">s</span><span class="nf">.make_grid</span><span class="p">(</span><span class="nf">Some</span><span class="p">(</span><span class="sc">b'.'</span><span class="p">)))</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</pre></td></tr></tbody></table></code></pre>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_star_1_12">Star 1</h3>
+<div class="paragraph">
+<p>A breadth first search finds the entire loop. Could probably be simplified, because we know that there is almost exactly one adjacent that has not yet been seen (except for the start node, which has two).</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight"><code data-lang="rust"><table class="linenotable"><tbody><tr><td class="linenos gl"><pre class="lineno"> 1
+ 2
+ 3
+ 4
+ 5
+ 6
+ 7
+ 8
+ 9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+26
+27
+28
+29
+30
+31
+32
+33
+34
+35
+36
+37
+38
+39
+40
+41
+42
+43
+44
+45
+46
+47
+</pre></td><td class="code"><pre><span class="k">const</span> <span class="n">TO_EAST</span><span class="p">:</span> <span class="p">[</span><span class="nb">u8</span><span class="p">;</span> <span class="mi">3</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="sc">b'-'</span><span class="p">,</span> <span class="sc">b'J'</span><span class="p">,</span> <span class="sc">b'7'</span><span class="p">];</span>
+<span class="k">const</span> <span class="n">TO_NORTH</span><span class="p">:</span> <span class="p">[</span><span class="nb">u8</span><span class="p">;</span> <span class="mi">3</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="sc">b'|'</span><span class="p">,</span> <span class="sc">b'F'</span><span class="p">,</span> <span class="sc">b'7'</span><span class="p">];</span>
+<span class="k">const</span> <span class="n">TO_WEST</span><span class="p">:</span> <span class="p">[</span><span class="nb">u8</span><span class="p">;</span> <span class="mi">3</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="sc">b'-'</span><span class="p">,</span> <span class="sc">b'F'</span><span class="p">,</span> <span class="sc">b'L'</span><span class="p">];</span>
+<span class="k">const</span> <span class="n">TO_SOUTH</span><span class="p">:</span> <span class="p">[</span><span class="nb">u8</span><span class="p">;</span> <span class="mi">3</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="sc">b'|'</span><span class="p">,</span> <span class="sc">b'L'</span><span class="p">,</span> <span class="sc">b'J'</span><span class="p">];</span>
+
+<span class="k">pub</span> <span class="k">fn</span> <span class="nf">find_loop</span><span class="p">(</span><span class="n">grid</span><span class="p">:</span> <span class="o">&amp;</span><span class="n">Grid</span><span class="p">,</span> <span class="n">start</span><span class="p">:</span> <span class="p">(</span><span class="nb">usize</span><span class="p">,</span> <span class="nb">usize</span><span class="p">))</span> <span class="k">-&gt;</span> <span class="p">(</span><span class="n">HashSet</span><span class="o">&lt;</span><span class="p">(</span><span class="nb">usize</span><span class="p">,</span> <span class="nb">usize</span><span class="p">)</span><span class="o">&gt;</span><span class="p">,</span> <span class="n">SolT</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">let</span> <span class="k">mut</span> <span class="n">pipe_loop</span> <span class="o">=</span> <span class="nn">HashSet</span><span class="p">::</span><span class="nf">from</span><span class="p">([</span><span class="n">start</span><span class="p">]);</span>
+    <span class="k">let</span> <span class="k">mut</span> <span class="n">queue</span> <span class="o">=</span> <span class="nn">VecDeque</span><span class="p">::</span><span class="nf">from</span><span class="p">([(</span><span class="n">start</span><span class="p">,</span> <span class="mi">0</span><span class="p">)]);</span>
+    <span class="k">let</span> <span class="k">mut</span> <span class="n">mx</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+    <span class="k">while</span> <span class="k">let</span> <span class="nf">Some</span><span class="p">(((</span><span class="n">col</span><span class="p">,</span> <span class="n">row</span><span class="p">),</span> <span class="n">dist</span><span class="p">))</span> <span class="o">=</span> <span class="n">queue</span><span class="nf">.pop_front</span><span class="p">()</span> <span class="p">{</span>
+        <span class="n">mx</span> <span class="o">=</span> <span class="n">mx</span><span class="nf">.max</span><span class="p">(</span><span class="n">dist</span><span class="p">);</span>
+        <span class="k">let</span> <span class="n">cur</span> <span class="o">=</span> <span class="n">grid</span><span class="p">[(</span><span class="n">col</span><span class="p">,</span> <span class="n">row</span><span class="p">)];</span>
+        <span class="k">if</span> <span class="n">TO_EAST</span><span class="nf">.contains</span><span class="p">(</span><span class="o">&amp;</span><span class="n">grid</span><span class="p">[(</span><span class="n">col</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">row</span><span class="p">)])</span>
+            <span class="o">&amp;&amp;</span> <span class="p">(</span><span class="n">cur</span> <span class="o">==</span> <span class="sc">b'S'</span> <span class="p">||</span> <span class="n">TO_WEST</span><span class="nf">.contains</span><span class="p">(</span><span class="o">&amp;</span><span class="n">cur</span><span class="p">))</span>
+            <span class="o">&amp;&amp;</span> <span class="n">pipe_loop</span><span class="nf">.insert</span><span class="p">((</span><span class="n">col</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">row</span><span class="p">))</span>
+        <span class="p">{</span>
+            <span class="n">queue</span><span class="nf">.push_back</span><span class="p">(((</span><span class="n">col</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">row</span><span class="p">),</span> <span class="n">dist</span> <span class="o">+</span> <span class="mi">1</span><span class="p">));</span>
+        <span class="p">}</span>
+        <span class="k">if</span> <span class="n">TO_NORTH</span><span class="nf">.contains</span><span class="p">(</span><span class="o">&amp;</span><span class="n">grid</span><span class="p">[(</span><span class="n">col</span><span class="p">,</span> <span class="n">row</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)])</span>
+            <span class="o">&amp;&amp;</span> <span class="p">(</span><span class="n">cur</span> <span class="o">==</span> <span class="sc">b'S'</span> <span class="p">||</span> <span class="n">TO_SOUTH</span><span class="nf">.contains</span><span class="p">(</span><span class="o">&amp;</span><span class="n">cur</span><span class="p">))</span>
+            <span class="o">&amp;&amp;</span> <span class="n">pipe_loop</span><span class="nf">.insert</span><span class="p">((</span><span class="n">col</span><span class="p">,</span> <span class="n">row</span> <span class="o">-</span> <span class="mi">1</span><span class="p">))</span>
+        <span class="p">{</span>
+            <span class="n">queue</span><span class="nf">.push_back</span><span class="p">(((</span><span class="n">col</span><span class="p">,</span> <span class="n">row</span> <span class="o">-</span> <span class="mi">1</span><span class="p">),</span> <span class="n">dist</span> <span class="o">+</span> <span class="mi">1</span><span class="p">));</span>
+        <span class="p">}</span>
+        <span class="k">if</span> <span class="n">TO_WEST</span><span class="nf">.contains</span><span class="p">(</span><span class="o">&amp;</span><span class="n">grid</span><span class="p">[(</span><span class="n">col</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="n">row</span><span class="p">)])</span>
+            <span class="o">&amp;&amp;</span> <span class="p">(</span><span class="n">cur</span> <span class="o">==</span> <span class="sc">b'S'</span> <span class="p">||</span> <span class="n">TO_EAST</span><span class="nf">.contains</span><span class="p">(</span><span class="o">&amp;</span><span class="n">cur</span><span class="p">))</span>
+            <span class="o">&amp;&amp;</span> <span class="n">pipe_loop</span><span class="nf">.insert</span><span class="p">((</span><span class="n">col</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="n">row</span><span class="p">))</span>
+        <span class="p">{</span>
+            <span class="n">queue</span><span class="nf">.push_back</span><span class="p">(((</span><span class="n">col</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="n">row</span><span class="p">),</span> <span class="n">dist</span> <span class="o">+</span> <span class="mi">1</span><span class="p">));</span>
+        <span class="p">}</span>
+        <span class="k">if</span> <span class="n">TO_SOUTH</span><span class="nf">.contains</span><span class="p">(</span><span class="o">&amp;</span><span class="n">grid</span><span class="p">[(</span><span class="n">col</span><span class="p">,</span> <span class="n">row</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)])</span>
+            <span class="o">&amp;&amp;</span> <span class="p">(</span><span class="n">cur</span> <span class="o">==</span> <span class="sc">b'S'</span> <span class="p">||</span> <span class="n">TO_NORTH</span><span class="nf">.contains</span><span class="p">(</span><span class="o">&amp;</span><span class="n">cur</span><span class="p">))</span>
+            <span class="o">&amp;&amp;</span> <span class="n">pipe_loop</span><span class="nf">.insert</span><span class="p">((</span><span class="n">col</span><span class="p">,</span> <span class="n">row</span> <span class="o">+</span> <span class="mi">1</span><span class="p">))</span>
+        <span class="p">{</span>
+            <span class="n">queue</span><span class="nf">.push_back</span><span class="p">(((</span><span class="n">col</span><span class="p">,</span> <span class="n">row</span> <span class="o">+</span> <span class="mi">1</span><span class="p">),</span> <span class="n">dist</span> <span class="o">+</span> <span class="mi">1</span><span class="p">));</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+    <span class="p">(</span><span class="n">pipe_loop</span><span class="p">,</span> <span class="n">mx</span><span class="p">)</span>
+<span class="p">}</span>
+
+<span class="k">pub</span> <span class="k">fn</span> <span class="nf">star_1</span><span class="p">(</span><span class="nf">PuzzleData</span><span class="p">(</span><span class="n">grid</span><span class="p">):</span> <span class="o">&amp;</span><span class="n">PuzzleData</span><span class="p">)</span> <span class="k">-&gt;</span> <span class="n">SolT</span> <span class="p">{</span>
+    <span class="k">let</span> <span class="p">(</span><span class="n">_</span><span class="p">,</span> <span class="n">mx</span><span class="p">)</span> <span class="o">=</span> <span class="nf">find_loop</span><span class="p">(</span>
+        <span class="n">grid</span><span class="p">,</span>
+        <span class="n">grid</span><span class="nf">.to_2d</span><span class="p">(</span><span class="n">grid</span><span class="nf">.data</span><span class="p">()</span><span class="nf">.iter</span><span class="p">()</span><span class="nf">.position</span><span class="p">(|</span><span class="o">&amp;</span><span class="n">b</span><span class="p">|</span> <span class="n">b</span> <span class="o">==</span> <span class="sc">b'S'</span><span class="p">)</span><span class="nf">.unwrap</span><span class="p">()),</span>
+    <span class="p">);</span>
+    <span class="n">mx</span>
+<span class="p">}</span>
+</pre></td></tr></tbody></table></code></pre>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_star_2_12">Star 2</h3>
+<div class="paragraph">
+<p>The easy part was to figure out that a point is inside the loop if going from that point outwards, we cross the loop an odd number of times.</p>
+</div>
+<div class="paragraph">
+<p>The tricky part was how to figure out the number of crossings. I decided to always go east. To count the number of crossings, we are only interested in the points that are contained in the pipe, and we can ignore <code>-</code> elements to which we are strictly tangent. Doing so, we just need the current and the previous element to decide whether we crossed the loop. This is the case exactly if the current element is '|' or when the previous and current element are 'L', '7' or 'F', 'J'.</p>
+</div>
+<div class="paragraph">
+<p>There is obviously a bit of potential for improvement, e.g., do not always go east or use the fact that any point that connects to another point crossing the pipe an even number of times shares the same in/out property.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight"><code data-lang="rust"><table class="linenotable"><tbody><tr><td class="linenos gl"><pre class="lineno"> 1
+ 2
+ 3
+ 4
+ 5
+ 6
+ 7
+ 8
+ 9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+26
+27
+28
+29
+30
+31
+32
+33
+34
+35
+36
+37
+38
+39
+40
+41
+42
+43
+44
+45
+46
+47
+48
+49
+50
+51
+52
+</pre></td><td class="code"><pre><span class="k">pub</span> <span class="k">fn</span> <span class="nf">star_2</span><span class="p">(</span><span class="nf">PuzzleData</span><span class="p">(</span><span class="n">grid</span><span class="p">):</span> <span class="o">&amp;</span><span class="n">PuzzleData</span><span class="p">)</span> <span class="k">-&gt;</span> <span class="n">SolT</span> <span class="p">{</span>
+    <span class="k">let</span> <span class="p">(</span><span class="n">col</span><span class="p">,</span> <span class="n">row</span><span class="p">)</span> <span class="o">=</span> <span class="n">grid</span><span class="nf">.to_2d</span><span class="p">(</span><span class="n">grid</span><span class="nf">.data</span><span class="p">()</span><span class="nf">.iter</span><span class="p">()</span><span class="nf">.position</span><span class="p">(|</span><span class="o">&amp;</span><span class="n">b</span><span class="p">|</span> <span class="n">b</span> <span class="o">==</span> <span class="sc">b'S'</span><span class="p">)</span><span class="nf">.unwrap</span><span class="p">());</span>
+    <span class="k">let</span> <span class="p">(</span><span class="n">pipe_loop</span><span class="p">,</span> <span class="n">_</span><span class="p">)</span> <span class="o">=</span> <span class="nf">find_loop</span><span class="p">(</span><span class="n">grid</span><span class="p">,</span> <span class="p">(</span><span class="n">col</span><span class="p">,</span> <span class="n">row</span><span class="p">));</span>
+
+    <span class="c1">// determine type of pipe below 'S' (required for count of crossings)</span>
+    <span class="k">let</span> <span class="n">start_pipe</span> <span class="o">=</span> <span class="k">match</span> <span class="p">(</span>
+        <span class="n">TO_EAST</span><span class="nf">.contains</span><span class="p">(</span><span class="o">&amp;</span><span class="n">grid</span><span class="p">[(</span><span class="n">col</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">row</span><span class="p">)]),</span>
+        <span class="n">TO_NORTH</span><span class="nf">.contains</span><span class="p">(</span><span class="o">&amp;</span><span class="n">grid</span><span class="p">[(</span><span class="n">col</span><span class="p">,</span> <span class="n">row</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)]),</span>
+        <span class="n">TO_WEST</span><span class="nf">.contains</span><span class="p">(</span><span class="o">&amp;</span><span class="n">grid</span><span class="p">[(</span><span class="n">col</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="n">row</span><span class="p">)]),</span>
+        <span class="n">TO_SOUTH</span><span class="nf">.contains</span><span class="p">(</span><span class="o">&amp;</span><span class="n">grid</span><span class="p">[(</span><span class="n">col</span><span class="p">,</span> <span class="n">row</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)]),</span>
+    <span class="p">)</span> <span class="p">{</span>
+        <span class="p">(</span><span class="k">true</span><span class="p">,</span> <span class="k">true</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">_</span><span class="p">)</span> <span class="k">=&gt;</span> <span class="sc">b'L'</span><span class="p">,</span>
+        <span class="p">(</span><span class="k">true</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="k">true</span><span class="p">,</span> <span class="n">_</span><span class="p">)</span> <span class="k">=&gt;</span> <span class="sc">b'-'</span><span class="p">,</span>
+        <span class="p">(</span><span class="k">true</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="k">true</span><span class="p">)</span> <span class="k">=&gt;</span> <span class="sc">b'F'</span><span class="p">,</span>
+        <span class="p">(</span><span class="n">_</span><span class="p">,</span> <span class="k">true</span><span class="p">,</span> <span class="k">true</span><span class="p">,</span> <span class="n">_</span><span class="p">)</span> <span class="k">=&gt;</span> <span class="sc">b'J'</span><span class="p">,</span>
+        <span class="p">(</span><span class="n">_</span><span class="p">,</span> <span class="k">true</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="k">true</span><span class="p">)</span> <span class="k">=&gt;</span> <span class="sc">b'|'</span><span class="p">,</span>
+        <span class="p">(</span><span class="n">_</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="k">true</span><span class="p">,</span> <span class="k">true</span><span class="p">)</span> <span class="k">=&gt;</span> <span class="sc">b'7'</span><span class="p">,</span>
+        <span class="n">_</span> <span class="k">=&gt;</span> <span class="nd">panic!</span><span class="p">(),</span>
+    <span class="p">};</span>
+
+    <span class="p">(</span><span class="mi">0</span><span class="o">..</span><span class="n">grid</span><span class="nf">.len</span><span class="p">())</span>
+        <span class="nf">.map</span><span class="p">(|</span><span class="n">pos</span><span class="p">|</span> <span class="n">grid</span><span class="nf">.to_2d</span><span class="p">(</span><span class="n">pos</span><span class="p">))</span>
+        <span class="nf">.filter</span><span class="p">(|</span><span class="n">pos</span><span class="p">|</span> <span class="o">!</span><span class="n">pipe_loop</span><span class="nf">.contains</span><span class="p">(</span><span class="n">pos</span><span class="p">))</span>
+        <span class="nf">.filter</span><span class="p">(|</span><span class="o">&amp;</span><span class="p">(</span><span class="n">col</span><span class="p">,</span> <span class="n">row</span><span class="p">)|</span> <span class="p">{</span>
+            <span class="c1">// count crossings of pipe</span>
+            <span class="k">let</span> <span class="p">(</span><span class="n">cnt</span><span class="p">,</span> <span class="n">_</span><span class="p">)</span> <span class="o">=</span> <span class="p">(</span><span class="n">col</span> <span class="o">+</span> <span class="mi">1</span><span class="o">..</span><span class="n">grid</span><span class="nf">.width</span><span class="p">())</span>
+                <span class="c1">// skip elements not part of pipe</span>
+                <span class="nf">.filter</span><span class="p">(|</span><span class="o">&amp;</span><span class="n">col</span><span class="p">|</span> <span class="n">pipe_loop</span><span class="nf">.contains</span><span class="p">(</span><span class="o">&amp;</span><span class="p">(</span><span class="n">col</span><span class="p">,</span> <span class="n">row</span><span class="p">)))</span>
+                <span class="c1">// map to elements (substituting 'S')</span>
+                <span class="nf">.map</span><span class="p">(|</span><span class="n">col</span><span class="p">|</span> <span class="k">match</span> <span class="n">grid</span><span class="p">[(</span><span class="n">col</span><span class="p">,</span> <span class="n">row</span><span class="p">)]</span> <span class="p">{</span>
+                    <span class="sc">b'S'</span> <span class="k">=&gt;</span> <span class="n">start_pipe</span><span class="p">,</span>
+                    <span class="n">b</span> <span class="k">=&gt;</span> <span class="n">b</span><span class="p">,</span>
+                <span class="p">})</span>
+                <span class="c1">// skip purely tangent elements</span>
+                <span class="nf">.filter</span><span class="p">(|</span><span class="o">&amp;</span><span class="n">b</span><span class="p">|</span> <span class="n">b</span> <span class="o">!=</span> <span class="sc">b'-'</span><span class="p">)</span>
+                <span class="c1">// count crossings</span>
+                <span class="nf">.fold</span><span class="p">((</span><span class="mi">0</span><span class="p">,</span> <span class="sc">b'.'</span><span class="p">),</span> <span class="p">|(</span><span class="n">cnt</span><span class="p">,</span> <span class="n">prev</span><span class="p">),</span> <span class="n">cur</span><span class="p">|</span> <span class="p">{</span>
+                    <span class="p">(</span>
+                        <span class="k">match</span> <span class="p">(</span><span class="n">prev</span><span class="p">,</span> <span class="n">cur</span><span class="p">)</span> <span class="p">{</span>
+                            <span class="p">(</span><span class="n">_</span><span class="p">,</span> <span class="sc">b'|'</span><span class="p">)</span> <span class="k">=&gt;</span> <span class="n">cnt</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span>    <span class="c1">// a "|" is always a crossing</span>
+                            <span class="p">(</span><span class="sc">b'L'</span><span class="p">,</span> <span class="sc">b'7'</span><span class="p">)</span> <span class="k">=&gt;</span> <span class="n">cnt</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="c1">// a "L7" is a crossing</span>
+                            <span class="p">(</span><span class="sc">b'F'</span><span class="p">,</span> <span class="sc">b'J'</span><span class="p">)</span> <span class="k">=&gt;</span> <span class="n">cnt</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="c1">// a "FJ" is a crossing</span>
+                            <span class="n">_</span> <span class="k">=&gt;</span> <span class="n">cnt</span><span class="p">,</span> <span class="c1">// anything else ("LJ", "F7", ...) is not a crossing</span>
+                        <span class="p">},</span>
+                        <span class="n">cur</span><span class="p">,</span>
+                    <span class="p">)</span>
+                <span class="p">});</span>
+            <span class="c1">// odd crossing count is inside</span>
+            <span class="n">cnt</span> <span class="o">&amp;</span> <span class="mi">1</span> <span class="o">==</span> <span class="mi">1</span>
+        <span class="p">})</span>
+        <span class="nf">.count</span><span class="p">()</span>
+<span class="p">}</span>
+</pre></td></tr></tbody></table></code></pre>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_tests_10">Tests</h3>
+<div class="paragraph">
+<p>I needed a few test inputs for star_2 until I got all the edge cases right. The last missing step, which did actually not fail any of my tests, was to replace 'S' with the pipe type hidden below.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight"><code data-lang="rust"><table class="linenotable"><tbody><tr><td class="linenos gl"><pre class="lineno"> 1
+ 2
+ 3
+ 4
+ 5
+ 6
+ 7
+ 8
+ 9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+26
+27
+28
+29
+30
+31
+32
+33
+34
+35
+36
+37
+38
+39
+40
+41
+42
+43
+44
+45
+46
+47
+48
+49
+50
+51
+52
+53
+54
+55
+56
+57
+58
+59
+60
+61
+62
+63
+64
+65
+66
+67
+68
+69
+</pre></td><td class="code"><pre><span class="nd">#[cfg(test)]</span>
+<span class="k">mod</span> <span class="n">tests</span> <span class="p">{</span>
+    <span class="k">use</span> <span class="k">super</span><span class="p">::</span><span class="o">*</span><span class="p">;</span>
+
+    <span class="k">const</span> <span class="n">CONTENT</span><span class="p">:</span> <span class="o">&amp;</span><span class="nb">str</span> <span class="o">=</span> <span class="s">r#"7-F7-
+.FJ|7
+SJLL7
+|F--J
+LJ.LJ
+"#</span><span class="p">;</span>
+    <span class="k">const</span> <span class="n">EXP_STAR_1</span><span class="p">:</span> <span class="n">SolT</span> <span class="o">=</span> <span class="mi">8</span><span class="p">;</span>
+
+    <span class="nd">#[test]</span>
+    <span class="k">pub</span> <span class="k">fn</span> <span class="nf">test_from</span><span class="p">()</span> <span class="p">{</span>
+        <span class="k">let</span> <span class="n">data</span> <span class="o">=</span> <span class="nn">PuzzleData</span><span class="p">::</span><span class="nf">from</span><span class="p">(</span><span class="n">CONTENT</span><span class="p">);</span>
+        <span class="nd">assert_eq!</span><span class="p">(</span><span class="mi">7</span><span class="p">,</span> <span class="n">data</span><span class="na">.0</span><span class="nf">.width</span><span class="p">());</span>
+        <span class="nd">assert_eq!</span><span class="p">(</span><span class="mi">7</span><span class="p">,</span> <span class="n">data</span><span class="na">.0</span><span class="nf">.height</span><span class="p">());</span>
+    <span class="p">}</span>
+
+    <span class="nd">#[test]</span>
+    <span class="k">pub</span> <span class="k">fn</span> <span class="nf">test_star_1</span><span class="p">()</span> <span class="p">{</span>
+        <span class="nd">assert_eq!</span><span class="p">(</span><span class="n">EXP_STAR_1</span><span class="p">,</span> <span class="nf">star_1</span><span class="p">(</span><span class="o">&amp;</span><span class="n">CONTENT</span><span class="nf">.into</span><span class="p">()));</span>
+    <span class="p">}</span>
+
+    <span class="k">const</span> <span class="n">CONTENT_2</span><span class="p">:</span> <span class="o">&amp;</span><span class="nb">str</span> <span class="o">=</span> <span class="s">r#"FF7FSF7F7F7F7F7F---7
+L|LJ||||||||||||F--J
+FL-7LJLJ||||||LJL-77
+F--JF--7||LJLJ7F7FJ-
+L---JF-JLJ.||-FJLJJ7
+|F|F-JF---7F7-L7L|7|
+|FFJF7L7F-JF7|JL---7
+7-L-JL7||F7|L7F-7F7|
+L.L7LFJ|||||FJL7||LJ
+L7JLJL-JLJLJL--JLJ.L
+"#</span><span class="p">;</span>
+    <span class="k">const</span> <span class="n">EXP_2_STAR_2</span><span class="p">:</span> <span class="n">SolT</span> <span class="o">=</span> <span class="mi">10</span><span class="p">;</span>
+
+    <span class="k">const</span> <span class="n">CONTENT_3</span><span class="p">:</span> <span class="o">&amp;</span><span class="nb">str</span> <span class="o">=</span> <span class="s">r#"...........
+.S-------7.
+.|F-----7|.
+.||.....||.
+.||.....||.
+.|L-7.F-J|.
+.|..|.|..|.
+.L--J.L--J.
+...........
+"#</span><span class="p">;</span>
+    <span class="k">const</span> <span class="n">EXP_3_STAR_2</span><span class="p">:</span> <span class="n">SolT</span> <span class="o">=</span> <span class="mi">4</span><span class="p">;</span>
+
+    <span class="k">const</span> <span class="n">CONTENT_4</span><span class="p">:</span> <span class="o">&amp;</span><span class="nb">str</span> <span class="o">=</span> <span class="s">r#".F----7F7F7F7F-7....
+.|F--7||||||||FJ....
+.||.FJ||||||||L7....
+FJL7L7LJLJ||LJ.L-7..
+L--J.L7...LJS7F-7L7.
+....F-J..F7FJ|L7L7L7
+....L7.F7||L7|.L7L7|
+.....|FJLJ|FJ|F7|.LJ
+....FJL-7.||.||||...
+....L---J.LJ.LJLJ...
+"#</span><span class="p">;</span>
+    <span class="k">const</span> <span class="n">EXP_4_STAR_2</span><span class="p">:</span> <span class="n">SolT</span> <span class="o">=</span> <span class="mi">8</span><span class="p">;</span>
+
+    <span class="nd">#[test]</span>
+    <span class="k">pub</span> <span class="k">fn</span> <span class="nf">test_star_2</span><span class="p">()</span> <span class="p">{</span>
+        <span class="nd">assert_eq!</span><span class="p">(</span><span class="n">EXP_2_STAR_2</span><span class="p">,</span> <span class="nf">star_2</span><span class="p">(</span><span class="o">&amp;</span><span class="n">CONTENT_2</span><span class="nf">.into</span><span class="p">()));</span>
+        <span class="nd">assert_eq!</span><span class="p">(</span><span class="n">EXP_3_STAR_2</span><span class="p">,</span> <span class="nf">star_2</span><span class="p">(</span><span class="o">&amp;</span><span class="n">CONTENT_3</span><span class="nf">.into</span><span class="p">()));</span>
+        <span class="nd">assert_eq!</span><span class="p">(</span><span class="n">EXP_4_STAR_2</span><span class="p">,</span> <span class="nf">star_2</span><span class="p">(</span><span class="o">&amp;</span><span class="n">CONTENT_4</span><span class="nf">.into</span><span class="p">()));</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</pre></td></tr></tbody></table></code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p><a href="#top">Top</a></p>
+</div>
+</div>
+</div>
+</div>
 </div>
 <div id="footer">
     <div id="footer-text">
-        Generated from <a href="https://github.com/mr-kaffee/aoc-2023/">github.com/mr-kaffee/aoc-2023/</a> on 2023-12-09 11:58:52 UTC
+        Generated from <a href="https://github.com/mr-kaffee/aoc-2023/">github.com/mr-kaffee/aoc-2023/</a> on 2023-12-10 08:57:35 UTC
         with <a href="https://asciidoctor.org">asciidoctor</a>.
     </div>
 </div>
