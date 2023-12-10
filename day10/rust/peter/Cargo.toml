@@ -6,6 +6,18 @@ license = "MIT"
 version = "0.1.0"
 edition = "2021"
 
+[dev-dependencies]
+
+criterion = { version = "0.4", features = ["html_reports"] }
+
 [dependencies]
 
 mr-kaffee-utils = { path = "../../../libs/rust/peter/utils/" }
+
+[features]
+
+point-by-point = []
+
+[[bench]]
+name = "day10"
+harness = false

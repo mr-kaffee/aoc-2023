@@ -1,7 +1,7 @@
 use input::*;
 use mr_kaffee_utils::grids::Grid;
-use std::collections::{HashSet, VecDeque};
 use std::fs::read_to_string;
+use std::iter::successors;
 
 // tag::prelude[]
 pub const IDENTIFIER: &str = "2023/10";
@@ -33,84 +33,86 @@ pub mod input {
 // end::input[]
 
 // tag::star_1[]
-const TO_EAST: [u8; 3] = [b'-', b'J', b'7'];
-const TO_NORTH: [u8; 3] = [b'|', b'F', b'7'];
-const TO_WEST: [u8; 3] = [b'-', b'F', b'L'];
-const TO_SOUTH: [u8; 3] = [b'|', b'L', b'J'];
+fn deduce_pipe(grid: &Grid, (col, row): (usize, usize)) -> u8 {
+    const TO_EAST: [u8; 3] = [b'-', b'J', b'7'];
+    const TO_NORTH: [u8; 3] = [b'|', b'F', b'7'];
+    const TO_WEST: [u8; 3] = [b'-', b'F', b'L'];
+    const TO_SOUTH: [u8; 3] = [b'|', b'L', b'J'];
 
-pub fn find_loop(grid: &Grid, start: (usize, usize)) -> (HashSet<(usize, usize)>, SolT) {
-    let mut pipe_loop = HashSet::from([start]);
-    let mut queue = VecDeque::from([(start, 0)]);
-    let mut mx = 0;
-    while let Some(((col, row), dist)) = queue.pop_front() {
-        mx = mx.max(dist);
-        let cur = grid[(col, row)];
-        if TO_EAST.contains(&grid[(col + 1, row)])
-            && (cur == b'S' || TO_WEST.contains(&cur))
-            && pipe_loop.insert((col + 1, row))
-        {
-            queue.push_back(((col + 1, row), dist + 1));
-        }
-        if TO_NORTH.contains(&grid[(col, row - 1)])
-            && (cur == b'S' || TO_SOUTH.contains(&cur))
-            && pipe_loop.insert((col, row - 1))
-        {
-            queue.push_back(((col, row - 1), dist + 1));
-        }
-        if TO_WEST.contains(&grid[(col - 1, row)])
-            && (cur == b'S' || TO_EAST.contains(&cur))
-            && pipe_loop.insert((col - 1, row))
-        {
-            queue.push_back(((col - 1, row), dist + 1));
-        }
-        if TO_SOUTH.contains(&grid[(col, row + 1)])
-            && (cur == b'S' || TO_NORTH.contains(&cur))
-            && pipe_loop.insert((col, row + 1))
-        {
-            queue.push_back(((col, row + 1), dist + 1));
-        }
-    }
-    (pipe_loop, mx)
-}
-
-pub fn star_1(PuzzleData(grid): &PuzzleData) -> SolT {
-    let (_, mx) = find_loop(
-        grid,
-        grid.to_2d(grid.data().iter().position(|&b| b == b'S').unwrap()),
-    );
-    mx
-}
-// end::star_1[]
-
-// tag::star_2[]
-pub fn star_2(PuzzleData(grid): &PuzzleData) -> SolT {
-    let (col, row) = grid.to_2d(grid.data().iter().position(|&b| b == b'S').unwrap());
-    let (pipe_loop, _) = find_loop(grid, (col, row));
-
-    // determine type of pipe below 'S' (required for count of crossings)
-    let start_pipe = match (
+    match (
         TO_EAST.contains(&grid[(col + 1, row)]),
         TO_NORTH.contains(&grid[(col, row - 1)]),
         TO_WEST.contains(&grid[(col - 1, row)]),
         TO_SOUTH.contains(&grid[(col, row + 1)]),
     ) {
-        (true, true, _, _) => b'L',
-        (true, _, true, _) => b'-',
-        (true, _, _, true) => b'F',
-        (_, true, true, _) => b'J',
-        (_, true, _, true) => b'|',
-        (_, _, true, true) => b'7',
+        (true, true, false, false) => b'L',
+        (true, false, true, false) => b'-',
+        (true, false, false, true) => b'F',
+        (false, true, true, false) => b'J',
+        (false, true, false, true) => b'|',
+        (false, false, true, true) => b'7',
         _ => panic!(),
-    };
+    }
+}
+
+pub fn find_loop(grid: &Grid) -> (SolT, Vec<bool>, u8) {
+    let start = grid.data().iter().position(|&b| b == b'S').unwrap();
+    let start_pipe = deduce_pipe(grid, grid.to_col_row(start));
+
+    let (len, pipe_loop) = successors(Some((0, start)), |&(prev_idx, cur_idx)| {
+        let cur = match grid[cur_idx] {
+            b'S' => start_pipe,
+            b => b,
+        };
+
+        let (idx_a, idx_b) = match cur {
+            b'-' => (cur_idx - 1, cur_idx + 1),
+            b'|' => (cur_idx - grid.width(), cur_idx + grid.width()),
+            b'J' => (cur_idx - 1, cur_idx - grid.width()),
+            b'7' => (cur_idx - 1, cur_idx + grid.width()),
+            b'F' => (cur_idx + 1, cur_idx + grid.width()),
+            b'L' => (cur_idx + 1, cur_idx - grid.width()),
+            _ => panic!(),
+        };
+
+        if prev_idx != idx_a && start != idx_a {
+            Some((cur_idx, idx_a))
+        } else if prev_idx != idx_b && start != idx_b {
+            Some((cur_idx, idx_b))
+        } else {
+            None
+        }
+    })
+    .fold(
+        (0, vec![false; grid.len()]),
+        |(len, mut pipe_loop), (_, idx)| {
+            pipe_loop[idx] = true;
+            (len + 1, pipe_loop)
+        },
+    );
+
+    (len >> 1, pipe_loop, start_pipe)
+}
+
+pub fn star_1(PuzzleData(grid): &PuzzleData) -> SolT {
+    let (mx, _, _) = find_loop(grid);
+    mx
+}
+// end::star_1[]
+
+// tag::star_2[]
+#[cfg(feature = "point-by-point")]
+pub fn star_2(PuzzleData(grid): &PuzzleData) -> SolT {
+    let (_, pipe_loop, start_pipe) = find_loop(grid);
 
     (0..grid.len())
-        .map(|pos| grid.to_2d(pos))
-        .filter(|pos| !pipe_loop.contains(pos))
+        .map(|pos| grid.to_col_row(pos))
+        .filter(|&(col, row)| !pipe_loop[col + grid.width() * row])
         .filter(|&(col, row)| {
             // count crossings of pipe
             let (cnt, _) = (col + 1..grid.width())
                 // skip elements not part of pipe
-                .filter(|&col| pipe_loop.contains(&(col, row)))
+                .filter(|&col| pipe_loop[col + grid.width() * row])
                 // map to elements (substituting 'S')
                 .map(|col| match grid[(col, row)] {
                     b'S' => start_pipe,
@@ -119,21 +121,42 @@ pub fn star_2(PuzzleData(grid): &PuzzleData) -> SolT {
                 // skip purely tangent elements
                 .filter(|&b| b != b'-')
                 // count crossings
-                .fold((0, b'.'), |(cnt, prev), cur| {
-                    (
-                        match (prev, cur) {
-                            (_, b'|') => cnt + 1,    // a "|" is always a crossing
-                            (b'L', b'7') => cnt + 1, // a "L7" is a crossing
-                            (b'F', b'J') => cnt + 1, // a "FJ" is a crossing
-                            _ => cnt, // anything else ("LJ", "F7", ...) is not a crossing
-                        },
-                        cur,
-                    )
+                .fold((0, b'.'), |(cnt, prev), cur| match (prev, cur) {
+                    // "|", "L7", and "FJ" are crossings
+                    (_, b'|') | (b'L', b'7') | (b'F', b'J') => (cnt + 1, cur),
+                    _ => (cnt, cur), // anything else ("LJ", "F7", ...) is not a crossing
                 });
             // odd crossing count is inside
             cnt & 1 == 1
         })
         .count()
+}
+
+#[cfg(not(feature = "point-by-point"))]
+pub fn star_2(PuzzleData(grid): &PuzzleData) -> SolT {
+    let (_, pipe_loop, start_pipe) = find_loop(grid);
+
+    (0..grid.height())
+        .map(|row| {
+            let (cnt, _, _) = (0..grid.width())
+                .map(
+                    |col| match (pipe_loop[col + grid.width() * row], grid[(col, row)]) {
+                        (true, b'S') => start_pipe,
+                        (true, b) => b,
+                        _ => b'.',
+                    },
+                )
+                .filter(|&b| b != b'-')
+                .fold((0, b'.', false), |(cnt, prev, inside), cur| {
+                    match (inside, prev, cur) {
+                        (true, _, b'.') => (cnt + 1, cur, true),
+                        (_, _, b'|') | (_, b'F', b'J') | (_, b'L', b'7') => (cnt, cur, !inside),
+                        _ => (cnt, cur, inside),
+                    }
+                });
+            cnt
+        })
+        .sum()
 }
 // end::star_2[]
 

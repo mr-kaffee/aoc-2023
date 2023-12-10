@@ -40,8 +40,12 @@ impl Grid {
         self.w * self.h
     }
 
-    pub fn to_2d(&self, pos: usize) -> (usize, usize) {
+    pub fn to_col_row(&self, pos: usize) -> (usize, usize) {
         (pos % self.w, pos / self.w)
+    }
+
+    pub fn to_idx(&self, (col, row): (usize, usize)) -> usize {
+        col + self.w * row
     }
 }
 
