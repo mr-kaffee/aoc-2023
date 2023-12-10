@@ -1,11 +1,26 @@
 //! Module to handle 2D grids
-use std::ops::{Index, IndexMut};
+use std::{
+    fmt::Display,
+    ops::{Index, IndexMut},
+};
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Grid {
     data: Vec<u8>,
     w: usize,
     h: usize,
+}
+
+impl Display for Grid {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        for row in 0..self.height() {
+            for col in 0..self.width() {
+                (self[(col, row)] as char).fmt(f)?;
+            }
+            '\n'.fmt(f)?;
+        }
+        Ok(())
+    }
 }
 
 impl Grid {
@@ -19,6 +34,10 @@ impl Grid {
 
     pub fn height(&self) -> usize {
         self.h
+    }
+
+    pub fn len(&self) -> usize {
+        self.w * self.h
     }
 
     pub fn to_2d(&self, pos: usize) -> (usize, usize) {
