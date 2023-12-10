@@ -1,0 +1,11 @@
+[package]
+name = "mr-kaffee-2023-10"
+description = "Solution to AoC 2023/10, http://adventofcode.com/2023/day/10/"
+authors = ["Peter Wieland <peter@die-wielands.net>"]
+license = "MIT"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+
+mr-kaffee-utils = { path = "../../../libs/rust/peter/utils/" }

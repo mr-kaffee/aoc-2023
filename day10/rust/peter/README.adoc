@@ -1,0 +1,45 @@
+== Rust | Day 10: Pipe Maze
+
+https://rust-lang.org[Rust] solution to https://adventofcode.com/2023/day/10[AoC|2023|10].
+
+I was a little bit scared when one of the first words I read in the description was "maze"...
+
+=== Input
+
+I use my utility `Grid` implementation. A layer of '.' is added around the original grid avoid special treatment of elements on the boundary.
+
+[source,rust,numbered]
+----
+include::src/lib.rs[tags=input]
+----
+
+=== Star 1
+
+A breadth first search finds the entire loop. Could probably be simplified, because we know that there is almost exactly one adjacent that has not yet been seen (except for the start node, which has two).
+
+[source,rust,numbered]
+----
+include::src/lib.rs[tags=star_1]
+----
+
+=== Star 2
+
+The easy part was to figure out that a point is inside the loop if going from that point outwards, we cross the loop an odd number of times.
+
+The tricky part was how to figure out the number of crossings. I decided to always go east. To count the number of crossings, we are only interested in the points that are contained in the pipe, and we can ignore `-` elements to which we are strictly tangent. Doing so, we just need the current and the previous element to decide whether we crossed the loop. This is the case exactly if the current element is '|' or when the previous and current element are 'L', '7' or 'F', 'J'.
+
+There is obviously a bit of potential for improvement, e.g., do not always go east or use the fact that any point that connects to another point crossing the pipe an even number of times shares the same in/out property.
+
+[source,rust,numbered]
+----
+include::src/lib.rs[tags=star_2]
+----
+
+=== Tests
+
+I needed a few test inputs for star_2 until I got all the edge cases right. The last missing step, which did actually not fail any of my tests, was to replace 'S' with the pipe type hidden below.
+
+[source,rust,numbered]
+----
+include::src/lib.rs[tags=tests]
+----
