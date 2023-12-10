@@ -35,7 +35,7 @@ pub fn parse_input() -> PuzzleData {
 pub fn star_1(PuzzleData(grid): &PuzzleData) -> SolT {
     numbers(grid)
         .filter(|(_, pos, len)| {
-            run_around(grid.to_2d(*pos), *len)
+            run_around(grid.to_col_row(*pos), *len)
                 .map(|pos| grid[pos])
                 .any(|b: u8| b != b'.' && !(b'0'..=b'9').contains(&b))
         })
@@ -48,7 +48,7 @@ pub fn star_1(PuzzleData(grid): &PuzzleData) -> SolT {
 pub fn star_2(PuzzleData(grid): &PuzzleData) -> SolT {
     numbers(grid)
         .fold(HashMap::new(), |map, (value, pos, len)| {
-            run_around(grid.to_2d(pos), len)
+            run_around(grid.to_col_row(pos), len)
                 .filter(|&pos| grid[pos] == b'*')
                 .fold(map, |mut map, pos| {
                     map.entry(pos).or_insert(Vec::new()).push(value);
