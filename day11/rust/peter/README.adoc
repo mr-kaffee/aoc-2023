@@ -4,7 +4,7 @@ https://rust-lang.org[Rust] solution to https://adventofcode.com/2023/day/11[AoC
 
 === Input
 
-Again a day for my `Grid` utility.
+I store the coordinates of each galaxy in a vector and create two more vectors with the galaxy counts in very column/row.
 
 [source,rust,numbered]
 ----
@@ -13,7 +13,9 @@ include::src/lib.rs[tags=input]
 
 === Star 1
 
-This was kind of straight forward.
+The basic approach was kind of straight forward. I experimented a bit with possibilities for optimization ending up with computing vectors with the offsets for each column and row that are indexed by the original positions of the galaxies (before expansion of the universe), to calculate the shortest distances in a single pass through all (unordered) pairs of galaxies.
+
+I also experimented a bit with `flat_map` vs `map` for the nested iterators. In theory, `iter_a.flat_map(|a| iter_b.map(move |b| calc_val(a, b))).sum()` should create a bit of overhead compared to `iter_a.map(|a| iter_b.map(|b| calc_val(a, b)).sum()).sum()`. In practice, the differences were hardly in the range of fluctuations of the overall solution time.
 
 [source,rust,numbered]
 ----
@@ -22,7 +24,7 @@ include::src/lib.rs[tags=star_1]
 
 === Star 2
 
-Luckily, I did not really create a bigger version of the grid for part 1 but just adjusted coordinates. So the same solution worked out of the box for the second part. I messed up a little bit: I forgot to subtract one from the expansion factor (because the empty rows/columns are already counted once)
+Even in my very first version, I did not alter the grid at all but just adjusted coordinates. So the second part was mostly for free (the only catch was to realize that I need to multiply by one million, not add one million).
 
 [source,rust,numbered]
 ----
