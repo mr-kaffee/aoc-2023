@@ -178,12 +178,6 @@ def solve_part_two(grid:list[list[str]]) -> None:
 
     inner = []
     for ca in connected_areas:
-        skip = False
-        for index in ca:
-            if not is_inside(index, loop):
-                skip = True
-                break
-
         if is_inside(ca[0], loop):
             for i in ca:
                 inner.append(i)
