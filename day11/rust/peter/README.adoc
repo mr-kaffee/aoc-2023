@@ -1,0 +1,37 @@
+== Day 11: Cosmic Expansion
+
+https://rust-lang.org[Rust] solution to https://adventofcode.com/2023/day/11[AoC|2023|11].
+
+=== Input
+
+Again a day for my `Grid` utility.
+
+[source,rust,numbered]
+----
+include::src/lib.rs[tags=input]
+----
+
+=== Star 1
+
+This was kind of straight forward.
+
+[source,rust,numbered]
+----
+include::src/lib.rs[tags=star_1]
+----
+
+=== Star 2
+
+Luckily, I did not really create a bigger version of the grid for part 1 but just adjusted coordinates. So the same solution worked out of the box for the second part. I messed up a little bit: I forgot to subtract one from the expansion factor (because the empty rows/columns are already counted once)
+
+[source,rust,numbered]
+----
+include::src/lib.rs[tags=star_2]
+----
+
+=== Tests
+
+[source,rust,numbered]
+----
+include::src/lib.rs[tags=tests]
+----
