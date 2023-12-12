@@ -1,0 +1,36 @@
+== Rust | Day 12: Hot Springs
+
+https://rust-lang.org[Rust] solution to https://adventofcode.com/2023/day/12[AoC|2023|12].
+
+=== Star 1
+
+I implemented a recursive solution in function `check_recursive`. Take the first group size and find all positions in the operational/damage patterns where it would match. The call `check_recursive` recursively with the matched part + one operational element stripped from the pattern and the remaining groups.
+
+That's essentially it for part 1.
+
+[source,rust,numbered]
+----
+include::src/lib.rs[tags=star_1]
+----
+
+=== Star 2
+
+The key to solve part 2 in a reasonable time was to add caching of partial results. So if `check_recursive` is called on something that had been calculated before, recursion is broken and the cached result is returned.
+
+(For part 1, caching is disabled, since caching results in worse runtime)
+
+The solution does not feel very clever...
+
+[source,rust,numbered]
+----
+include::src/lib.rs[tags=star_2]
+----
+
+=== Tests
+
+Some tests for individual lines proved useful today.
+
+[source,rust,numbered]
+----
+include::src/lib.rs[tags=tests]
+----
