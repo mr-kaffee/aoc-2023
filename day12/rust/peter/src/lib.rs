@@ -30,12 +30,7 @@ pub fn parse_line(line: &str) -> (&[u8], Vec<SolT>) {
 
 type Cache<'a> = HashMap<(&'a [u8], &'a [SolT]), SolT>;
 
-pub fn check(data: &[u8], groups: &[SolT], cached: bool) -> SolT {
-    let mut cache = if cached { Some(Cache::default()) } else { None };
-    check_recursive(data, groups, &mut cache)
-}
-
-fn check_recursive<'a>(data: &'a [u8], groups: &'a [SolT], cache: &mut Option<Cache<'a>>) -> SolT {
+fn check<'a>(data: &'a [u8], groups: &'a [SolT], cache: &mut Option<Cache<'a>>) -> SolT {
     if let Some(&result) = cache.as_mut().and_then(|cache| cache.get(&(data, groups))) {
         // return cached result
         return result;
@@ -67,7 +62,7 @@ fn check_recursive<'a>(data: &'a [u8], groups: &'a [SolT], cache: &mut Option<Ca
                     }
                 } else if data[pos + group] != b'#' {
                     // next element afterwards can be operational
-                    result += check_recursive(&data[pos + group + 1..], &groups[1..], cache);
+                    result += check(&data[pos + group + 1..], &groups[1..], cache);
                 }
             }
 
@@ -89,33 +84,57 @@ fn check_recursive<'a>(data: &'a [u8], groups: &'a [SolT], cache: &mut Option<Ca
 pub fn star_1(data: &str) -> SolT {
     data.lines()
         .map(parse_line)
-        .map(|(data, groups)| check(data, &groups, false))
+        .map(|(data, groups)| check(data, &groups, &mut None))
         .sum()
 }
 // end::star_1[]
 
 // tag::star_2[]
+const UNFOLDS: usize = 5;
+
+#[cfg(not(feature = "shared-cache"))]
+const CACHE_CAPACITY: usize = 1 << 10;
+
+#[cfg(feature = "shared-cache")]
+const CACHE_CAPACITY: usize = 1 << 16;
+
+fn make_cache<'a>() -> Option<Cache<'a>> {
+    Some(Cache::with_capacity(CACHE_CAPACITY))
+}
+
+pub fn data_iter(data: &str, unfolds: usize) -> impl Iterator<Item = (Vec<u8>, Vec<SolT>)> + '_ {
+    data.lines().map(parse_line).map(move |(data, groups)| {
+        let new_data_len = unfolds * (data.len() + 1) - 1;
+        let new_groups_len = unfolds * groups.len();
+        (
+            data.iter()
+                .copied()
+                .chain(once(b'?'))
+                .cycle()
+                .take(new_data_len)
+                .collect::<Vec<_>>(),
+            groups
+                .into_iter()
+                .cycle()
+                .take(new_groups_len)
+                .collect::<Vec<_>>(),
+        )
+    })
+}
+
+#[cfg(not(feature = "shared-cache"))]
 pub fn star_2(data: &str) -> SolT {
-    data.lines()
-        .map(parse_line)
-        .map(|(data, groups)| {
-            let new_data_len = 5 * (data.len() + 1) - 1;
-            let new_groups_len = 5 * groups.len();
-            (
-                data.iter()
-                    .copied()
-                    .chain(once(b'?'))
-                    .cycle()
-                    .take(new_data_len)
-                    .collect::<Vec<_>>(),
-                groups
-                    .into_iter()
-                    .cycle()
-                    .take(new_groups_len)
-                    .collect::<Vec<_>>(),
-            )
-        })
-        .map(|(data, groups)| check(&data, &groups, true))
+    data_iter(data, UNFOLDS)
+        .map(|(data, groups)| check(&data, &groups, &mut make_cache()))
+        .sum()
+}
+
+#[cfg(feature = "shared-cache")]
+pub fn star_2(data: &str) -> SolT {
+    let mut cache = make_cache();
+    let data = data_iter(data, UNFOLDS).collect::<Vec<_>>();
+    data.iter()
+        .map(|(data, groups)| check(&data, &groups, &mut cache))
         .sum()
 }
 // end::star_2[]
@@ -135,15 +154,37 @@ mod tests {
 
     #[test]
     pub fn test_check() {
-        assert_eq!(1, check(".###.##.#...".as_bytes(), &[3, 2, 1], false));
-        assert_eq!(0, check(".###.##.#...".as_bytes(), &[3, 2, 2], true));
-        assert_eq!(0, check(".###.##.#...".as_bytes(), &[3, 2, 1, 1], false));
-        assert_eq!(1, check(".###.##....#".as_bytes(), &[3, 2, 1], true));
+        assert_eq!(1, check(".###.##.#...".as_bytes(), &[3, 2, 1], &mut None));
+        assert_eq!(
+            0,
+            check(
+                ".###.##.#...".as_bytes(),
+                &[3, 2, 2],
+                &mut Some(Cache::default())
+            )
+        );
+        assert_eq!(
+            0,
+            check(".###.##.#...".as_bytes(), &[3, 2, 1, 1], &mut None)
+        );
+        assert_eq!(
+            1,
+            check(
+                ".###.##....#".as_bytes(),
+                &[3, 2, 1],
+                &mut Some(Cache::default())
+            )
+        );
 
         const EXP: &[SolT] = &[1, 4, 1, 1, 4, 10];
         for (k, (line, &exp)) in CONTENT.lines().zip(EXP.iter()).enumerate() {
             let (data, groups) = parse_line(line);
-            assert_eq!(exp, check(data, &groups, k & 1 == 0), "{}", line);
+            assert_eq!(
+                exp,
+                check(data, &groups, &mut (k & 1 == 0).then_some(Cache::default())),
+                "{}",
+                line
+            );
         }
     }
 
