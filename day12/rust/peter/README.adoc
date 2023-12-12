@@ -15,7 +15,7 @@ include::src/lib.rs[tags=star_1]
 
 === Star 2
 
-The key to solve part 2 in a reasonable time was to add caching of partial results. So if `check_recursive` is called on something that had been calculated before, recursion is broken and the cached result is returned.
+The key to solve part 2 in a reasonable time was to add caching of partial results. So if `check_recursive` is called on something that had been calculated before, recursion is broken and the cached result is returned. I was surprised to see that using one shared cache (across all lines) does not improve performance over individual caches for each line. The initial capacity of the cache has however quite an impact on the performance.
 
 (For part 1, caching is disabled, since caching results in worse runtime)
 
