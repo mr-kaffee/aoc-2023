@@ -4294,11 +4294,6 @@ L--J.L7...LJS7F-7L7.
 72
 73
 74
-75
-76
-77
-78
-79
 </pre></td><td class="code"><pre><span class="k">pub</span> <span class="k">fn</span> <span class="nf">parse_line</span><span class="p">(</span><span class="n">line</span><span class="p">:</span> <span class="o">&amp;</span><span class="nb">str</span><span class="p">)</span> <span class="k">-&gt;</span> <span class="p">(</span><span class="o">&amp;</span><span class="p">[</span><span class="nb">u8</span><span class="p">],</span> <span class="nb">Vec</span><span class="o">&lt;</span><span class="n">SolT</span><span class="o">&gt;</span><span class="p">)</span> <span class="p">{</span>
     <span class="n">line</span><span class="nf">.split_once</span><span class="p">(</span><span class="sc">' '</span><span class="p">)</span>
         <span class="nf">.map</span><span class="p">(|(</span><span class="n">data</span><span class="p">,</span> <span class="n">groups</span><span class="p">)|</span> <span class="p">{</span>
@@ -4316,12 +4311,7 @@ L--J.L7...LJS7F-7L7.
 
 <span class="k">type</span> <span class="n">Cache</span><span class="o">&lt;</span><span class="nv">'a</span><span class="o">&gt;</span> <span class="o">=</span> <span class="n">HashMap</span><span class="o">&lt;</span><span class="p">(</span><span class="o">&amp;</span><span class="nv">'a</span> <span class="p">[</span><span class="nb">u8</span><span class="p">],</span> <span class="o">&amp;</span><span class="nv">'a</span> <span class="p">[</span><span class="n">SolT</span><span class="p">]),</span> <span class="n">SolT</span><span class="o">&gt;</span><span class="p">;</span>
 
-<span class="k">pub</span> <span class="k">fn</span> <span class="nf">check</span><span class="p">(</span><span class="n">data</span><span class="p">:</span> <span class="o">&amp;</span><span class="p">[</span><span class="nb">u8</span><span class="p">],</span> <span class="n">groups</span><span class="p">:</span> <span class="o">&amp;</span><span class="p">[</span><span class="n">SolT</span><span class="p">],</span> <span class="n">cached</span><span class="p">:</span> <span class="nb">bool</span><span class="p">)</span> <span class="k">-&gt;</span> <span class="n">SolT</span> <span class="p">{</span>
-    <span class="k">let</span> <span class="k">mut</span> <span class="n">cache</span> <span class="o">=</span> <span class="k">if</span> <span class="n">cached</span> <span class="p">{</span> <span class="nf">Some</span><span class="p">(</span><span class="nn">Cache</span><span class="p">::</span><span class="nf">default</span><span class="p">())</span> <span class="p">}</span> <span class="k">else</span> <span class="p">{</span> <span class="nb">None</span> <span class="p">};</span>
-    <span class="nf">check_recursive</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">groups</span><span class="p">,</span> <span class="o">&amp;</span><span class="k">mut</span> <span class="n">cache</span><span class="p">)</span>
-<span class="p">}</span>
-
-<span class="k">fn</span> <span class="n">check_recursive</span><span class="o">&lt;</span><span class="nv">'a</span><span class="o">&gt;</span><span class="p">(</span><span class="n">data</span><span class="p">:</span> <span class="o">&amp;</span><span class="nv">'a</span> <span class="p">[</span><span class="nb">u8</span><span class="p">],</span> <span class="n">groups</span><span class="p">:</span> <span class="o">&amp;</span><span class="nv">'a</span> <span class="p">[</span><span class="n">SolT</span><span class="p">],</span> <span class="n">cache</span><span class="p">:</span> <span class="o">&amp;</span><span class="k">mut</span> <span class="nb">Option</span><span class="o">&lt;</span><span class="n">Cache</span><span class="o">&lt;</span><span class="nv">'a</span><span class="o">&gt;&gt;</span><span class="p">)</span> <span class="k">-&gt;</span> <span class="n">SolT</span> <span class="p">{</span>
+<span class="k">fn</span> <span class="n">check</span><span class="o">&lt;</span><span class="nv">'a</span><span class="o">&gt;</span><span class="p">(</span><span class="n">data</span><span class="p">:</span> <span class="o">&amp;</span><span class="nv">'a</span> <span class="p">[</span><span class="nb">u8</span><span class="p">],</span> <span class="n">groups</span><span class="p">:</span> <span class="o">&amp;</span><span class="nv">'a</span> <span class="p">[</span><span class="n">SolT</span><span class="p">],</span> <span class="n">cache</span><span class="p">:</span> <span class="o">&amp;</span><span class="k">mut</span> <span class="nb">Option</span><span class="o">&lt;</span><span class="n">Cache</span><span class="o">&lt;</span><span class="nv">'a</span><span class="o">&gt;&gt;</span><span class="p">)</span> <span class="k">-&gt;</span> <span class="n">SolT</span> <span class="p">{</span>
     <span class="k">if</span> <span class="k">let</span> <span class="nf">Some</span><span class="p">(</span><span class="o">&amp;</span><span class="n">result</span><span class="p">)</span> <span class="o">=</span> <span class="n">cache</span><span class="nf">.as_mut</span><span class="p">()</span><span class="nf">.and_then</span><span class="p">(|</span><span class="n">cache</span><span class="p">|</span> <span class="n">cache</span><span class="nf">.get</span><span class="p">(</span><span class="o">&amp;</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">groups</span><span class="p">)))</span> <span class="p">{</span>
         <span class="c1">// return cached result</span>
         <span class="k">return</span> <span class="n">result</span><span class="p">;</span>
@@ -4353,7 +4343,7 @@ L--J.L7...LJS7F-7L7.
                     <span class="p">}</span>
                 <span class="p">}</span> <span class="k">else</span> <span class="k">if</span> <span class="n">data</span><span class="p">[</span><span class="n">pos</span> <span class="o">+</span> <span class="n">group</span><span class="p">]</span> <span class="o">!=</span> <span class="sc">b'#'</span> <span class="p">{</span>
                     <span class="c1">// next element afterwards can be operational</span>
-                    <span class="n">result</span> <span class="o">+=</span> <span class="nf">check_recursive</span><span class="p">(</span><span class="o">&amp;</span><span class="n">data</span><span class="p">[</span><span class="n">pos</span> <span class="o">+</span> <span class="n">group</span> <span class="o">+</span> <span class="mi">1</span><span class="o">..</span><span class="p">],</span> <span class="o">&amp;</span><span class="n">groups</span><span class="p">[</span><span class="mi">1</span><span class="o">..</span><span class="p">],</span> <span class="n">cache</span><span class="p">);</span>
+                    <span class="n">result</span> <span class="o">+=</span> <span class="nf">check</span><span class="p">(</span><span class="o">&amp;</span><span class="n">data</span><span class="p">[</span><span class="n">pos</span> <span class="o">+</span> <span class="n">group</span> <span class="o">+</span> <span class="mi">1</span><span class="o">..</span><span class="p">],</span> <span class="o">&amp;</span><span class="n">groups</span><span class="p">[</span><span class="mi">1</span><span class="o">..</span><span class="p">],</span> <span class="n">cache</span><span class="p">);</span>
                 <span class="p">}</span>
             <span class="p">}</span>
 
@@ -4375,7 +4365,7 @@ L--J.L7...LJS7F-7L7.
 <span class="k">pub</span> <span class="k">fn</span> <span class="nf">star_1</span><span class="p">(</span><span class="n">data</span><span class="p">:</span> <span class="o">&amp;</span><span class="nb">str</span><span class="p">)</span> <span class="k">-&gt;</span> <span class="n">SolT</span> <span class="p">{</span>
     <span class="n">data</span><span class="nf">.lines</span><span class="p">()</span>
         <span class="nf">.map</span><span class="p">(</span><span class="n">parse_line</span><span class="p">)</span>
-        <span class="nf">.map</span><span class="p">(|(</span><span class="n">data</span><span class="p">,</span> <span class="n">groups</span><span class="p">)|</span> <span class="nf">check</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">groups</span><span class="p">,</span> <span class="k">false</span><span class="p">))</span>
+        <span class="nf">.map</span><span class="p">(|(</span><span class="n">data</span><span class="p">,</span> <span class="n">groups</span><span class="p">)|</span> <span class="nf">check</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">groups</span><span class="p">,</span> <span class="o">&amp;</span><span class="k">mut</span> <span class="nb">None</span><span class="p">))</span>
         <span class="nf">.sum</span><span class="p">()</span>
 <span class="p">}</span>
 </pre></td></tr></tbody></table></code></pre>
@@ -4385,7 +4375,7 @@ L--J.L7...LJS7F-7L7.
 <div class="sect2">
 <h3 id="_star_2_14">Star 2</h3>
 <div class="paragraph">
-<p>The key to solve part 2 in a reasonable time was to add caching of partial results. So if <code>check_recursive</code> is called on something that had been calculated before, recursion is broken and the cached result is returned.</p>
+<p>The key to solve part 2 in a reasonable time was to add caching of partial results. So if <code>check_recursive</code> is called on something that had been calculated before, recursion is broken and the cached result is returned. I was surprised to see that using one shared cache (across all lines) does not improve performance over individual caches for each line. The initial capacity of the cache has however quite an impact on the performance.</p>
 </div>
 <div class="paragraph">
 <p>(For part 1, caching is disabled, since caching results in worse runtime)</p>
@@ -4418,27 +4408,75 @@ L--J.L7...LJS7F-7L7.
 21
 22
 23
-</pre></td><td class="code"><pre><span class="k">pub</span> <span class="k">fn</span> <span class="nf">star_2</span><span class="p">(</span><span class="n">data</span><span class="p">:</span> <span class="o">&amp;</span><span class="nb">str</span><span class="p">)</span> <span class="k">-&gt;</span> <span class="n">SolT</span> <span class="p">{</span>
-    <span class="n">data</span><span class="nf">.lines</span><span class="p">()</span>
-        <span class="nf">.map</span><span class="p">(</span><span class="n">parse_line</span><span class="p">)</span>
-        <span class="nf">.map</span><span class="p">(|(</span><span class="n">data</span><span class="p">,</span> <span class="n">groups</span><span class="p">)|</span> <span class="p">{</span>
-            <span class="k">let</span> <span class="n">new_data_len</span> <span class="o">=</span> <span class="mi">5</span> <span class="o">*</span> <span class="p">(</span><span class="n">data</span><span class="nf">.len</span><span class="p">()</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">;</span>
-            <span class="k">let</span> <span class="n">new_groups_len</span> <span class="o">=</span> <span class="mi">5</span> <span class="o">*</span> <span class="n">groups</span><span class="nf">.len</span><span class="p">();</span>
-            <span class="p">(</span>
-                <span class="n">data</span><span class="nf">.iter</span><span class="p">()</span>
-                    <span class="nf">.copied</span><span class="p">()</span>
-                    <span class="nf">.chain</span><span class="p">(</span><span class="nf">once</span><span class="p">(</span><span class="sc">b'?'</span><span class="p">))</span>
-                    <span class="nf">.cycle</span><span class="p">()</span>
-                    <span class="nf">.take</span><span class="p">(</span><span class="n">new_data_len</span><span class="p">)</span>
-                    <span class="py">.collect</span><span class="p">::</span><span class="o">&lt;</span><span class="nb">Vec</span><span class="o">&lt;</span><span class="n">_</span><span class="o">&gt;&gt;</span><span class="p">(),</span>
-                <span class="n">groups</span>
-                    <span class="nf">.into_iter</span><span class="p">()</span>
-                    <span class="nf">.cycle</span><span class="p">()</span>
-                    <span class="nf">.take</span><span class="p">(</span><span class="n">new_groups_len</span><span class="p">)</span>
-                    <span class="py">.collect</span><span class="p">::</span><span class="o">&lt;</span><span class="nb">Vec</span><span class="o">&lt;</span><span class="n">_</span><span class="o">&gt;&gt;</span><span class="p">(),</span>
-            <span class="p">)</span>
-        <span class="p">})</span>
-        <span class="nf">.map</span><span class="p">(|(</span><span class="n">data</span><span class="p">,</span> <span class="n">groups</span><span class="p">)|</span> <span class="nf">check</span><span class="p">(</span><span class="o">&amp;</span><span class="n">data</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">groups</span><span class="p">,</span> <span class="k">true</span><span class="p">))</span>
+24
+25
+26
+27
+28
+29
+30
+31
+32
+33
+34
+35
+36
+37
+38
+39
+40
+41
+42
+43
+44
+45
+46
+47
+</pre></td><td class="code"><pre><span class="k">const</span> <span class="n">UNFOLDS</span><span class="p">:</span> <span class="nb">usize</span> <span class="o">=</span> <span class="mi">5</span><span class="p">;</span>
+
+<span class="nd">#[cfg(not(feature</span> <span class="nd">=</span> <span class="s">"shared-cache"</span><span class="nd">))]</span>
+<span class="k">const</span> <span class="n">CACHE_CAPACITY</span><span class="p">:</span> <span class="nb">usize</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">&lt;&lt;</span> <span class="mi">10</span><span class="p">;</span>
+
+<span class="nd">#[cfg(feature</span> <span class="nd">=</span> <span class="s">"shared-cache"</span><span class="nd">)]</span>
+<span class="k">const</span> <span class="n">CACHE_CAPACITY</span><span class="p">:</span> <span class="nb">usize</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">&lt;&lt;</span> <span class="mi">16</span><span class="p">;</span>
+
+<span class="k">fn</span> <span class="n">make_cache</span><span class="o">&lt;</span><span class="nv">'a</span><span class="o">&gt;</span><span class="p">()</span> <span class="k">-&gt;</span> <span class="nb">Option</span><span class="o">&lt;</span><span class="n">Cache</span><span class="o">&lt;</span><span class="nv">'a</span><span class="o">&gt;&gt;</span> <span class="p">{</span>
+    <span class="nf">Some</span><span class="p">(</span><span class="nn">Cache</span><span class="p">::</span><span class="nf">with_capacity</span><span class="p">(</span><span class="n">CACHE_CAPACITY</span><span class="p">))</span>
+<span class="p">}</span>
+
+<span class="k">pub</span> <span class="k">fn</span> <span class="nf">data_iter</span><span class="p">(</span><span class="n">data</span><span class="p">:</span> <span class="o">&amp;</span><span class="nb">str</span><span class="p">,</span> <span class="n">unfolds</span><span class="p">:</span> <span class="nb">usize</span><span class="p">)</span> <span class="k">-&gt;</span> <span class="k">impl</span> <span class="nb">Iterator</span><span class="o">&lt;</span><span class="n">Item</span> <span class="o">=</span> <span class="p">(</span><span class="nb">Vec</span><span class="o">&lt;</span><span class="nb">u8</span><span class="o">&gt;</span><span class="p">,</span> <span class="nb">Vec</span><span class="o">&lt;</span><span class="n">SolT</span><span class="o">&gt;</span><span class="p">)</span><span class="o">&gt;</span> <span class="o">+</span> <span class="nv">'_</span> <span class="p">{</span>
+    <span class="n">data</span><span class="nf">.lines</span><span class="p">()</span><span class="nf">.map</span><span class="p">(</span><span class="n">parse_line</span><span class="p">)</span><span class="nf">.map</span><span class="p">(</span><span class="k">move</span> <span class="p">|(</span><span class="n">data</span><span class="p">,</span> <span class="n">groups</span><span class="p">)|</span> <span class="p">{</span>
+        <span class="k">let</span> <span class="n">new_data_len</span> <span class="o">=</span> <span class="n">unfolds</span> <span class="o">*</span> <span class="p">(</span><span class="n">data</span><span class="nf">.len</span><span class="p">()</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">;</span>
+        <span class="k">let</span> <span class="n">new_groups_len</span> <span class="o">=</span> <span class="n">unfolds</span> <span class="o">*</span> <span class="n">groups</span><span class="nf">.len</span><span class="p">();</span>
+        <span class="p">(</span>
+            <span class="n">data</span><span class="nf">.iter</span><span class="p">()</span>
+                <span class="nf">.copied</span><span class="p">()</span>
+                <span class="nf">.chain</span><span class="p">(</span><span class="nf">once</span><span class="p">(</span><span class="sc">b'?'</span><span class="p">))</span>
+                <span class="nf">.cycle</span><span class="p">()</span>
+                <span class="nf">.take</span><span class="p">(</span><span class="n">new_data_len</span><span class="p">)</span>
+                <span class="py">.collect</span><span class="p">::</span><span class="o">&lt;</span><span class="nb">Vec</span><span class="o">&lt;</span><span class="n">_</span><span class="o">&gt;&gt;</span><span class="p">(),</span>
+            <span class="n">groups</span>
+                <span class="nf">.into_iter</span><span class="p">()</span>
+                <span class="nf">.cycle</span><span class="p">()</span>
+                <span class="nf">.take</span><span class="p">(</span><span class="n">new_groups_len</span><span class="p">)</span>
+                <span class="py">.collect</span><span class="p">::</span><span class="o">&lt;</span><span class="nb">Vec</span><span class="o">&lt;</span><span class="n">_</span><span class="o">&gt;&gt;</span><span class="p">(),</span>
+        <span class="p">)</span>
+    <span class="p">})</span>
+<span class="p">}</span>
+
+<span class="nd">#[cfg(not(feature</span> <span class="nd">=</span> <span class="s">"shared-cache"</span><span class="nd">))]</span>
+<span class="k">pub</span> <span class="k">fn</span> <span class="nf">star_2</span><span class="p">(</span><span class="n">data</span><span class="p">:</span> <span class="o">&amp;</span><span class="nb">str</span><span class="p">)</span> <span class="k">-&gt;</span> <span class="n">SolT</span> <span class="p">{</span>
+    <span class="nf">data_iter</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">UNFOLDS</span><span class="p">)</span>
+        <span class="nf">.map</span><span class="p">(|(</span><span class="n">data</span><span class="p">,</span> <span class="n">groups</span><span class="p">)|</span> <span class="nf">check</span><span class="p">(</span><span class="o">&amp;</span><span class="n">data</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">groups</span><span class="p">,</span> <span class="o">&amp;</span><span class="k">mut</span> <span class="nf">make_cache</span><span class="p">()))</span>
+        <span class="nf">.sum</span><span class="p">()</span>
+<span class="p">}</span>
+
+<span class="nd">#[cfg(feature</span> <span class="nd">=</span> <span class="s">"shared-cache"</span><span class="nd">)]</span>
+<span class="k">pub</span> <span class="k">fn</span> <span class="nf">star_2</span><span class="p">(</span><span class="n">data</span><span class="p">:</span> <span class="o">&amp;</span><span class="nb">str</span><span class="p">)</span> <span class="k">-&gt;</span> <span class="n">SolT</span> <span class="p">{</span>
+    <span class="k">let</span> <span class="k">mut</span> <span class="n">cache</span> <span class="o">=</span> <span class="nf">make_cache</span><span class="p">();</span>
+    <span class="k">let</span> <span class="n">data</span> <span class="o">=</span> <span class="nf">data_iter</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">UNFOLDS</span><span class="p">)</span><span class="py">.collect</span><span class="p">::</span><span class="o">&lt;</span><span class="nb">Vec</span><span class="o">&lt;</span><span class="n">_</span><span class="o">&gt;&gt;</span><span class="p">();</span>
+    <span class="n">data</span><span class="nf">.iter</span><span class="p">()</span>
+        <span class="nf">.map</span><span class="p">(|(</span><span class="n">data</span><span class="p">,</span> <span class="n">groups</span><span class="p">)|</span> <span class="nf">check</span><span class="p">(</span><span class="o">&amp;</span><span class="n">data</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">groups</span><span class="p">,</span> <span class="o">&amp;</span><span class="k">mut</span> <span class="n">cache</span><span class="p">))</span>
         <span class="nf">.sum</span><span class="p">()</span>
 <span class="p">}</span>
 </pre></td></tr></tbody></table></code></pre>
@@ -4488,6 +4526,28 @@ L--J.L7...LJS7F-7L7.
 34
 35
 36
+37
+38
+39
+40
+41
+42
+43
+44
+45
+46
+47
+48
+49
+50
+51
+52
+53
+54
+55
+56
+57
+58
 </pre></td><td class="code"><pre><span class="nd">#[cfg(test)]</span>
 <span class="k">mod</span> <span class="n">tests</span> <span class="p">{</span>
     <span class="k">use</span> <span class="k">super</span><span class="p">::</span><span class="o">*</span><span class="p">;</span>
@@ -4502,15 +4562,37 @@ L--J.L7...LJS7F-7L7.
 
     <span class="nd">#[test]</span>
     <span class="k">pub</span> <span class="k">fn</span> <span class="nf">test_check</span><span class="p">()</span> <span class="p">{</span>
-        <span class="nd">assert_eq!</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nf">check</span><span class="p">(</span><span class="s">".###.##.#..."</span><span class="nf">.as_bytes</span><span class="p">(),</span> <span class="o">&amp;</span><span class="p">[</span><span class="mi">3</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span> <span class="kc">false</span><span class="p">));</span>
-        <span class="nd">assert_eq!</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nf">check</span><span class="p">(</span><span class="s">".###.##.#..."</span><span class="nf">.as_bytes</span><span class="p">(),</span> <span class="o">&amp;</span><span class="p">[</span><span class="mi">3</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">],</span> <span class="kc">true</span><span class="p">));</span>
-        <span class="nd">assert_eq!</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nf">check</span><span class="p">(</span><span class="s">".###.##.#..."</span><span class="nf">.as_bytes</span><span class="p">(),</span> <span class="o">&amp;</span><span class="p">[</span><span class="mi">3</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span> <span class="kc">false</span><span class="p">));</span>
-        <span class="nd">assert_eq!</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nf">check</span><span class="p">(</span><span class="s">".###.##....#"</span><span class="nf">.as_bytes</span><span class="p">(),</span> <span class="o">&amp;</span><span class="p">[</span><span class="mi">3</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span> <span class="kc">true</span><span class="p">));</span>
+        <span class="nd">assert_eq!</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nf">check</span><span class="p">(</span><span class="s">".###.##.#..."</span><span class="nf">.as_bytes</span><span class="p">(),</span> <span class="o">&amp;</span><span class="p">[</span><span class="mi">3</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span> <span class="o">&amp;</span><span class="k">mut</span> <span class="nb">None</span><span class="p">));</span>
+        <span class="nd">assert_eq!</span><span class="p">(</span>
+            <span class="mi">0</span><span class="p">,</span>
+            <span class="nf">check</span><span class="p">(</span>
+                <span class="s">".###.##.#..."</span><span class="nf">.as_bytes</span><span class="p">(),</span>
+                <span class="o">&amp;</span><span class="p">[</span><span class="mi">3</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">],</span>
+                <span class="o">&amp;</span><span class="k">mut</span> <span class="nf">Some</span><span class="p">(</span><span class="nn">Cache</span><span class="p">::</span><span class="nf">default</span><span class="p">())</span>
+            <span class="p">)</span>
+        <span class="p">);</span>
+        <span class="nd">assert_eq!</span><span class="p">(</span>
+            <span class="mi">0</span><span class="p">,</span>
+            <span class="nf">check</span><span class="p">(</span><span class="s">".###.##.#..."</span><span class="nf">.as_bytes</span><span class="p">(),</span> <span class="o">&amp;</span><span class="p">[</span><span class="mi">3</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span> <span class="o">&amp;</span><span class="k">mut</span> <span class="nb">None</span><span class="p">)</span>
+        <span class="p">);</span>
+        <span class="nd">assert_eq!</span><span class="p">(</span>
+            <span class="mi">1</span><span class="p">,</span>
+            <span class="nf">check</span><span class="p">(</span>
+                <span class="s">".###.##....#"</span><span class="nf">.as_bytes</span><span class="p">(),</span>
+                <span class="o">&amp;</span><span class="p">[</span><span class="mi">3</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span>
+                <span class="o">&amp;</span><span class="k">mut</span> <span class="nf">Some</span><span class="p">(</span><span class="nn">Cache</span><span class="p">::</span><span class="nf">default</span><span class="p">())</span>
+            <span class="p">)</span>
+        <span class="p">);</span>
 
         <span class="k">const</span> <span class="n">EXP</span><span class="p">:</span> <span class="o">&amp;</span><span class="p">[</span><span class="n">SolT</span><span class="p">]</span> <span class="o">=</span> <span class="o">&amp;</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">10</span><span class="p">];</span>
         <span class="k">for</span> <span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="p">(</span><span class="n">line</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">exp</span><span class="p">))</span> <span class="k">in</span> <span class="n">CONTENT</span><span class="nf">.lines</span><span class="p">()</span><span class="nf">.zip</span><span class="p">(</span><span class="n">EXP</span><span class="nf">.iter</span><span class="p">())</span><span class="nf">.enumerate</span><span class="p">()</span> <span class="p">{</span>
             <span class="k">let</span> <span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">groups</span><span class="p">)</span> <span class="o">=</span> <span class="nf">parse_line</span><span class="p">(</span><span class="n">line</span><span class="p">);</span>
-            <span class="nd">assert_eq!</span><span class="p">(</span><span class="n">exp</span><span class="p">,</span> <span class="nf">check</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">groups</span><span class="p">,</span> <span class="n">k</span> <span class="o">&amp;</span> <span class="mi">1</span> <span class="o">==</span> <span class="mi">0</span><span class="p">),</span> <span class="s">"{}"</span><span class="p">,</span> <span class="n">line</span><span class="p">);</span>
+            <span class="nd">assert_eq!</span><span class="p">(</span>
+                <span class="n">exp</span><span class="p">,</span>
+                <span class="nf">check</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">groups</span><span class="p">,</span> <span class="o">&amp;</span><span class="k">mut</span> <span class="p">(</span><span class="n">k</span> <span class="o">&amp;</span> <span class="mi">1</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span><span class="nf">.then_some</span><span class="p">(</span><span class="nn">Cache</span><span class="p">::</span><span class="nf">default</span><span class="p">())),</span>
+                <span class="s">"{}"</span><span class="p">,</span>
+                <span class="n">line</span>
+            <span class="p">);</span>
         <span class="p">}</span>
     <span class="p">}</span>
 
@@ -4536,7 +4618,7 @@ L--J.L7...LJS7F-7L7.
 </div>
 <div id="footer">
     <div id="footer-text">
-        Generated from <a href="https://github.com/mr-kaffee/aoc-2023/">github.com/mr-kaffee/aoc-2023/</a> on 2023-12-12 08:03:34 UTC
+        Generated from <a href="https://github.com/mr-kaffee/aoc-2023/">github.com/mr-kaffee/aoc-2023/</a> on 2023-12-12 18:47:54 UTC
         with <a href="https://asciidoctor.org">asciidoctor</a>.
     </div>
 </div>
