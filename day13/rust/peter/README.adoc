@@ -1,0 +1,43 @@
+== Rust | Day 13: Point of Incidence
+
+https://rust-lang.org[Rust] solution to https://adventofcode.com/2023/day/13[AoC|2023|13].
+
+=== Input
+
+I parse the input by splitting it by consecutive line breaks. This caused quite a bit of headache, because it results in the chunks of input not ending with a line break. So the usual `height = len / (width + 1)` needs to be replaced by `height = (len + 1) / (width + 1)`. It took I long while for me to find that issue.
+
+[source,rust,numbered]
+----
+include::src/lib.rs[tags=input]
+----
+
+=== Star 1
+
+The solution might look a bit over-structured. That is kind of the price for avoiding code duplication (which will become more clear in the second part).
+
+For the first part, we need to solve the same problem essentially twice. Once in the horizontal direction, once in the vertical direction. The `find_line` method does both. To do so, it takes the argument `idx` of enum type `ToIdx`, which converts either `(col, row)` or `(row, col)` to a flat index into the array. I did not manage to do this with a closure called from a closure.
+
+The actual algorithm to find the line of symmetry is simple.
+
+The function `star` accepts the algorithm as an argument `f` to be re-usable for the second part.
+
+[source,rust,numbered]
+----
+include::src/lib.rs[tags=star_1]
+----
+
+=== Star 2
+
+The second part is solved by adapting the algorithm to not find lines where all elements match, but where there is exactly one that does not match. Against my nature, I implemented this with for loops instead of iterators. The reason is that I can break from the for loop easily as soon as I know that the sum will be larger than one.
+
+[source,rust,numbered]
+----
+include::src/lib.rs[tags=star_2]
+----
+
+=== Tests
+
+[source,rust,numbered]
+----
+include::src/lib.rs[tags=tests]
+----

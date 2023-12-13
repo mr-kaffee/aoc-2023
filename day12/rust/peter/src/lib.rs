@@ -31,7 +31,7 @@ pub fn parse_line(line: &str) -> (&[u8], Vec<SolT>) {
 type Cache<'a> = HashMap<(&'a [u8], &'a [SolT]), SolT>;
 
 fn check<'a>(data: &'a [u8], groups: &'a [SolT], cache: &mut Option<Cache<'a>>) -> SolT {
-    if let Some(&result) = cache.as_mut().and_then(|cache| cache.get(&(data, groups))) {
+    if let Some(&result) = cache.as_ref().and_then(|cache| cache.get(&(data, groups))) {
         // return cached result
         return result;
     }
