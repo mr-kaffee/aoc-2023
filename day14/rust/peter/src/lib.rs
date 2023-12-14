@@ -1,5 +1,4 @@
 use input::*;
-use std::collections::HashMap;
 use std::fs::read_to_string;
 
 // tag::prelude[]
@@ -35,64 +34,62 @@ pub mod input {
 pub fn star_1(&PuzzleData(data, w, h): &PuzzleData) -> usize {
     (0..w)
         .map(|col| {
-            let (load, _) = (0..h).fold((0, 0), |(load, free), row| {
+            (0..h).fold((0, 0), |(load, free), row| {
                 match data[col + row * (w + 1)] {
                     b'#' => (load, row + 1),
                     b'O' => (load + h - free, free + 1),
                     _ => (load, free),
                 }
-            });
-            load
+            })
         })
-        .sum()
+        .fold(0, |sum, (load, _)| sum + load)
 }
 // end::star_1[]
 
 // tag::star_2[]
-pub fn tilt<F>(data: &mut [u8], d1: usize, d2: usize, idx: F) -> usize
-where
-    F: Fn(usize, usize) -> usize,
-{
+pub fn tilt<F: Fn(usize, usize) -> usize>(data: &mut [u8], d1: usize, d2: usize, idx: F) -> usize {
     (0..d1)
         .map(|x| {
-            let (load, _) = (0..d2).fold((0, 0), |(load, free), y| match data[idx(x, y)] {
+            (0..d2).fold((0, 0), |(load, free), y| match data[idx(x, y)] {
                 b'#' => (load, y + 1),
                 b'O' => {
-                    if free != y {
-                        data[idx(x, free)] = b'O';
-                        data[idx(x, y)] = b'.';
-                    }
+                    data.swap(idx(x, free), idx(x, y));
                     (load + d2 - free, free + 1)
                 }
                 _ => (load, free),
-            });
-            load
+            })
         })
-        .sum()
+        .fold(0, |sum, (load, _)| sum + load)
 }
 
-pub fn cycle(data: &mut [u8], w: usize, h: usize) -> (usize, usize, usize, usize) {
-    let load_n = tilt(data, w, h, |col, row| col + row * (w + 1));
-    let load_w = tilt(data, h, w, |row, col| col + row * (w + 1));
-    let load_s = tilt(data, w, h, |col, row| col + (h - row - 1) * (w + 1));
-    let load_e = tilt(data, h, w, |row, col| (w - col - 1) + row * (w + 1));
-    (load_n, load_w, load_s, load_e)
+pub fn cycle(data: &mut [u8], w: usize, h: usize) -> [usize; 4] {
+    [
+        tilt(data, w, h, |col, row| col + row * (w + 1)),
+        tilt(data, h, w, |row, col| col + row * (w + 1)),
+        tilt(data, w, h, |col, row_inv| col + (h - row_inv - 1) * (w + 1)),
+        tilt(data, h, w, |row, col_inv| (w - col_inv - 1) + row * (w + 1)),
+    ]
 }
 
 pub fn star_2(&PuzzleData(data, w, h): &PuzzleData) -> usize {
     let mut data = data.to_owned();
 
     // cycle until repetition is found
-    let (n_0, n_1) = (0..)
-        .scan(HashMap::new(), |map, n| {
-            Some(map.insert(cycle(&mut data, w, h), n).map(|n_0| (n_0, n)))
+    let r = (0..)
+        .scan(Vec::new(), |list, n_1| {
+            let loads = cycle(&mut data, w, h);
+            let v = list
+                .iter()
+                .position(|prev| prev == &loads)
+                .map(|n_0| ((1_000_000_000) - (n_1 + 1)) % (n_1 - n_0));
+            list.push(loads);
+            Some(v)
         })
         .flatten()
         .next()
         .unwrap();
 
     // execute residual cycles
-    let r = ((1_000_000_000) - (n_1 + 1)) % (n_1 - n_0);
     for _ in 0..r {
         cycle(&mut data, w, h);
     }
