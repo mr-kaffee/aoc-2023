@@ -157,6 +157,14 @@
 <li><a href="#_tests_13">Tests</a></li>
 </ul>
 </li>
+<li><a href="#sol-rust-14">Day 14: Parabolic Reflector Dish</a>
+<ul class="sectlevel2">
+<li><a href="#_input_12">Input</a></li>
+<li><a href="#_star_1_16">Star 1</a></li>
+<li><a href="#_star_2_16">Star 2</a></li>
+<li><a href="#_tests_14">Tests</a></li>
+</ul>
+</li>
 </ul>
 </div>
 </div>
@@ -5026,10 +5034,423 @@ L--J.L7...LJS7F-7L7.
 </div>
 </div>
 </div>
+<div class="sect1">
+<h2 id="sol-rust-14">Day 14: Parabolic Reflector Dish</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p><a href="https://rust-lang.org">Rust</a> solution to <a href="https://adventofcode.com/2023/day/14">AoC|2023|14</a>.</p>
+</div>
+<div class="sect2">
+<h3 id="_input_12">Input</h3>
+<div class="paragraph">
+<p>Just the plain input plus width and height.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight"><code data-lang="rust"><table class="linenotable"><tbody><tr><td class="linenos gl"><pre class="lineno"> 1
+ 2
+ 3
+ 4
+ 5
+ 6
+ 7
+ 8
+ 9
+10
+11
+12
+13
+14
+15
+16
+</pre></td><td class="code"><pre><span class="k">pub</span> <span class="k">mod</span> <span class="n">input</span> <span class="p">{</span>
+    <span class="nd">#[derive(Debug)]</span>
+    <span class="k">pub</span> <span class="k">struct</span> <span class="n">PuzzleData</span><span class="o">&lt;</span><span class="nv">'a</span><span class="o">&gt;</span><span class="p">(</span><span class="k">pub</span> <span class="o">&amp;</span><span class="nv">'a</span> <span class="p">[</span><span class="nb">u8</span><span class="p">],</span> <span class="k">pub</span> <span class="nb">usize</span><span class="p">,</span> <span class="k">pub</span> <span class="nb">usize</span><span class="p">);</span>
+
+    <span class="k">impl</span><span class="o">&lt;</span><span class="nv">'a</span><span class="p">,</span> <span class="n">T</span><span class="o">&gt;</span> <span class="nb">From</span><span class="o">&lt;&amp;</span><span class="nv">'a</span> <span class="n">T</span><span class="o">&gt;</span> <span class="k">for</span> <span class="n">PuzzleData</span><span class="o">&lt;</span><span class="nv">'a</span><span class="o">&gt;</span>
+    <span class="k">where</span>
+        <span class="n">T</span><span class="p">:</span> <span class="nb">AsRef</span><span class="o">&lt;</span><span class="p">[</span><span class="nb">u8</span><span class="p">]</span><span class="o">&gt;</span> <span class="o">+</span> <span class="nv">'a</span> <span class="o">+</span> <span class="o">?</span><span class="nb">Sized</span><span class="p">,</span>
+    <span class="p">{</span>
+        <span class="k">fn</span> <span class="nf">from</span><span class="p">(</span><span class="n">s</span><span class="p">:</span> <span class="o">&amp;</span><span class="nv">'a</span> <span class="n">T</span><span class="p">)</span> <span class="k">-&gt;</span> <span class="k">Self</span> <span class="p">{</span>
+            <span class="k">let</span> <span class="n">data</span> <span class="o">=</span> <span class="n">s</span><span class="nf">.as_ref</span><span class="p">();</span>
+            <span class="k">let</span> <span class="n">w</span> <span class="o">=</span> <span class="n">data</span><span class="nf">.iter</span><span class="p">()</span><span class="nf">.position</span><span class="p">(|</span><span class="o">&amp;</span><span class="n">b</span><span class="p">|</span> <span class="n">b</span> <span class="o">==</span> <span class="sc">b'\n'</span><span class="p">)</span><span class="nf">.unwrap_or</span><span class="p">(</span><span class="n">data</span><span class="nf">.len</span><span class="p">());</span>
+            <span class="k">let</span> <span class="n">h</span> <span class="o">=</span> <span class="p">(</span><span class="n">data</span><span class="nf">.len</span><span class="p">()</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">w</span> <span class="o">+</span> <span class="mi">1</span><span class="p">);</span>
+            <span class="k">Self</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">w</span><span class="p">,</span> <span class="n">h</span><span class="p">)</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</pre></td></tr></tbody></table></code></pre>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_star_1_16">Star 1</h3>
+<div class="paragraph">
+<p>I just calculated the load without actually modifying the grid.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight"><code data-lang="rust"><table class="linenotable"><tbody><tr><td class="linenos gl"><pre class="lineno"> 1
+ 2
+ 3
+ 4
+ 5
+ 6
+ 7
+ 8
+ 9
+10
+11
+12
+13
+14
+</pre></td><td class="code"><pre><span class="k">pub</span> <span class="k">fn</span> <span class="nf">star_1</span><span class="p">(</span><span class="o">&amp;</span><span class="nf">PuzzleData</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">w</span><span class="p">,</span> <span class="n">h</span><span class="p">):</span> <span class="o">&amp;</span><span class="n">PuzzleData</span><span class="p">)</span> <span class="k">-&gt;</span> <span class="nb">usize</span> <span class="p">{</span>
+    <span class="p">(</span><span class="mi">0</span><span class="o">..</span><span class="n">w</span><span class="p">)</span>
+        <span class="nf">.map</span><span class="p">(|</span><span class="n">col</span><span class="p">|</span> <span class="p">{</span>
+            <span class="k">let</span> <span class="p">(</span><span class="n">load</span><span class="p">,</span> <span class="n">_</span><span class="p">)</span> <span class="o">=</span> <span class="p">(</span><span class="mi">0</span><span class="o">..</span><span class="n">h</span><span class="p">)</span><span class="nf">.fold</span><span class="p">((</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="p">|(</span><span class="n">load</span><span class="p">,</span> <span class="n">free</span><span class="p">),</span> <span class="n">row</span><span class="p">|</span> <span class="p">{</span>
+                <span class="k">match</span> <span class="n">data</span><span class="p">[</span><span class="n">col</span> <span class="o">+</span> <span class="n">row</span> <span class="o">*</span> <span class="p">(</span><span class="n">w</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)]</span> <span class="p">{</span>
+                    <span class="sc">b'#'</span> <span class="k">=&gt;</span> <span class="p">(</span><span class="n">load</span><span class="p">,</span> <span class="n">row</span> <span class="o">+</span> <span class="mi">1</span><span class="p">),</span>
+                    <span class="sc">b'O'</span> <span class="k">=&gt;</span> <span class="p">(</span><span class="n">load</span> <span class="o">+</span> <span class="n">h</span> <span class="o">-</span> <span class="n">free</span><span class="p">,</span> <span class="n">free</span> <span class="o">+</span> <span class="mi">1</span><span class="p">),</span>
+                    <span class="n">_</span> <span class="k">=&gt;</span> <span class="p">(</span><span class="n">load</span><span class="p">,</span> <span class="n">free</span><span class="p">),</span>
+                <span class="p">}</span>
+            <span class="p">});</span>
+            <span class="n">load</span>
+        <span class="p">})</span>
+        <span class="nf">.sum</span><span class="p">()</span>
+<span class="p">}</span>
+</pre></td></tr></tbody></table></code></pre>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_star_2_16">Star 2</h3>
+<div class="paragraph">
+<p>Now, I need to modify the grid - at least I do not have a better idea.</p>
+</div>
+<div class="paragraph">
+<p>Obviously, this was about finding a shortcut to simulating a billion cycles. I have no idea if there is an analytic way, but given the 'physics' of the problem, there should by periodic cycles after a while.</p>
+</div>
+<div class="paragraph">
+<p>My first attempt was to check for repetitions in the rock locations themselves. That did not work, because I only compared to the configuration after the first cycle completed, which does not repeat for the test data (and I did not even try for my input).</p>
+</div>
+<div class="paragraph">
+<p>Then I just took the loads produced in each direction throughout one cycle and stored them in a hash-map. This solution works independent of the number of initial steps it takes, before repeating cycles start. I might have double-checked that the actual rock locations do repeat as well&#8230;&#8203;</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight"><code data-lang="rust"><table class="linenotable"><tbody><tr><td class="linenos gl"><pre class="lineno"> 1
+ 2
+ 3
+ 4
+ 5
+ 6
+ 7
+ 8
+ 9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+26
+27
+28
+29
+30
+31
+32
+33
+34
+35
+36
+37
+38
+39
+40
+41
+42
+43
+44
+45
+46
+47
+48
+49
+50
+51
+52
+53
+54
+55
+56
+57
+58
+</pre></td><td class="code"><pre><span class="k">pub</span> <span class="k">fn</span> <span class="n">tilt</span><span class="o">&lt;</span><span class="n">F</span><span class="o">&gt;</span><span class="p">(</span><span class="n">data</span><span class="p">:</span> <span class="o">&amp;</span><span class="k">mut</span> <span class="p">[</span><span class="nb">u8</span><span class="p">],</span> <span class="n">d1</span><span class="p">:</span> <span class="nb">usize</span><span class="p">,</span> <span class="n">d2</span><span class="p">:</span> <span class="nb">usize</span><span class="p">,</span> <span class="n">idx</span><span class="p">:</span> <span class="n">F</span><span class="p">)</span> <span class="k">-&gt;</span> <span class="nb">usize</span>
+<span class="k">where</span>
+    <span class="n">F</span><span class="p">:</span> <span class="nf">Fn</span><span class="p">(</span><span class="nb">usize</span><span class="p">,</span> <span class="nb">usize</span><span class="p">)</span> <span class="k">-&gt;</span> <span class="nb">usize</span><span class="p">,</span>
+<span class="p">{</span>
+    <span class="p">(</span><span class="mi">0</span><span class="o">..</span><span class="n">d1</span><span class="p">)</span>
+        <span class="nf">.map</span><span class="p">(|</span><span class="n">x</span><span class="p">|</span> <span class="p">{</span>
+            <span class="k">let</span> <span class="p">(</span><span class="n">load</span><span class="p">,</span> <span class="n">_</span><span class="p">)</span> <span class="o">=</span> <span class="p">(</span><span class="mi">0</span><span class="o">..</span><span class="n">d2</span><span class="p">)</span><span class="nf">.fold</span><span class="p">((</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="p">|(</span><span class="n">load</span><span class="p">,</span> <span class="n">free</span><span class="p">),</span> <span class="n">y</span><span class="p">|</span> <span class="k">match</span> <span class="n">data</span><span class="p">[</span><span class="nf">idx</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">)]</span> <span class="p">{</span>
+                <span class="sc">b'#'</span> <span class="k">=&gt;</span> <span class="p">(</span><span class="n">load</span><span class="p">,</span> <span class="n">y</span> <span class="o">+</span> <span class="mi">1</span><span class="p">),</span>
+                <span class="sc">b'O'</span> <span class="k">=&gt;</span> <span class="p">{</span>
+                    <span class="k">if</span> <span class="n">free</span> <span class="o">!=</span> <span class="n">y</span> <span class="p">{</span>
+                        <span class="n">data</span><span class="p">[</span><span class="nf">idx</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">free</span><span class="p">)]</span> <span class="o">=</span> <span class="sc">b'O'</span><span class="p">;</span>
+                        <span class="n">data</span><span class="p">[</span><span class="nf">idx</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">)]</span> <span class="o">=</span> <span class="sc">b'.'</span><span class="p">;</span>
+                    <span class="p">}</span>
+                    <span class="p">(</span><span class="n">load</span> <span class="o">+</span> <span class="n">d2</span> <span class="o">-</span> <span class="n">free</span><span class="p">,</span> <span class="n">free</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+                <span class="p">}</span>
+                <span class="n">_</span> <span class="k">=&gt;</span> <span class="p">(</span><span class="n">load</span><span class="p">,</span> <span class="n">free</span><span class="p">),</span>
+            <span class="p">});</span>
+            <span class="n">load</span>
+        <span class="p">})</span>
+        <span class="nf">.sum</span><span class="p">()</span>
+<span class="p">}</span>
+
+<span class="k">pub</span> <span class="k">fn</span> <span class="nf">cycle</span><span class="p">(</span><span class="n">data</span><span class="p">:</span> <span class="o">&amp;</span><span class="k">mut</span> <span class="p">[</span><span class="nb">u8</span><span class="p">],</span> <span class="n">w</span><span class="p">:</span> <span class="nb">usize</span><span class="p">,</span> <span class="n">h</span><span class="p">:</span> <span class="nb">usize</span><span class="p">)</span> <span class="k">-&gt;</span> <span class="p">(</span><span class="nb">usize</span><span class="p">,</span> <span class="nb">usize</span><span class="p">,</span> <span class="nb">usize</span><span class="p">,</span> <span class="nb">usize</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">let</span> <span class="n">load_n</span> <span class="o">=</span> <span class="nf">tilt</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">w</span><span class="p">,</span> <span class="n">h</span><span class="p">,</span> <span class="p">|</span><span class="n">col</span><span class="p">,</span> <span class="n">row</span><span class="p">|</span> <span class="n">col</span> <span class="o">+</span> <span class="n">row</span> <span class="o">*</span> <span class="p">(</span><span class="n">w</span> <span class="o">+</span> <span class="mi">1</span><span class="p">));</span>
+    <span class="k">let</span> <span class="n">load_w</span> <span class="o">=</span> <span class="nf">tilt</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">h</span><span class="p">,</span> <span class="n">w</span><span class="p">,</span> <span class="p">|</span><span class="n">row</span><span class="p">,</span> <span class="n">col</span><span class="p">|</span> <span class="n">col</span> <span class="o">+</span> <span class="n">row</span> <span class="o">*</span> <span class="p">(</span><span class="n">w</span> <span class="o">+</span> <span class="mi">1</span><span class="p">));</span>
+    <span class="k">let</span> <span class="n">load_s</span> <span class="o">=</span> <span class="nf">tilt</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">w</span><span class="p">,</span> <span class="n">h</span><span class="p">,</span> <span class="p">|</span><span class="n">col</span><span class="p">,</span> <span class="n">row</span><span class="p">|</span> <span class="n">col</span> <span class="o">+</span> <span class="p">(</span><span class="n">h</span> <span class="o">-</span> <span class="n">row</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">w</span> <span class="o">+</span> <span class="mi">1</span><span class="p">));</span>
+    <span class="k">let</span> <span class="n">load_e</span> <span class="o">=</span> <span class="nf">tilt</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">h</span><span class="p">,</span> <span class="n">w</span><span class="p">,</span> <span class="p">|</span><span class="n">row</span><span class="p">,</span> <span class="n">col</span><span class="p">|</span> <span class="p">(</span><span class="n">w</span> <span class="o">-</span> <span class="n">col</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">+</span> <span class="n">row</span> <span class="o">*</span> <span class="p">(</span><span class="n">w</span> <span class="o">+</span> <span class="mi">1</span><span class="p">));</span>
+    <span class="p">(</span><span class="n">load_n</span><span class="p">,</span> <span class="n">load_w</span><span class="p">,</span> <span class="n">load_s</span><span class="p">,</span> <span class="n">load_e</span><span class="p">)</span>
+<span class="p">}</span>
+
+<span class="k">pub</span> <span class="k">fn</span> <span class="nf">star_2</span><span class="p">(</span><span class="o">&amp;</span><span class="nf">PuzzleData</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">w</span><span class="p">,</span> <span class="n">h</span><span class="p">):</span> <span class="o">&amp;</span><span class="n">PuzzleData</span><span class="p">)</span> <span class="k">-&gt;</span> <span class="nb">usize</span> <span class="p">{</span>
+    <span class="k">let</span> <span class="k">mut</span> <span class="n">data</span> <span class="o">=</span> <span class="n">data</span><span class="nf">.to_owned</span><span class="p">();</span>
+
+    <span class="c1">// cycle until repetition is found</span>
+    <span class="k">let</span> <span class="p">(</span><span class="n">n_0</span><span class="p">,</span> <span class="n">n_1</span><span class="p">)</span> <span class="o">=</span> <span class="p">(</span><span class="mi">0</span><span class="o">..</span><span class="p">)</span>
+        <span class="nf">.scan</span><span class="p">(</span><span class="nn">HashMap</span><span class="p">::</span><span class="nf">new</span><span class="p">(),</span> <span class="p">|</span><span class="n">map</span><span class="p">,</span> <span class="n">n</span><span class="p">|</span> <span class="p">{</span>
+            <span class="nf">Some</span><span class="p">(</span><span class="n">map</span><span class="nf">.insert</span><span class="p">(</span><span class="nf">cycle</span><span class="p">(</span><span class="o">&amp;</span><span class="k">mut</span> <span class="n">data</span><span class="p">,</span> <span class="n">w</span><span class="p">,</span> <span class="n">h</span><span class="p">),</span> <span class="n">n</span><span class="p">)</span><span class="nf">.map</span><span class="p">(|</span><span class="n">n_0</span><span class="p">|</span> <span class="p">(</span><span class="n">n_0</span><span class="p">,</span> <span class="n">n</span><span class="p">)))</span>
+        <span class="p">})</span>
+        <span class="nf">.flatten</span><span class="p">()</span>
+        <span class="nf">.next</span><span class="p">()</span>
+        <span class="nf">.unwrap</span><span class="p">();</span>
+
+    <span class="c1">// execute residual cycles</span>
+    <span class="k">let</span> <span class="n">r</span> <span class="o">=</span> <span class="p">((</span><span class="mi">1_000_000_000</span><span class="p">)</span> <span class="o">-</span> <span class="p">(</span><span class="n">n_1</span> <span class="o">+</span> <span class="mi">1</span><span class="p">))</span> <span class="o">%</span> <span class="p">(</span><span class="n">n_1</span> <span class="o">-</span> <span class="n">n_0</span><span class="p">);</span>
+    <span class="k">for</span> <span class="n">_</span> <span class="k">in</span> <span class="mi">0</span><span class="o">..</span><span class="n">r</span> <span class="p">{</span>
+        <span class="nf">cycle</span><span class="p">(</span><span class="o">&amp;</span><span class="k">mut</span> <span class="n">data</span><span class="p">,</span> <span class="n">w</span><span class="p">,</span> <span class="n">h</span><span class="p">);</span>
+    <span class="p">}</span>
+
+    <span class="c1">// determine load on north (without tilting to north)</span>
+    <span class="p">(</span><span class="mi">0</span><span class="o">..</span><span class="n">w</span><span class="p">)</span>
+        <span class="nf">.map</span><span class="p">(|</span><span class="n">col</span><span class="p">|</span> <span class="p">{</span>
+            <span class="p">(</span><span class="mi">0</span><span class="o">..</span><span class="n">h</span><span class="p">)</span>
+                <span class="nf">.filter</span><span class="p">(|</span><span class="o">&amp;</span><span class="n">row</span><span class="p">|</span> <span class="n">data</span><span class="p">[</span><span class="n">col</span> <span class="o">+</span> <span class="n">row</span> <span class="o">*</span> <span class="p">(</span><span class="n">w</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)]</span> <span class="o">==</span> <span class="sc">b'O'</span><span class="p">)</span>
+                <span class="nf">.map</span><span class="p">(|</span><span class="n">row</span><span class="p">|</span> <span class="n">h</span> <span class="o">-</span> <span class="n">row</span><span class="p">)</span>
+                <span class="py">.sum</span><span class="p">::</span><span class="o">&lt;</span><span class="nb">usize</span><span class="o">&gt;</span><span class="p">()</span>
+        <span class="p">})</span>
+        <span class="nf">.sum</span><span class="p">()</span>
+<span class="p">}</span>
+</pre></td></tr></tbody></table></code></pre>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_tests_14">Tests</h3>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight"><code data-lang="rust"><table class="linenotable"><tbody><tr><td class="linenos gl"><pre class="lineno"> 1
+ 2
+ 3
+ 4
+ 5
+ 6
+ 7
+ 8
+ 9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+26
+27
+28
+29
+30
+31
+32
+33
+34
+35
+36
+37
+38
+39
+40
+41
+42
+43
+44
+45
+46
+47
+48
+49
+50
+51
+52
+53
+54
+55
+56
+57
+58
+59
+60
+61
+62
+63
+64
+65
+66
+67
+68
+69
+70
+71
+72
+73
+74
+75
+76
+77
+78
+79
+80
+81
+82
+83
+84
+85
+86
+87
+88
+</pre></td><td class="code"><pre><span class="nd">#[cfg(test)]</span>
+<span class="k">mod</span> <span class="n">tests</span> <span class="p">{</span>
+    <span class="k">use</span> <span class="k">super</span><span class="p">::</span><span class="o">*</span><span class="p">;</span>
+
+    <span class="k">const</span> <span class="n">CONTENT</span><span class="p">:</span> <span class="o">&amp;</span><span class="nb">str</span> <span class="o">=</span> <span class="s">r#"O....#....
+O.OO#....#
+.....##...
+OO.#O....O
+.O.....O#.
+O.#..O.#.#
+..O..#O..O
+.......O..
+#....###..
+#OO..#....
+"#</span><span class="p">;</span>
+
+    <span class="k">const</span> <span class="n">CONTENT_1</span><span class="p">:</span> <span class="o">&amp;</span><span class="nb">str</span> <span class="o">=</span> <span class="s">r#".....#....
+....#...O#
+...OO##...
+.OO#......
+.....OOO#.
+.O#...O#.#
+....O#....
+......OOOO
+#...O###..
+#..OO#....
+"#</span><span class="p">;</span>
+
+    <span class="k">const</span> <span class="n">CONTENT_2</span><span class="p">:</span> <span class="o">&amp;</span><span class="nb">str</span> <span class="o">=</span> <span class="s">r#".....#....
+....#...O#
+.....##...
+..O#......
+.....OOO#.
+.O#...O#.#
+....O#...O
+.......OOO
+#..OO###..
+#.OOO#...O
+"#</span><span class="p">;</span>
+
+    <span class="k">const</span> <span class="n">CONTENT_3</span><span class="p">:</span> <span class="o">&amp;</span><span class="nb">str</span> <span class="o">=</span> <span class="s">r#".....#....
+....#...O#
+.....##...
+..O#......
+.....OOO#.
+.O#...O#.#
+....O#...O
+.......OOO
+#...O###.O
+#.OOO#...O
+"#</span><span class="p">;</span>
+
+    <span class="nd">#[test]</span>
+    <span class="k">pub</span> <span class="k">fn</span> <span class="nf">test_from</span><span class="p">()</span> <span class="p">{</span>
+        <span class="k">let</span> <span class="nf">PuzzleData</span><span class="p">(</span><span class="n">_</span><span class="p">,</span> <span class="n">w</span><span class="p">,</span> <span class="n">h</span><span class="p">)</span> <span class="o">=</span> <span class="nn">PuzzleData</span><span class="p">::</span><span class="nf">from</span><span class="p">(</span><span class="n">CONTENT</span><span class="p">);</span>
+        <span class="nd">assert_eq!</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="n">w</span><span class="p">);</span>
+        <span class="nd">assert_eq!</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="n">h</span><span class="p">);</span>
+    <span class="p">}</span>
+
+    <span class="nd">#[test]</span>
+    <span class="k">pub</span> <span class="k">fn</span> <span class="nf">test_cycle</span><span class="p">()</span> <span class="p">{</span>
+        <span class="k">let</span> <span class="nf">PuzzleData</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">w</span><span class="p">,</span> <span class="n">h</span><span class="p">)</span> <span class="o">=</span> <span class="nn">PuzzleData</span><span class="p">::</span><span class="nf">from</span><span class="p">(</span><span class="n">CONTENT</span><span class="p">);</span>
+        <span class="k">let</span> <span class="k">mut</span> <span class="n">data</span> <span class="o">=</span> <span class="n">data</span><span class="nf">.to_owned</span><span class="p">();</span>
+        <span class="nf">cycle</span><span class="p">(</span><span class="o">&amp;</span><span class="k">mut</span> <span class="n">data</span><span class="p">,</span> <span class="n">w</span><span class="p">,</span> <span class="n">h</span><span class="p">);</span>
+        <span class="nd">assert_eq!</span><span class="p">(</span><span class="nn">String</span><span class="p">::</span><span class="nf">from_utf8_lossy</span><span class="p">(</span><span class="o">&amp;</span><span class="n">data</span><span class="p">),</span> <span class="n">CONTENT_1</span><span class="p">);</span>
+        <span class="nf">cycle</span><span class="p">(</span><span class="o">&amp;</span><span class="k">mut</span> <span class="n">data</span><span class="p">,</span> <span class="n">w</span><span class="p">,</span> <span class="n">h</span><span class="p">);</span>
+        <span class="nd">assert_eq!</span><span class="p">(</span><span class="nn">String</span><span class="p">::</span><span class="nf">from_utf8_lossy</span><span class="p">(</span><span class="o">&amp;</span><span class="n">data</span><span class="p">),</span> <span class="n">CONTENT_2</span><span class="p">);</span>
+        <span class="nf">cycle</span><span class="p">(</span><span class="o">&amp;</span><span class="k">mut</span> <span class="n">data</span><span class="p">,</span> <span class="n">w</span><span class="p">,</span> <span class="n">h</span><span class="p">);</span>
+        <span class="nd">assert_eq!</span><span class="p">(</span><span class="nn">String</span><span class="p">::</span><span class="nf">from_utf8_lossy</span><span class="p">(</span><span class="o">&amp;</span><span class="n">data</span><span class="p">),</span> <span class="n">CONTENT_3</span><span class="p">);</span>
+    <span class="p">}</span>
+
+    <span class="nd">#[test]</span>
+    <span class="k">pub</span> <span class="k">fn</span> <span class="nf">test_star_1</span><span class="p">()</span> <span class="p">{</span>
+        <span class="nd">assert_eq!</span><span class="p">(</span><span class="mi">136</span><span class="p">,</span> <span class="nf">star_1</span><span class="p">(</span><span class="o">&amp;</span><span class="n">CONTENT</span><span class="nf">.into</span><span class="p">()));</span>
+    <span class="p">}</span>
+
+    <span class="nd">#[test]</span>
+    <span class="k">pub</span> <span class="k">fn</span> <span class="nf">test_tilt_north</span><span class="p">()</span> <span class="p">{</span>
+        <span class="k">let</span> <span class="nf">PuzzleData</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">w</span><span class="p">,</span> <span class="n">h</span><span class="p">)</span> <span class="o">=</span> <span class="nn">PuzzleData</span><span class="p">::</span><span class="nf">from</span><span class="p">(</span><span class="n">CONTENT</span><span class="p">);</span>
+        <span class="k">let</span> <span class="k">mut</span> <span class="n">data</span> <span class="o">=</span> <span class="n">data</span><span class="nf">.to_owned</span><span class="p">();</span>
+        <span class="nd">assert_eq!</span><span class="p">(</span><span class="mi">136</span><span class="p">,</span> <span class="nf">tilt</span><span class="p">(</span><span class="o">&amp;</span><span class="k">mut</span> <span class="n">data</span><span class="p">,</span> <span class="n">w</span><span class="p">,</span> <span class="n">h</span><span class="p">,</span> <span class="p">|</span><span class="n">col</span><span class="p">,</span> <span class="n">row</span><span class="p">|</span> <span class="n">col</span> <span class="o">+</span> <span class="n">row</span> <span class="o">*</span> <span class="p">(</span><span class="n">w</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)));</span>
+    <span class="p">}</span>
+
+    <span class="nd">#[test]</span>
+    <span class="k">pub</span> <span class="k">fn</span> <span class="nf">test_star_2</span><span class="p">()</span> <span class="p">{</span>
+        <span class="nd">assert_eq!</span><span class="p">(</span><span class="mi">64</span><span class="p">,</span> <span class="nf">star_2</span><span class="p">(</span><span class="o">&amp;</span><span class="n">CONTENT</span><span class="nf">.into</span><span class="p">()));</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</pre></td></tr></tbody></table></code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p><a href="#top">Top</a></p>
+</div>
+</div>
+</div>
+</div>
 </div>
 <div id="footer">
     <div id="footer-text">
-        Generated from <a href="https://github.com/mr-kaffee/aoc-2023/">github.com/mr-kaffee/aoc-2023/</a> on 2023-12-13 07:51:59 UTC
+        Generated from <a href="https://github.com/mr-kaffee/aoc-2023/">github.com/mr-kaffee/aoc-2023/</a> on 2023-12-14 07:26:14 UTC
         with <a href="https://asciidoctor.org">asciidoctor</a>.
     </div>
 </div>
