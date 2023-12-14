@@ -1,0 +1,43 @@
+== Day 14: Parabolic Reflector Dish
+
+https://rust-lang.org[Rust] solution to https://adventofcode.com/2023/day/14[AoC|2023|14].
+
+=== Input
+
+Just the plain input plus width and height.
+
+[source,rust,numbered]
+----
+include::src/lib.rs[tags=input]
+----
+
+=== Star 1
+
+I just calculated the load without actually modifying the grid.
+
+[source,rust,numbered]
+----
+include::src/lib.rs[tags=star_1]
+----
+
+=== Star 2
+
+Now, I need to modify the grid - at least I do not have a better idea.
+
+Obviously, this was about finding a shortcut to simulating a billion cycles. I have no idea if there is an analytic way, but given the 'physics' of the problem, there should by periodic cycles after a while. 
+
+My first attempt was to check for repetitions in the rock locations themselves. That did not work, because I only compared to the configuration after the first cycle completed, which does not repeat for the test data (and I did not even try for my input).
+
+Then I just took the loads produced in each direction throughout one cycle and stored them in a hash-map. This solution works independent of the number of initial steps it takes, before repeating cycles start. I might have double-checked that the actual rock locations do repeat as well...
+
+[source,rust,numbered]
+----
+include::src/lib.rs[tags=star_2]
+----
+
+=== Tests
+
+[source,rust,numbered]
+----
+include::src/lib.rs[tags=tests]
+----
