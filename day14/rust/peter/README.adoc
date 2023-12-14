@@ -1,4 +1,4 @@
-== Day 14: Parabolic Reflector Dish
+== Rust | Day 14: Parabolic Reflector Dish
 
 https://rust-lang.org[Rust] solution to https://adventofcode.com/2023/day/14[AoC|2023|14].
 
@@ -26,9 +26,9 @@ Now, I need to modify the grid - at least I do not have a better idea.
 
 Obviously, this was about finding a shortcut to simulating a billion cycles. I have no idea if there is an analytic way, but given the 'physics' of the problem, there should by periodic cycles after a while. 
 
-My first attempt was to check for repetitions in the rock locations themselves. That did not work, because I only compared to the configuration after the first cycle completed, which does not repeat for the test data (and I did not even try for my input).
+My first attempt was to check for repetitions in the rock locations themselves. That did not work, because I only compared to the configuration after the first cycle completed, but apparently the inputs are such that it takes a while before we reach the periodic behavior.
 
-Then I just took the loads produced in each direction throughout one cycle and stored them in a hash-map. This solution works independent of the number of initial steps it takes, before repeating cycles start. I might have double-checked that the actual rock locations do repeat as well...
+Then I just took the loads produced in each direction throughout one cycle and stored them in a vector (the numbers are small enough so that linear search is cheaper than the overhead of a hash map). This solution works independent of the number of initial steps it takes, before repeating cycles start. I might have double-checked that the actual rock locations do repeat as well...
 
 [source,rust,numbered]
 ----
