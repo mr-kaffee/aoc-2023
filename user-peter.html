@@ -165,6 +165,13 @@
 <li><a href="#_tests_14">Tests</a></li>
 </ul>
 </li>
+<li><a href="#sol-rust-15">Rust | Day 15: Lens Library</a>
+<ul class="sectlevel2">
+<li><a href="#_star_1_17">Star 1</a></li>
+<li><a href="#_star_2_17">Star 2</a></li>
+<li><a href="#_tests_15">Tests</a></li>
+</ul>
+</li>
 </ul>
 </div>
 </div>
@@ -5443,10 +5450,180 @@ O.#..O.#.#
 </div>
 </div>
 </div>
+<div class="sect1">
+<h2 id="sol-rust-15">Rust | Day 15: Lens Library</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p><a href="https://rust-lang.org">Rust</a> solution to <a href="https://adventofcode.com/2023/day/15">AoC|2023|15</a>.</p>
+</div>
+<div class="sect2">
+<h3 id="_star_1_17">Star 1</h3>
+<div class="paragraph">
+<p>A no-brainer</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight"><code data-lang="rust"><table class="linenotable"><tbody><tr><td class="linenos gl"><pre class="lineno">1
+2
+3
+4
+5
+6
+7
+8
+</pre></td><td class="code"><pre><span class="k">pub</span> <span class="k">fn</span> <span class="nf">hash</span><span class="p">(</span><span class="n">item</span><span class="p">:</span> <span class="o">&amp;</span><span class="nb">str</span><span class="p">)</span> <span class="k">-&gt;</span> <span class="nb">usize</span> <span class="p">{</span>
+    <span class="n">item</span><span class="nf">.bytes</span><span class="p">()</span>
+        <span class="nf">.fold</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="p">|</span><span class="n">hash</span><span class="p">,</span> <span class="n">b</span><span class="p">|</span> <span class="p">((</span><span class="n">hash</span> <span class="o">+</span> <span class="p">(</span><span class="n">b</span> <span class="k">as</span> <span class="nb">usize</span><span class="p">))</span> <span class="o">*</span> <span class="mi">17</span><span class="p">)</span> <span class="o">&amp;</span> <span class="mi">255</span><span class="p">)</span>
+<span class="p">}</span>
+
+<span class="k">pub</span> <span class="k">fn</span> <span class="nf">star_1</span><span class="p">(</span><span class="n">data</span><span class="p">:</span> <span class="o">&amp;</span><span class="nb">str</span><span class="p">)</span> <span class="k">-&gt;</span> <span class="nb">usize</span> <span class="p">{</span>
+    <span class="n">data</span><span class="nf">.split</span><span class="p">(</span><span class="sc">','</span><span class="p">)</span><span class="nf">.map</span><span class="p">(</span><span class="nn">str</span><span class="p">::</span><span class="n">trim</span><span class="p">)</span><span class="nf">.map</span><span class="p">(</span><span class="n">hash</span><span class="p">)</span><span class="nf">.sum</span><span class="p">()</span>
+<span class="p">}</span>
+</pre></td></tr></tbody></table></code></pre>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_star_2_17">Star 2</h3>
+<div class="paragraph">
+<p>A bit of reading comprehension, mostly.</p>
+</div>
+<div class="paragraph">
+<p>The input is parsed into pairs of a label and an optional value on the fly.</p>
+</div>
+<div class="paragraph">
+<p>Each box is actually kind of a hash map. Because insertion order needs to be preserved, I cannot just simply use rust&#8217;s hash map. I guess <code>Vec</code> is faster anyhow.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight"><code data-lang="rust"><table class="linenotable"><tbody><tr><td class="linenos gl"><pre class="lineno"> 1
+ 2
+ 3
+ 4
+ 5
+ 6
+ 7
+ 8
+ 9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+26
+27
+28
+29
+30
+31
+32
+33
+34
+35
+36
+</pre></td><td class="code"><pre><span class="k">pub</span> <span class="k">fn</span> <span class="nf">star_2</span><span class="p">(</span><span class="n">data</span><span class="p">:</span> <span class="o">&amp;</span><span class="nb">str</span><span class="p">)</span> <span class="k">-&gt;</span> <span class="nb">usize</span> <span class="p">{</span>
+    <span class="k">let</span> <span class="n">init_boxes</span> <span class="o">=</span> <span class="p">||</span> <span class="p">{</span>
+        <span class="k">let</span> <span class="k">mut</span> <span class="n">boxes</span> <span class="o">=</span> <span class="nn">Vec</span><span class="p">::</span><span class="nf">with_capacity</span><span class="p">(</span><span class="mi">256</span><span class="p">);</span>
+        <span class="n">boxes</span><span class="nf">.resize</span><span class="p">(</span><span class="mi">256</span><span class="p">,</span> <span class="nn">Vec</span><span class="p">::</span><span class="nf">new</span><span class="p">());</span>
+        <span class="n">boxes</span>
+    <span class="p">};</span>
+
+    <span class="n">data</span><span class="nf">.split</span><span class="p">(</span><span class="sc">','</span><span class="p">)</span>
+        <span class="nf">.map</span><span class="p">(</span><span class="nn">str</span><span class="p">::</span><span class="n">trim</span><span class="p">)</span>
+        <span class="nf">.map</span><span class="p">(|</span><span class="n">step</span><span class="p">|</span> <span class="p">{</span>
+            <span class="n">step</span><span class="nf">.split_once</span><span class="p">(</span><span class="sc">'='</span><span class="p">)</span>
+                <span class="nf">.map</span><span class="p">(|(</span><span class="n">label</span><span class="p">,</span> <span class="n">value</span><span class="p">)|</span> <span class="p">(</span><span class="n">label</span><span class="p">,</span> <span class="nf">Some</span><span class="p">(</span><span class="n">value</span><span class="py">.parse</span><span class="p">::</span><span class="o">&lt;</span><span class="nb">usize</span><span class="o">&gt;</span><span class="p">()</span><span class="nf">.unwrap</span><span class="p">())))</span>
+                <span class="nf">.or_else</span><span class="p">(||</span> <span class="n">step</span><span class="nf">.strip_suffix</span><span class="p">(</span><span class="sc">'-'</span><span class="p">)</span><span class="nf">.map</span><span class="p">(|</span><span class="n">label</span><span class="p">|</span> <span class="p">(</span><span class="n">label</span><span class="p">,</span> <span class="nb">None</span><span class="p">)))</span>
+                <span class="nf">.unwrap</span><span class="p">()</span>
+        <span class="p">})</span>
+        <span class="nf">.fold</span><span class="p">(</span><span class="nf">init_boxes</span><span class="p">(),</span> <span class="p">|</span><span class="k">mut</span> <span class="n">boxes</span><span class="p">,</span> <span class="p">(</span><span class="n">label</span><span class="p">,</span> <span class="n">value</span><span class="p">)|</span> <span class="p">{</span>
+            <span class="k">let</span> <span class="n">box_</span> <span class="o">=</span> <span class="o">&amp;</span><span class="k">mut</span> <span class="n">boxes</span><span class="p">[</span><span class="nf">hash</span><span class="p">(</span><span class="n">label</span><span class="p">)];</span>
+            <span class="k">let</span> <span class="n">idx</span> <span class="o">=</span> <span class="n">box_</span><span class="nf">.iter</span><span class="p">()</span><span class="nf">.position</span><span class="p">(|(</span><span class="n">other</span><span class="p">,</span> <span class="n">_</span><span class="p">)|</span> <span class="n">other</span> <span class="o">==</span> <span class="o">&amp;</span><span class="n">label</span><span class="p">);</span>
+            <span class="k">match</span> <span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">idx</span><span class="p">)</span> <span class="p">{</span>
+                <span class="p">(</span><span class="nf">Some</span><span class="p">(</span><span class="n">value</span><span class="p">),</span> <span class="nf">Some</span><span class="p">(</span><span class="n">idx</span><span class="p">))</span> <span class="k">=&gt;</span> <span class="n">box_</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">label</span><span class="p">,</span> <span class="n">value</span><span class="p">),</span>
+                <span class="p">(</span><span class="nf">Some</span><span class="p">(</span><span class="n">value</span><span class="p">),</span> <span class="n">_</span><span class="p">)</span> <span class="k">=&gt;</span> <span class="n">box_</span><span class="nf">.push</span><span class="p">((</span><span class="n">label</span><span class="p">,</span> <span class="n">value</span><span class="p">)),</span>
+                <span class="p">(</span><span class="n">_</span><span class="p">,</span> <span class="nf">Some</span><span class="p">(</span><span class="n">idx</span><span class="p">))</span> <span class="k">=&gt;</span> <span class="n">_</span> <span class="o">=</span> <span class="n">box_</span><span class="nf">.remove</span><span class="p">(</span><span class="n">idx</span><span class="p">),</span>
+                <span class="n">_</span> <span class="k">=&gt;</span> <span class="p">(),</span>
+            <span class="p">}</span>
+            <span class="n">boxes</span>
+        <span class="p">})</span>
+        <span class="nf">.iter</span><span class="p">()</span>
+        <span class="nf">.enumerate</span><span class="p">()</span>
+        <span class="nf">.map</span><span class="p">(|(</span><span class="n">box_no</span><span class="p">,</span> <span class="n">box_</span><span class="p">)|</span> <span class="p">{</span>
+            <span class="n">box_</span><span class="nf">.iter</span><span class="p">()</span>
+                <span class="nf">.enumerate</span><span class="p">()</span>
+                <span class="nf">.map</span><span class="p">(|(</span><span class="n">lens_no</span><span class="p">,</span> <span class="o">&amp;</span><span class="p">(</span><span class="n">_</span><span class="p">,</span> <span class="n">value</span><span class="p">))|</span> <span class="p">(</span><span class="n">box_no</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">lens_no</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">value</span><span class="p">)</span>
+                <span class="py">.sum</span><span class="p">::</span><span class="o">&lt;</span><span class="nb">usize</span><span class="o">&gt;</span><span class="p">()</span>
+        <span class="p">})</span>
+        <span class="nf">.sum</span><span class="p">()</span>
+<span class="p">}</span>
+</pre></td></tr></tbody></table></code></pre>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_tests_15">Tests</h3>
+<div class="paragraph">
+<p>Only created after the puzzle was solved today.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight"><code data-lang="rust"><table class="linenotable"><tbody><tr><td class="linenos gl"><pre class="lineno"> 1
+ 2
+ 3
+ 4
+ 5
+ 6
+ 7
+ 8
+ 9
+10
+11
+12
+13
+14
+15
+16
+</pre></td><td class="code"><pre><span class="nd">#[cfg(test)]</span>
+<span class="k">mod</span> <span class="n">tests</span> <span class="p">{</span>
+    <span class="k">use</span> <span class="k">super</span><span class="p">::</span><span class="o">*</span><span class="p">;</span>
+
+    <span class="k">const</span> <span class="n">CONTENT</span><span class="p">:</span> <span class="o">&amp;</span><span class="nb">str</span> <span class="o">=</span> <span class="s">r#"rn=1,cm-,qp=3,cm=2,qp-,pc=4,ot=9,ab=5,pc-,pc=6,ot=7"#</span><span class="p">;</span>
+
+    <span class="nd">#[test]</span>
+    <span class="k">pub</span> <span class="k">fn</span> <span class="nf">test_star_1</span><span class="p">()</span> <span class="p">{</span>
+        <span class="nd">assert_eq!</span><span class="p">(</span><span class="mi">1_320</span><span class="p">,</span> <span class="nf">star_1</span><span class="p">(</span><span class="n">CONTENT</span><span class="p">));</span>
+    <span class="p">}</span>
+
+    <span class="nd">#[test]</span>
+    <span class="k">pub</span> <span class="k">fn</span> <span class="nf">test_star_2</span><span class="p">()</span> <span class="p">{</span>
+        <span class="nd">assert_eq!</span><span class="p">(</span><span class="mi">145</span><span class="p">,</span> <span class="nf">star_2</span><span class="p">(</span><span class="n">CONTENT</span><span class="p">));</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</pre></td></tr></tbody></table></code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p><a href="#top">Top</a></p>
+</div>
+</div>
+</div>
+</div>
 </div>
 <div id="footer">
     <div id="footer-text">
-        Generated from <a href="https://github.com/mr-kaffee/aoc-2023/">github.com/mr-kaffee/aoc-2023/</a> on 2023-12-14 22:18:01 UTC
+        Generated from <a href="https://github.com/mr-kaffee/aoc-2023/">github.com/mr-kaffee/aoc-2023/</a> on 2023-12-15 07:09:27 UTC
         with <a href="https://asciidoctor.org">asciidoctor</a>.
     </div>
 </div>
