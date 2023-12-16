@@ -1,0 +1,75 @@
+#!/bin/bash
+
+# check inputs are provided
+if [ -z $1 ]; then 
+    echo "USAGE: $0 <day> [<session-cookie-file>]"
+    exit 1
+fi
+
+# year and day
+year=2023
+day=$(printf "%d" "$1")
+if [ $? -ne 0 ] || [ $day -lt 1 ] || [ $day -gt 25 ]; then
+    echo "Illegal day: '$1', expected 1 <= day <= 25."
+    exit 1
+fi
+
+# two-digit zero padded day
+day2=$(printf "%02d" "${day}")
+
+# check whether input is available (5:00 UTC)
+if [[ $(date -u +%Y-%m-%d-%H) < "${year}-12-${day2}-05" ]]; then
+    echo "Too early for input for day '$day'."
+    exit 1
+fi
+
+# directory of script
+script_dir=$(dirname "$0")
+
+# locate session cookie file
+if [ ! -z "$2" ]; then
+    # use session cookie file from argument, if it exists
+    if [ -f "$2" ]; then
+        cookie_file=$2
+    else
+        echo "Could not locate session cookie file."
+        exit 1
+    fi
+elif [ -f "$SESSION_COOKIE_FILE" ]; then 
+    # use SESSION_COOKIE_FILE environment variable
+    cookie_file="${SESSION_COOKIE_FILE}"
+elif [ -f "${script_dir}/session.cookie" ]; then 
+    # use session.cookie in script directory
+    cookie_file="${script_dir}/session.cookie"
+elif [ -f "$(pwd)/session.cookie" ]; then 
+    # use session.cookie in current directory
+    cookie_file="$(pwd)/session.cookie"
+else
+    echo "Could not locate session cookie file."
+    exit 1
+fi
+
+# load session cookie
+cookie=$(cat "${cookie_file}" | head -c 128)
+pattern="^[0-9a-fA-F]{128}$"
+if ! [[ ${cookie} =~ $pattern ]]; then
+    echo "Invalid contents in cookie file '${cookie_file}'. Expected 512 bits hex encoded."
+    exit 1
+fi
+
+# input url
+url="https://adventofcode.com/${year}/day/${day}/input"
+
+# destination file
+out_file="${script_dir}/inputs/input${day2}"
+if [ -f "${out_file}" ]; then
+    echo "Output file '${out_file}' exists. Delete it first."
+    exit 1
+fi
+
+# load using curl
+curl -o ${out_file} -b "session=${cookie}" ${url}
+if [ $? -ne 0 ]; then
+    echo "Could not download input."
+    exit 1
+fi
