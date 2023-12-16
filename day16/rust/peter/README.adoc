@@ -1,0 +1,41 @@
+== Rust | Day 16: The Floor Will Be Lava
+
+https://rust-lang.org[Rust] solution to https://adventofcode.com/2023/day/16[AoC|2023|16].
+
+=== Input
+
+Forward the input data together with grid width and height.
+
+[source,rust,numbered]
+----
+include::src/lib.rs[tags=input]
+----
+
+=== Star 1
+
+I implemented a depth first search to let the beam of light traverse the contraption. Breadth first search would have worked just as well, but pushing to and popping from the tail using a `Vec` is much faster than pushing to one end and popping from the other in a `VecDeque`.
+
+The state of the search space includes a heading, so a tile is only to be considered seen if there was a beam at the same tile and in the same direction.
+
+Key to performance is: avoid using `HashMap`, `HashSet`, `VecDeque`, ...
+
+[source,rust,numbered]
+----
+include::src/lib.rs[tags=star_1]
+----
+
+=== Star 2
+
+I did not have a good idea to implement anything but linear search. And, looking at the time it takes to count energized tiles for one starting position/heading, linear search is good enough.
+
+[source,rust,numbered]
+----
+include::src/lib.rs[tags=star_2]
+----
+
+=== Tests
+
+[source,rust,numbered]
+----
+include::src/lib.rs[tags=tests]
+----

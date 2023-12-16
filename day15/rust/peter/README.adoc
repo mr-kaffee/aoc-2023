@@ -17,7 +17,7 @@ A bit of reading comprehension, mostly.
 
 The input is parsed into pairs of a label and an optional value on the fly.
 
-Each box is actually kind of a hash map. Because insertion order needs to be preserved, I cannot just simply use rust's hash map. I guess `Vec` is faster anyhow.
+The vec of boxes is essentially a hash map, each box inside is a bucket of values that produce the same hash. The algorithm to apply for collision resolution is probably something like link::https://en.wikipedia.org/wiki/Hash_table#Separate_chaining[separate chaining], but link::https://rust-unofficial.github.io/too-many-lists/[linked lists] are no fun.
 
 [source,rust,numbered]
 ----
