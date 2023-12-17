@@ -1,0 +1,43 @@
+== Rust | Day 17: Clumsy Crucible
+
+https://rust-lang.org[Rust] solution to https://adventofcode.com/2023/day/17[AoC|2023|17].
+
+=== Input
+
+Another grid with width and height.
+
+[source,rust,numbered]
+----
+include::src/lib.rs[tags=input]
+----
+
+=== Stars 1 & 2
+
+It is time for Dijkstra and A*!
+
+My initial solution for part 1 did use a simpler algorithm, that settled a node once expanded (see <<Initial Solution for Star 1>>). This approach failed for part 2. Since the more general algorithm implemented in `minimize_loss` for part 2 works for part 1 as well, I use it for both parts.
+
+The state of the search space consists of the position in the grid, the current heading and the number of steps since heading changed. Any change of one of these will have an impact on which part of the grid is reachable at which cost.
+
+As a lower bound for the cost to go, I use the minimum cost that would be possible without any constraints on changing direction. This is calculated in `loss_bounds`. This A* heuristic reduced the runtime quite a bit.
+
+[source,rust,numbered]
+----
+include::src/lib.rs[tags=solution]
+----
+
+=== Initial Solution for Star 1
+
+Here is the initial solution for part 1. It is enabled using feature `initial-star-1`. The performance is comparable to the A* solution.
+
+[source,rust,numbered]
+----
+include::src/lib.rs[tags=star_1]
+----
+
+=== Tests
+
+[source,rust,numbered]
+----
+include::src/lib.rs[tags=tests]
+----
