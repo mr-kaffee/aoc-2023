@@ -1,0 +1,31 @@
+== Rust | Day 18: Lavaduct Lagoon
+
+https://rust-lang.org[Rust] solution to https://adventofcode.com/2023/day/18[AoC|2023|18].
+
+=== Star 1
+
+On 10, we already calculated the surface enclosed in a polygon. Back then I scanned the complete grid line by line.
+Today, it is time for the https://en.wikipedia.org/wiki/Shoelace_formula[Shoelace formula]. I quickly looked at it already when solving day 10.
+
+The only part that requires some thinking is how to account for the fact that the coordinates represent lines of width 1. The shoelace formula gives the area, that we would get if we had zero-width lines centered in the actual lines. So we have to add half of the number of elements on the perimeter. For the corners, if we walk across the perimeter clockwise, a right turn will contribute three quarters of a unit while a left turn will contribute one quarter of a unit. Since we end up at the origin, there must be a right turn for every left turn plus an additional four right turns. Hence, I need to add one unit.
+
+[source,rust,numbered]
+----
+include::src/lib.rs[tags=star_1]
+----
+
+=== Star 2
+
+Same as star 1.
+
+[source,rust,numbered]
+----
+include::src/lib.rs[tags=star_2]
+----
+
+=== Tests
+
+[source,rust,numbered]
+----
+include::src/lib.rs[tags=tests]
+----
