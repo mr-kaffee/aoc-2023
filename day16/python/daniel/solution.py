@@ -1,5 +1,6 @@
-from dataclasses import dataclass
 from collections import deque
+from dataclasses import dataclass
+
 
 @dataclass(frozen=True)
 class Vec:
@@ -75,11 +76,11 @@ def solve_part_one(data: list[str], start: tuple[Vec, Vec]) -> int:
 def solve_part_two(data: list[str]) -> int:
     results: list[int] = []
 
-    for i,_ in enumerate(data):
+    for i in range(len(data)):
         results.append(solve_part_one(data, (Vec(i, 0), Vec(0, 1))))
         results.append(solve_part_one(data, (Vec(i, len(data[0])-1), Vec(0, -1))))
 
-    for j,_ in enumerate(data[0]):
+    for j in range(len(data[0])):
         results.append(solve_part_one(data, (Vec(0, j), Vec(1, 0))))
         results.append(solve_part_one(data, (Vec(len(data)-1, j), Vec(-1, 0))))
 
