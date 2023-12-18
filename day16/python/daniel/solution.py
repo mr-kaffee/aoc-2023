@@ -47,6 +47,7 @@ def get_new_directions(data: list[str], pos: Vec, dir: Vec) -> list[Vec]:
     
     return result
 
+
 def update_head_position(data: list[str], pos: Vec, dir: Vec, visited: set[tuple[Vec, Vec]]) -> Vec | None:
     new_pos = pos + dir
     if not in_bounds(data, new_pos) or (new_pos, dir) in visited:
@@ -55,10 +56,9 @@ def update_head_position(data: list[str], pos: Vec, dir: Vec, visited: set[tuple
         return new_pos
 
 
-
-def solve_part_one(data: list[str]) -> None:
+def solve_part_one(data: list[str], start: tuple[Vec, Vec]) -> int:
     b = Beam(deque(), set())
-    b.heads.append( (Vec(0,0), Vec(0,1)) )
+    b.heads.append(start)
 
     while b.heads:
         h = b.heads.popleft()
@@ -72,9 +72,24 @@ def solve_part_one(data: list[str]) -> None:
     result = set()
     for v in b.visited:
         result.add(v[0])
-    print(f"Solution part one: {len(result)}")
+    return len(result)
+
+
+def solve_part_two(data: list[str]) -> int:
+    results: list[int] = []
+
+    for i,_ in enumerate(data):
+        results.append(solve_part_one(data, (Vec(i, 0), Vec(0, 1))))
+        results.append(solve_part_one(data, (Vec(i, len(data[0])-1), Vec(0, -1))))
+
+    for j,_ in enumerate(data[0]):
+        results.append(solve_part_one(data, (Vec(0, j), Vec(1, 0))))
+        results.append(solve_part_one(data, (Vec(len(data)-1, j), Vec(-1, 0))))
+
+    return max(results)
 
 
 if __name__ == "__main__":
     data = get_data("../../../inputs/input16.txt")
-    solve_part_one(data)
+    print(f"Solution part one: {solve_part_one(data, (Vec(0,0), Vec(0,1)))}")
+    print(f"Solution part one: {solve_part_two(data)}")
