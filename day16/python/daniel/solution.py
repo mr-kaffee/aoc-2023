@@ -69,10 +69,7 @@ def solve_part_one(data: list[str], start: tuple[Vec, Vec]) -> int:
             if (new_pos := update_head_position(data, h[0], d, b.visited)) is not None:
                 b.heads.append((new_pos, d))
 
-    result = set()
-    for v in b.visited:
-        result.add(v[0])
-    return len(result)
+    return len(set(v[0] for v in b.visited))
 
 
 def solve_part_two(data: list[str]) -> int:
