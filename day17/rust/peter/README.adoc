@@ -15,24 +15,46 @@ include::src/lib.rs[tags=input]
 
 It is time for Dijkstra and A*!
 
-My initial solution for part 1 did use a simpler algorithm, that settled a node once expanded (see <<Initial Solution for Star 1>>). This approach failed for part 2. Since the more general algorithm implemented in `minimize_loss` for part 2 works for part 1 as well, I use it for both parts.
+We need to navigate crucibles on a path that minimizes heat loss. each block of the grid has a heat loss associated to it. The specialty of the problem is that the crucible is constrained in its movement: it needs to advance a minimum number straight before it stops or changes direction and it must not move more than a maximum number of blocks in a straight line before it changes direction.
 
-The state of the search space consists of the position in the grid, the current heading and the number of steps since heading changed. Any change of one of these will have an impact on which part of the grid is reachable at which cost.
+Obviously, we cannot just take the location on the map as the graph's nodes. There is at least two ways to model the graph for the problem:
 
-As a lower bound for the cost to go, I use the minimum cost that would be possible without any constraints on changing direction. This is calculated in `loss_bounds`. This A* heuristic reduced the runtime quite a bit.
+* Nodes are defined by location, current heading, and steps since last change of heading; any node that can be reached by by changing direction (if allowed) and moving the minimum number of steps or moving 1 step in the same direction (if allowed) is an adjacent
+* Nodes are defined by location and current heading; any node that can be reached by changing direction and moving any valid number of steps is an adjacent
+
+I came up with the first variant myself and found out about the second variant reading about solution ideas of others.
+
+Since the number of steps since the last change of heading is part of a node's description in the first variant, there is a single unique predecessor for every node in the graph. This implies that we will never reach a node with any lower cost then the cost assigned to it when we first reached it. We can thus use a simplified version of Dijkstra, where nodes are settled upon expansion, instead of only settling nodes when they are popped from the queue.
+
+The second variant has a much smaller search space (allowing for a Dijkstra implementation without sets or maps), since the number of steps is not included. However, we will in general reach the same node several times and the cost is not guaranteed to be the lowest the first time. As an example, consider the situation below, where the node on the top-right is first reached from x with a cost of 43. Only after the nodes labeled with the weights [11] and [15] are expanded, the same node is reached a second time with a cost of 27 < 43.
+
+```             
+       (7)    (43)
+        v       v
+X 2 2 2 1 9 9 9 9 < [27]
+        1       1
+        1       1
+        1       1
+ [11] > 1 1 1 1 1 < [15]
+```
+
+As a lower bound for the cost to go, I use the minimum cost that would be possible without any constraints on changing direction. This is calculated in `loss_bounds`. This A* heuristic reduced the runtime quite a bit. The heuristic is on by default. It can be switched off with the feature `no-heuristic`.
 
 [source,rust,numbered]
 ----
-include::src/lib.rs[tags=solution]
+include::src/lib.rs[tags=loss_bounds]
 ----
 
-=== Initial Solution for Star 1
-
-Here is the initial solution for part 1. It is enabled using feature `initial-star-1`. The performance is comparable to the A* solution.
+I implemented both variants. Since the second options requires less run-time, I chose this as default. The first variant can be chosen using feature `settle-early`.
 
 [source,rust,numbered]
 ----
-include::src/lib.rs[tags=star_1]
+include::src/lib.rs[tags=settle-early]
+----
+
+[source,rust,numbered]
+----
+include::src/lib.rs[tags=greedy-expand]
 ----
 
 === Tests
