@@ -1,0 +1,35 @@
+== Rust | Day 19: Aplenty
+
+https://rust-lang.org[Rust] solution to https://adventofcode.com/2023/day/19[AoC|2023|19].
+
+=== Input
+
+Input parsing was a bit tedious today. Maybe regex would have worked faster here, but I still only use standard library.
+
+[source,rust,numbered]
+----
+include::src/lib.rs[tags=input]
+----
+
+=== Star 1
+
+Just recurse through the workflows until a part is accepted or rejected. Recursion is done using a `successors` iterator. 
+
+[source,rust,numbered]
+----
+include::src/lib.rs[tags=star_1]
+----
+
+=== Star 2
+
+[source,rust,numbered]
+----
+include::src/lib.rs[tags=star_2]
+----
+
+=== Tests
+
+[source,rust,numbered]
+----
+include::src/lib.rs[tags=tests]
+----

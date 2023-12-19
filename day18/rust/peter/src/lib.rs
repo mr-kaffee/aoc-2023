@@ -1,7 +1,7 @@
 use std::fs::read_to_string;
 
 // tag::prelude[]
-pub const IDENTIFIER: &str = "2023/17";
+pub const IDENTIFIER: &str = "2023/18";
 
 pub type SolT = isize;
 pub type InputT<'a> = &'a str;
