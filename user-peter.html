@@ -184,7 +184,6 @@
 <ul class="sectlevel2">
 <li><a href="#_input_14">Input</a></li>
 <li><a href="#_stars_1_2">Stars 1 &amp; 2</a></li>
-<li><a href="#_initial_solution_for_star_1">Initial Solution for Star 1</a></li>
 <li><a href="#_tests_17">Tests</a></li>
 </ul>
 </li>
@@ -5980,248 +5979,43 @@ O.#..O.#.#
 <p>It is time for Dijkstra and A*!</p>
 </div>
 <div class="paragraph">
-<p>My initial solution for part 1 did use a simpler algorithm, that settled a node once expanded (see <a href="#_initial_solution_for_star_1">Initial Solution for Star 1</a>). This approach failed for part 2. Since the more general algorithm implemented in <code>minimize_loss</code> for part 2 works for part 1 as well, I use it for both parts.</p>
+<p>We need to navigate crucibles on a path that minimizes heat loss. each block of the grid has a heat loss associated to it. The specialty of the problem is that the crucible is constrained in its movement: it needs to advance a minimum number straight before it stops or changes direction and it must not move more than a maximum number of blocks in a straight line before it changes direction.</p>
 </div>
 <div class="paragraph">
-<p>The state of the search space consists of the position in the grid, the current heading and the number of steps since heading changed. Any change of one of these will have an impact on which part of the grid is reachable at which cost.</p>
+<p>Obviously, we cannot just take the location on the map as the graph&#8217;s nodes. There is at least two ways to model the graph for the problem:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Nodes are defined by location, current heading, and steps since last change of heading; any node that can be reached by by changing direction (if allowed) and moving the minimum number of steps or moving 1 step in the same direction (if allowed) is an adjacent</p>
+</li>
+<li>
+<p>Nodes are defined by location and current heading; any node that can be reached by changing direction and moving any valid number of steps is an adjacent</p>
+</li>
+</ul>
 </div>
 <div class="paragraph">
-<p>As a lower bound for the cost to go, I use the minimum cost that would be possible without any constraints on changing direction. This is calculated in <code>loss_bounds</code>. This A* heuristic reduced the runtime quite a bit.</p>
+<p>I came up with the first variant myself and found out about the second variant reading about solution ideas of others.</p>
+</div>
+<div class="paragraph">
+<p>Since the number of steps since the last change of heading is part of a node&#8217;s description in the first variant, there is a single unique predecessor for every node in the graph. This implies that we will never reach a node with any lower cost then the cost assigned to it when we first reached it. We can thus use a simplified version of Dijkstra, where nodes are settled upon expansion, instead of only settling nodes when they are popped from the queue.</p>
+</div>
+<div class="paragraph">
+<p>The second variant has a much smaller search space (allowing for a Dijkstra implementation without sets or maps), since the number of steps is not included. However, we will in general reach the same node several times and the cost is not guaranteed to be the lowest the first time. As an example, consider the situation below, where the node on the top-right is first reached from x with a cost of 43. Only after the nodes labeled with the weights [11] and [15] are expanded, the same node is reached a second time with a cost of 27 &lt; 43.</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="rouge highlight"><code data-lang="rust"><table class="linenotable"><tbody><tr><td class="linenos gl"><pre class="lineno">  1
-  2
-  3
-  4
-  5
-  6
-  7
-  8
-  9
- 10
- 11
- 12
- 13
- 14
- 15
- 16
- 17
- 18
- 19
- 20
- 21
- 22
- 23
- 24
- 25
- 26
- 27
- 28
- 29
- 30
- 31
- 32
- 33
- 34
- 35
- 36
- 37
- 38
- 39
- 40
- 41
- 42
- 43
- 44
- 45
- 46
- 47
- 48
- 49
- 50
- 51
- 52
- 53
- 54
- 55
- 56
- 57
- 58
- 59
- 60
- 61
- 62
- 63
- 64
- 65
- 66
- 67
- 68
- 69
- 70
- 71
- 72
- 73
- 74
- 75
- 76
- 77
- 78
- 79
- 80
- 81
- 82
- 83
- 84
- 85
- 86
- 87
- 88
- 89
- 90
- 91
- 92
- 93
- 94
- 95
- 96
- 97
- 98
- 99
-100
-101
-102
-103
-104
-105
-106
-107
-108
-109
-110
-111
-112
-</pre></td><td class="code"><pre><span class="k">const</span> <span class="n">D</span><span class="p">:</span> <span class="p">[(</span><span class="nb">isize</span><span class="p">,</span> <span class="nb">isize</span><span class="p">);</span> <span class="mi">4</span><span class="p">]</span> <span class="o">=</span> <span class="p">[(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">),</span> <span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)];</span>
-
-<span class="k">pub</span> <span class="k">fn</span> <span class="nf">loss_bounds</span><span class="p">(</span><span class="n">grid</span><span class="p">:</span> <span class="o">&amp;</span><span class="p">[</span><span class="nb">u8</span><span class="p">],</span> <span class="n">w</span><span class="p">:</span> <span class="nb">usize</span><span class="p">,</span> <span class="n">h</span><span class="p">:</span> <span class="nb">usize</span><span class="p">)</span> <span class="k">-&gt;</span> <span class="nb">Vec</span><span class="o">&lt;</span><span class="n">SolT</span><span class="o">&gt;</span> <span class="p">{</span>
-    <span class="k">let</span> <span class="n">target</span> <span class="o">=</span> <span class="p">(</span><span class="n">w</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="n">h</span> <span class="o">-</span> <span class="mi">1</span><span class="p">);</span>
-    <span class="k">let</span> <span class="n">target_cost</span> <span class="o">=</span> <span class="o">!</span><span class="p">((</span><span class="n">grid</span><span class="p">[(</span><span class="n">w</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">h</span> <span class="o">-</span> <span class="mi">2</span><span class="p">]</span> <span class="o">-</span> <span class="sc">b'0'</span><span class="p">)</span> <span class="k">as</span> <span class="n">SolT</span><span class="p">);</span>
-    <span class="k">let</span> <span class="k">mut</span> <span class="n">bounds</span> <span class="o">=</span> <span class="nd">vec!</span><span class="p">[</span><span class="mi">0</span><span class="p">;</span> <span class="n">w</span> <span class="o">*</span> <span class="n">h</span><span class="p">];</span>
-    <span class="n">bounds</span><span class="p">[</span><span class="n">w</span> <span class="o">*</span> <span class="n">h</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">target_cost</span><span class="p">;</span>
-    <span class="c1">// Queue is a max heap! Need to inverse cost (bitwise complement and subtract).</span>
-    <span class="k">let</span> <span class="k">mut</span> <span class="n">queue</span> <span class="o">=</span> <span class="nn">BinaryHeap</span><span class="p">::</span><span class="nf">from</span><span class="p">([(</span><span class="n">target_cost</span><span class="p">,</span> <span class="n">target</span><span class="p">)]);</span>
-    <span class="k">while</span> <span class="k">let</span> <span class="nf">Some</span><span class="p">((</span><span class="n">cost_0</span><span class="p">,</span> <span class="p">(</span><span class="n">c0</span><span class="p">,</span> <span class="n">r0</span><span class="p">)))</span> <span class="o">=</span> <span class="n">queue</span><span class="nf">.pop</span><span class="p">()</span> <span class="p">{</span>
-        <span class="k">for</span> <span class="p">(</span><span class="n">c1</span><span class="p">,</span> <span class="n">r1</span><span class="p">)</span> <span class="k">in</span> <span class="n">D</span>
-            <span class="nf">.map</span><span class="p">(|(</span><span class="n">dc</span><span class="p">,</span> <span class="n">dr</span><span class="p">)|</span> <span class="p">(</span><span class="n">c0</span><span class="nf">.wrapping_add_signed</span><span class="p">(</span><span class="n">dc</span><span class="p">),</span> <span class="n">r0</span><span class="nf">.wrapping_add_signed</span><span class="p">(</span><span class="n">dr</span><span class="p">)))</span>
-            <span class="nf">.into_iter</span><span class="p">()</span>
-            <span class="nf">.filter</span><span class="p">(|</span><span class="o">&amp;</span><span class="p">(</span><span class="n">c1</span><span class="p">,</span> <span class="n">r1</span><span class="p">)|</span> <span class="n">c1</span> <span class="o">&lt;</span> <span class="n">w</span> <span class="o">&amp;&amp;</span> <span class="n">r1</span> <span class="o">&lt;</span> <span class="n">h</span><span class="p">)</span>
-        <span class="p">{</span>
-            <span class="c1">// settle value; this is safe because the cost adder to reach a node</span>
-            <span class="c1">// is the same no matter from which neighbor we reach the node</span>
-            <span class="k">let</span> <span class="n">r</span> <span class="o">=</span> <span class="o">&amp;</span><span class="k">mut</span> <span class="n">bounds</span><span class="p">[</span><span class="n">c1</span> <span class="o">+</span> <span class="n">r1</span> <span class="o">*</span> <span class="n">w</span><span class="p">];</span>
-            <span class="k">if</span> <span class="o">*</span><span class="n">r</span> <span class="o">==</span> <span class="mi">0</span> <span class="p">{</span>
-                <span class="o">*</span><span class="n">r</span> <span class="o">=</span> <span class="n">cost_0</span> <span class="o">-</span> <span class="p">(</span><span class="n">grid</span><span class="p">[</span><span class="n">c1</span> <span class="o">+</span> <span class="n">r1</span> <span class="o">*</span> <span class="p">(</span><span class="n">w</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)]</span> <span class="o">-</span> <span class="sc">b'0'</span><span class="p">)</span> <span class="k">as</span> <span class="n">SolT</span><span class="p">;</span>
-                <span class="n">queue</span><span class="nf">.push</span><span class="p">((</span><span class="o">*</span><span class="n">r</span><span class="p">,</span> <span class="p">(</span><span class="n">c1</span><span class="p">,</span> <span class="n">r1</span><span class="p">)))</span>
-            <span class="p">}</span>
-        <span class="p">}</span>
-    <span class="p">}</span>
-    <span class="c1">// undo reversion and subtract self cost</span>
-    <span class="c1">// (self cost was added in the first place to be able to settle early)</span>
-    <span class="n">bounds</span>
-        <span class="nf">.into_iter</span><span class="p">()</span>
-        <span class="nf">.enumerate</span><span class="p">()</span>
-        <span class="nf">.map</span><span class="p">(|(</span><span class="n">pos</span><span class="p">,</span> <span class="n">b</span><span class="p">)|</span> <span class="k">match</span> <span class="n">grid</span><span class="p">[</span><span class="n">pos</span> <span class="o">+</span> <span class="n">pos</span> <span class="o">/</span> <span class="n">w</span><span class="p">]</span> <span class="p">{</span>
-            <span class="sc">b'.'</span> <span class="k">=&gt;</span> <span class="o">!</span><span class="n">b</span><span class="p">,</span>
-            <span class="n">v</span> <span class="k">=&gt;</span> <span class="o">!</span><span class="n">b</span> <span class="o">-</span> <span class="p">(</span><span class="n">v</span> <span class="o">-</span> <span class="sc">b'0'</span><span class="p">)</span> <span class="k">as</span> <span class="n">SolT</span><span class="p">,</span>
-        <span class="p">})</span>
-        <span class="nf">.collect</span><span class="p">()</span>
-<span class="p">}</span>
-
-<span class="k">pub</span> <span class="k">fn</span> <span class="nf">minimize_loss</span><span class="p">(</span><span class="n">grid</span><span class="p">:</span> <span class="o">&amp;</span><span class="p">[</span><span class="nb">u8</span><span class="p">],</span> <span class="n">w</span><span class="p">:</span> <span class="nb">usize</span><span class="p">,</span> <span class="n">h</span><span class="p">:</span> <span class="nb">usize</span><span class="p">,</span> <span class="n">s_max</span><span class="p">:</span> <span class="nb">u8</span><span class="p">,</span> <span class="n">s_min</span><span class="p">:</span> <span class="nb">u8</span><span class="p">)</span> <span class="k">-&gt;</span> <span class="n">SolT</span> <span class="p">{</span>
-    <span class="k">type</span> <span class="n">NodeT</span> <span class="o">=</span> <span class="p">((</span><span class="nb">usize</span><span class="p">,</span> <span class="nb">usize</span><span class="p">),</span> <span class="p">(</span><span class="nb">u8</span><span class="p">,</span> <span class="nb">u8</span><span class="p">));</span>
-
-    <span class="c1">// A* heuristic</span>
-    <span class="k">let</span> <span class="n">bounds</span> <span class="o">=</span> <span class="nf">loss_bounds</span><span class="p">(</span><span class="n">grid</span><span class="p">,</span> <span class="n">w</span><span class="p">,</span> <span class="n">h</span><span class="p">);</span>
-
-    <span class="c1">// start nodes</span>
-    <span class="k">let</span> <span class="n">starts</span><span class="p">:</span> <span class="o">&amp;</span><span class="p">[</span><span class="n">NodeT</span><span class="p">]</span> <span class="o">=</span> <span class="o">&amp;</span><span class="p">[((</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">s_max</span><span class="p">)),</span> <span class="p">((</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="n">s_max</span><span class="p">))];</span>
-
-    <span class="c1">// target predicate</span>
-    <span class="k">let</span> <span class="n">is_target</span> <span class="o">=</span> <span class="p">|(</span><span class="n">pos</span><span class="p">,</span> <span class="n">_</span><span class="p">):</span> <span class="o">&amp;</span><span class="n">NodeT</span><span class="p">|</span> <span class="n">pos</span> <span class="o">==</span> <span class="o">&amp;</span><span class="p">(</span><span class="n">w</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="n">h</span> <span class="o">-</span> <span class="mi">1</span><span class="p">);</span>
-
-    <span class="c1">// Queue is a max heap! Need to inverse cost (bitwise complement and subtract).</span>
-    <span class="k">let</span> <span class="k">mut</span> <span class="n">queue</span> <span class="o">=</span> <span class="nn">BinaryHeap</span><span class="p">::</span><span class="nf">new</span><span class="p">();</span>
-    <span class="k">let</span> <span class="k">mut</span> <span class="n">costs</span> <span class="o">=</span> <span class="nn">HashMap</span><span class="p">::</span><span class="nf">new</span><span class="p">();</span>
-    <span class="k">let</span> <span class="k">mut</span> <span class="n">settled</span> <span class="o">=</span> <span class="nn">HashSet</span><span class="p">::</span><span class="nf">new</span><span class="p">();</span>
-
-    <span class="c1">// initialize</span>
-    <span class="k">for</span> <span class="o">&amp;</span><span class="p">((</span><span class="n">col</span><span class="p">,</span> <span class="n">row</span><span class="p">),</span> <span class="n">hs</span><span class="p">)</span> <span class="k">in</span> <span class="n">starts</span> <span class="p">{</span>
-        <span class="k">let</span> <span class="n">cost</span> <span class="o">=</span> <span class="o">!</span><span class="mi">0</span> <span class="o">-</span> <span class="n">bounds</span><span class="p">[</span><span class="n">col</span> <span class="o">+</span> <span class="n">row</span> <span class="o">*</span> <span class="n">w</span><span class="p">];</span>
-        <span class="n">queue</span><span class="nf">.push</span><span class="p">((</span><span class="n">cost</span><span class="p">,</span> <span class="p">((</span><span class="n">col</span><span class="p">,</span> <span class="n">row</span><span class="p">),</span> <span class="n">hs</span><span class="p">)));</span>
-        <span class="n">costs</span><span class="nf">.insert</span><span class="p">(((</span><span class="n">col</span><span class="p">,</span> <span class="n">row</span><span class="p">),</span> <span class="n">hs</span><span class="p">),</span> <span class="n">cost</span><span class="p">);</span>
-    <span class="p">}</span>
-
-    <span class="k">while</span> <span class="k">let</span> <span class="nf">Some</span><span class="p">((</span><span class="n">cost_0</span><span class="p">,</span> <span class="n">node_0</span><span class="p">))</span> <span class="o">=</span> <span class="n">queue</span><span class="nf">.pop</span><span class="p">()</span> <span class="p">{</span>
-        <span class="k">if</span> <span class="nf">is_target</span><span class="p">(</span><span class="o">&amp;</span><span class="n">node_0</span><span class="p">)</span> <span class="p">{</span>
-            <span class="k">return</span> <span class="o">!</span><span class="n">cost_0</span><span class="p">;</span>
-        <span class="p">}</span>
-
-        <span class="k">if</span> <span class="o">!</span><span class="n">settled</span><span class="nf">.insert</span><span class="p">(</span><span class="n">node_0</span><span class="p">)</span> <span class="p">{</span>
-            <span class="k">continue</span><span class="p">;</span>
-        <span class="p">}</span>
-
-        <span class="k">let</span> <span class="p">((</span><span class="n">c0</span><span class="p">,</span> <span class="n">r0</span><span class="p">),</span> <span class="p">(</span><span class="n">h0</span><span class="p">,</span> <span class="n">s0</span><span class="p">))</span> <span class="o">=</span> <span class="n">node_0</span><span class="p">;</span>
-        <span class="nd">debug_assert!</span><span class="p">(</span><span class="n">s0</span> <span class="o">&gt;=</span> <span class="n">s_min</span><span class="p">,</span> <span class="s">"s0 &gt;= s_min expected"</span><span class="p">);</span>
-        <span class="k">let</span> <span class="n">dhs</span><span class="p">:</span> <span class="o">&amp;</span><span class="p">[</span><span class="nb">u8</span><span class="p">]</span> <span class="o">=</span> <span class="k">if</span> <span class="n">s0</span> <span class="o">&lt;</span> <span class="n">s_max</span> <span class="p">{</span> <span class="o">&amp;</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">]</span> <span class="p">}</span> <span class="k">else</span> <span class="p">{</span> <span class="o">&amp;</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">]</span> <span class="p">};</span>
-        <span class="k">for</span> <span class="p">(</span><span class="n">weight</span><span class="p">,</span> <span class="p">((</span><span class="n">c1</span><span class="p">,</span> <span class="n">r1</span><span class="p">),</span> <span class="p">(</span><span class="n">h1</span><span class="p">,</span> <span class="n">s1</span><span class="p">)))</span> <span class="k">in</span> <span class="n">dhs</span>
-            <span class="nf">.iter</span><span class="p">()</span>
-            <span class="nf">.map</span><span class="p">(|</span><span class="o">&amp;</span><span class="n">dh</span><span class="p">|</span> <span class="p">((</span><span class="n">h0</span> <span class="o">+</span> <span class="n">dh</span><span class="p">)</span> <span class="o">&amp;</span> <span class="mi">3</span><span class="p">,</span> <span class="k">if</span> <span class="n">dh</span> <span class="o">==</span> <span class="mi">0</span> <span class="p">{</span> <span class="n">s0</span> <span class="p">}</span> <span class="k">else</span> <span class="p">{</span> <span class="mi">0</span> <span class="p">}))</span>
-            <span class="nf">.filter_map</span><span class="p">(|(</span><span class="n">h1</span><span class="p">,</span> <span class="n">s1</span><span class="p">)|</span> <span class="p">{</span>
-                <span class="c1">// move one step or enough to complete s_min, whatever is more</span>
-                <span class="k">let</span> <span class="n">to_go</span> <span class="o">=</span> <span class="mi">1</span><span class="nf">.max</span><span class="p">(</span><span class="n">s_min</span> <span class="o">-</span> <span class="n">s1</span><span class="nf">.min</span><span class="p">(</span><span class="n">s_min</span><span class="p">));</span>
-                <span class="k">let</span> <span class="p">(</span><span class="n">dc</span><span class="p">,</span> <span class="n">dr</span><span class="p">)</span> <span class="o">=</span> <span class="n">D</span><span class="p">[</span><span class="n">h1</span> <span class="k">as</span> <span class="nb">usize</span><span class="p">];</span>
-                <span class="nf">successors</span><span class="p">(</span><span class="nf">Some</span><span class="p">((</span><span class="mi">0</span><span class="p">,</span> <span class="n">c0</span><span class="p">,</span> <span class="n">r0</span><span class="p">)),</span> <span class="p">|(</span><span class="n">weight</span><span class="p">,</span> <span class="n">c</span><span class="p">,</span> <span class="n">r</span><span class="p">)|</span> <span class="p">{</span>
-                    <span class="c1">// return Some - summing weights - while in bounds</span>
-                    <span class="k">let</span> <span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="n">r</span><span class="p">)</span> <span class="o">=</span> <span class="p">(</span><span class="n">c</span><span class="nf">.wrapping_add_signed</span><span class="p">(</span><span class="n">dc</span><span class="p">),</span> <span class="n">r</span><span class="nf">.wrapping_add_signed</span><span class="p">(</span><span class="n">dr</span><span class="p">));</span>
-                    <span class="p">(</span><span class="n">c</span> <span class="o">&lt;</span> <span class="n">w</span> <span class="o">&amp;&amp;</span> <span class="n">r</span> <span class="o">&lt;</span> <span class="n">h</span><span class="p">)</span>
-                        <span class="nf">.then</span><span class="p">(||</span> <span class="p">(</span><span class="n">weight</span> <span class="o">+</span> <span class="p">(</span><span class="n">grid</span><span class="p">[</span><span class="n">c</span> <span class="o">+</span> <span class="n">r</span> <span class="o">*</span> <span class="p">(</span><span class="n">w</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)]</span> <span class="o">-</span> <span class="sc">b'0'</span><span class="p">)</span> <span class="k">as</span> <span class="n">SolT</span><span class="p">,</span> <span class="n">c</span><span class="p">,</span> <span class="n">r</span><span class="p">))</span>
-                <span class="p">})</span>
-                <span class="nf">.nth</span><span class="p">(</span><span class="n">to_go</span> <span class="k">as</span> <span class="n">_</span><span class="p">)</span>
-                <span class="nf">.map</span><span class="p">(|(</span><span class="n">weight</span><span class="p">,</span> <span class="n">c1</span><span class="p">,</span> <span class="n">r1</span><span class="p">)|</span> <span class="p">(</span><span class="n">weight</span><span class="p">,</span> <span class="p">((</span><span class="n">c1</span><span class="p">,</span> <span class="n">r1</span><span class="p">),</span> <span class="p">(</span><span class="n">h1</span><span class="p">,</span> <span class="n">s1</span> <span class="o">+</span> <span class="n">to_go</span><span class="p">))))</span>
-            <span class="p">})</span>
-            <span class="nf">.filter</span><span class="p">(|(</span><span class="n">_</span><span class="p">,</span> <span class="n">node_1</span><span class="p">)|</span> <span class="o">!</span><span class="n">settled</span><span class="nf">.contains</span><span class="p">(</span><span class="n">node_1</span><span class="p">))</span>
-        <span class="p">{</span>
-            <span class="k">let</span> <span class="n">cost_1</span> <span class="o">=</span> <span class="n">cost_0</span> <span class="o">-</span> <span class="n">weight</span> <span class="o">+</span> <span class="n">bounds</span><span class="p">[</span><span class="n">c0</span> <span class="o">+</span> <span class="n">r0</span> <span class="o">*</span> <span class="n">w</span><span class="p">]</span> <span class="o">-</span> <span class="n">bounds</span><span class="p">[</span><span class="n">c1</span> <span class="o">+</span> <span class="n">r1</span> <span class="o">*</span> <span class="n">w</span><span class="p">];</span>
-            <span class="k">let</span> <span class="n">node_1</span> <span class="o">=</span> <span class="p">((</span><span class="n">c1</span><span class="p">,</span> <span class="n">r1</span><span class="p">),</span> <span class="p">(</span><span class="n">h1</span><span class="p">,</span> <span class="n">s1</span><span class="p">));</span>
-
-            <span class="k">let</span> <span class="n">cost</span> <span class="o">=</span> <span class="n">costs</span><span class="nf">.entry</span><span class="p">(</span><span class="n">node_1</span><span class="p">)</span><span class="nf">.or_insert</span><span class="p">(</span><span class="mi">0</span><span class="p">);</span>
-            <span class="k">if</span> <span class="n">cost_1</span> <span class="o">&gt;</span> <span class="o">*</span><span class="n">cost</span> <span class="p">{</span>
-                <span class="o">*</span><span class="n">cost</span> <span class="o">=</span> <span class="n">cost_1</span><span class="p">;</span>
-                <span class="n">queue</span><span class="nf">.push</span><span class="p">((</span><span class="n">cost_1</span><span class="p">,</span> <span class="n">node_1</span><span class="p">));</span>
-            <span class="p">}</span>
-        <span class="p">}</span>
-    <span class="p">}</span>
-
-    <span class="nd">panic!</span><span class="p">(</span><span class="s">"No solution!"</span><span class="p">);</span>
-<span class="p">}</span>
-
-<span class="nd">#[cfg(not(feature</span> <span class="nd">=</span> <span class="s">"initial-star-1"</span><span class="nd">))]</span>
-<span class="k">pub</span> <span class="k">fn</span> <span class="nf">star_1</span><span class="p">(</span><span class="o">&amp;</span><span class="nf">PuzzleData</span><span class="p">(</span><span class="n">grid</span><span class="p">,</span> <span class="n">w</span><span class="p">,</span> <span class="n">h</span><span class="p">):</span> <span class="o">&amp;</span><span class="n">PuzzleData</span><span class="p">)</span> <span class="k">-&gt;</span> <span class="n">SolT</span> <span class="p">{</span>
-    <span class="nf">minimize_loss</span><span class="p">(</span><span class="n">grid</span><span class="p">,</span> <span class="n">w</span><span class="p">,</span> <span class="n">h</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
-<span class="p">}</span>
-
-<span class="k">pub</span> <span class="k">fn</span> <span class="nf">star_2</span><span class="p">(</span><span class="o">&amp;</span><span class="nf">PuzzleData</span><span class="p">(</span><span class="n">grid</span><span class="p">,</span> <span class="n">w</span><span class="p">,</span> <span class="n">h</span><span class="p">):</span> <span class="o">&amp;</span><span class="n">PuzzleData</span><span class="p">)</span> <span class="k">-&gt;</span> <span class="n">SolT</span> <span class="p">{</span>
-    <span class="nf">minimize_loss</span><span class="p">(</span><span class="n">grid</span><span class="p">,</span> <span class="n">w</span><span class="p">,</span> <span class="n">h</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">4</span><span class="p">)</span>
-<span class="p">}</span>
-</pre></td></tr></tbody></table></code></pre>
+<pre class="rouge highlight"><code>       (7)    (43)
+        v       v
+X 2 2 2 1 9 9 9 9 &lt; [27]
+        1       1
+        1       1
+        1       1
+ [11] &gt; 1 1 1 1 1 &lt; [15]</code></pre>
 </div>
 </div>
-</div>
-<div class="sect2">
-<h3 id="_initial_solution_for_star_1">Initial Solution for Star 1</h3>
 <div class="paragraph">
-<p>Here is the initial solution for part 1. It is enabled using feature <code>initial-star-1</code>. The performance is comparable to the A* solution.</p>
+<p>As a lower bound for the cost to go, I use the minimum cost that would be possible without any constraints on changing direction. This is calculated in <code>loss_bounds</code>. This A* heuristic reduced the runtime quite a bit. The heuristic is on by default. It can be switched off with the feature <code>no-heuristic</code>.</p>
 </div>
 <div class="listingblock">
 <div class="content">
@@ -6256,36 +6050,331 @@ O.#..O.#.#
 29
 30
 31
-</pre></td><td class="code"><pre><span class="nd">#[cfg(feature</span> <span class="nd">=</span> <span class="s">"initial-star-1"</span><span class="nd">)]</span>
-<span class="k">pub</span> <span class="k">fn</span> <span class="nf">star_1</span><span class="p">(</span><span class="o">&amp;</span><span class="nf">PuzzleData</span><span class="p">(</span><span class="n">grid</span><span class="p">,</span> <span class="n">w</span><span class="p">,</span> <span class="n">h</span><span class="p">):</span> <span class="o">&amp;</span><span class="n">PuzzleData</span><span class="p">)</span> <span class="k">-&gt;</span> <span class="n">SolT</span> <span class="p">{</span>
-    <span class="k">type</span> <span class="n">NodeT</span> <span class="o">=</span> <span class="p">((</span><span class="nb">usize</span><span class="p">,</span> <span class="nb">usize</span><span class="p">),</span> <span class="p">(</span><span class="nb">u8</span><span class="p">,</span> <span class="nb">u8</span><span class="p">));</span>
+32
+33
+34
+35
+36
+37
+38
+</pre></td><td class="code"><pre><span class="nd">#[cfg(not(feature</span> <span class="nd">=</span> <span class="s">"no-heuristic"</span><span class="nd">))]</span>
+<span class="k">fn</span> <span class="nf">loss_bounds</span><span class="p">(</span><span class="n">grid</span><span class="p">:</span> <span class="o">&amp;</span><span class="p">[</span><span class="nb">u8</span><span class="p">],</span> <span class="n">w</span><span class="p">:</span> <span class="nb">usize</span><span class="p">,</span> <span class="n">h</span><span class="p">:</span> <span class="nb">usize</span><span class="p">)</span> <span class="k">-&gt;</span> <span class="nb">Vec</span><span class="o">&lt;</span><span class="n">SolT</span><span class="o">&gt;</span> <span class="p">{</span>
+    <span class="k">use</span> <span class="nn">std</span><span class="p">::</span><span class="nn">collections</span><span class="p">::</span><span class="n">BinaryHeap</span><span class="p">;</span>
 
-    <span class="k">let</span> <span class="n">start</span> <span class="o">=</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">);</span>
     <span class="k">let</span> <span class="n">target</span> <span class="o">=</span> <span class="p">(</span><span class="n">w</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="n">h</span> <span class="o">-</span> <span class="mi">1</span><span class="p">);</span>
-    <span class="k">let</span> <span class="k">mut</span> <span class="n">seen</span> <span class="o">=</span> <span class="nn">HashSet</span><span class="p">::</span><span class="o">&lt;</span><span class="n">NodeT</span><span class="o">&gt;</span><span class="p">::</span><span class="nf">new</span><span class="p">();</span>
-    <span class="k">let</span> <span class="k">mut</span> <span class="n">queue</span> <span class="o">=</span> <span class="nn">BinaryHeap</span><span class="p">::</span><span class="o">&lt;</span><span class="p">(</span><span class="n">SolT</span><span class="p">,</span> <span class="n">NodeT</span><span class="p">)</span><span class="o">&gt;</span><span class="p">::</span><span class="nf">from</span><span class="p">([(</span><span class="o">!</span><span class="mi">0</span><span class="p">,</span> <span class="p">(</span><span class="n">start</span><span class="p">,</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">)))]);</span>
-    <span class="k">while</span> <span class="k">let</span> <span class="nf">Some</span><span class="p">((</span><span class="n">loss</span><span class="p">,</span> <span class="p">((</span><span class="n">c0</span><span class="p">,</span> <span class="n">r0</span><span class="p">),</span> <span class="p">(</span><span class="n">h0</span><span class="p">,</span> <span class="n">s0</span><span class="p">))))</span> <span class="o">=</span> <span class="n">queue</span><span class="nf">.pop</span><span class="p">()</span> <span class="p">{</span>
-        <span class="k">if</span> <span class="p">(</span><span class="n">c0</span><span class="p">,</span> <span class="n">r0</span><span class="p">)</span> <span class="o">==</span> <span class="n">target</span> <span class="p">{</span>
-            <span class="k">return</span> <span class="o">!</span><span class="n">loss</span><span class="p">;</span>
+    <span class="k">let</span> <span class="k">mut</span> <span class="n">bounds</span> <span class="o">=</span> <span class="nd">vec!</span><span class="p">[</span><span class="nn">SolT</span><span class="p">::</span><span class="n">MAX</span><span class="p">;</span> <span class="n">w</span> <span class="o">*</span> <span class="n">h</span><span class="p">];</span>
+    <span class="n">bounds</span><span class="p">[</span><span class="n">w</span> <span class="o">*</span> <span class="n">h</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+    <span class="c1">// queue is a max heap! Need to inverse cost.</span>
+    <span class="k">let</span> <span class="k">mut</span> <span class="n">queue</span> <span class="o">=</span>
+        <span class="nn">BinaryHeap</span><span class="p">::</span><span class="nf">from</span><span class="p">([(</span><span class="nn">SolT</span><span class="p">::</span><span class="n">MAX</span> <span class="o">-</span> <span class="p">(</span><span class="n">grid</span><span class="p">[(</span><span class="n">w</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">h</span> <span class="o">-</span> <span class="mi">2</span><span class="p">]</span> <span class="o">-</span> <span class="sc">b'0'</span><span class="p">)</span> <span class="k">as</span> <span class="n">SolT</span><span class="p">,</span> <span class="n">target</span><span class="p">)]);</span>
+    <span class="k">while</span> <span class="k">let</span> <span class="nf">Some</span><span class="p">((</span><span class="n">cost_0</span><span class="p">,</span> <span class="p">(</span><span class="n">c0</span><span class="p">,</span> <span class="n">r0</span><span class="p">)))</span> <span class="o">=</span> <span class="n">queue</span><span class="nf">.pop</span><span class="p">()</span> <span class="p">{</span>
+        <span class="k">for</span> <span class="p">(</span><span class="n">c1</span><span class="p">,</span> <span class="n">r1</span><span class="p">)</span> <span class="k">in</span> <span class="n">D</span>
+            <span class="nf">.map</span><span class="p">(|(</span><span class="n">dc</span><span class="p">,</span> <span class="n">dr</span><span class="p">)|</span> <span class="p">(</span><span class="n">c0</span><span class="nf">.wrapping_add_signed</span><span class="p">(</span><span class="n">dc</span><span class="p">),</span> <span class="n">r0</span><span class="nf">.wrapping_add_signed</span><span class="p">(</span><span class="n">dr</span><span class="p">)))</span>
+            <span class="nf">.into_iter</span><span class="p">()</span>
+            <span class="nf">.filter</span><span class="p">(|</span><span class="o">&amp;</span><span class="p">(</span><span class="n">c1</span><span class="p">,</span> <span class="n">r1</span><span class="p">)|</span> <span class="n">c1</span> <span class="o">&lt;</span> <span class="n">w</span> <span class="o">&amp;&amp;</span> <span class="n">r1</span> <span class="o">&lt;</span> <span class="n">h</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="c1">// settle value; this is safe because the cost adder to reach a node</span>
+            <span class="c1">// is the same no matter from which neighbor we reach the node</span>
+            <span class="k">let</span> <span class="n">r</span> <span class="o">=</span> <span class="o">&amp;</span><span class="k">mut</span> <span class="n">bounds</span><span class="p">[</span><span class="n">c1</span> <span class="o">+</span> <span class="n">r1</span> <span class="o">*</span> <span class="n">w</span><span class="p">];</span>
+            <span class="k">if</span> <span class="o">*</span><span class="n">r</span> <span class="o">==</span> <span class="nn">SolT</span><span class="p">::</span><span class="n">MAX</span> <span class="p">{</span>
+                <span class="o">*</span><span class="n">r</span> <span class="o">=</span> <span class="nn">SolT</span><span class="p">::</span><span class="n">MAX</span> <span class="o">-</span> <span class="n">cost_0</span><span class="p">;</span>
+                <span class="n">queue</span><span class="nf">.push</span><span class="p">((</span><span class="n">cost_0</span> <span class="o">-</span> <span class="p">(</span><span class="n">grid</span><span class="p">[</span><span class="n">c1</span> <span class="o">+</span> <span class="n">r1</span> <span class="o">*</span> <span class="p">(</span><span class="n">w</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)]</span> <span class="o">-</span> <span class="sc">b'0'</span><span class="p">)</span> <span class="k">as</span> <span class="n">SolT</span><span class="p">,</span> <span class="p">(</span><span class="n">c1</span><span class="p">,</span> <span class="n">r1</span><span class="p">)))</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+    <span class="n">bounds</span>
+<span class="p">}</span>
+
+<span class="nd">#[cfg(not(feature</span> <span class="nd">=</span> <span class="s">"no-heuristic"</span><span class="nd">))]</span>
+<span class="k">fn</span> <span class="nf">loss_bounds_heuristic</span><span class="p">(</span><span class="n">grid</span><span class="p">:</span> <span class="o">&amp;</span><span class="p">[</span><span class="nb">u8</span><span class="p">],</span> <span class="n">w</span><span class="p">:</span> <span class="nb">usize</span><span class="p">,</span> <span class="n">h</span><span class="p">:</span> <span class="nb">usize</span><span class="p">)</span> <span class="k">-&gt;</span> <span class="k">impl</span> <span class="nf">Fn</span><span class="p">((</span><span class="nb">usize</span><span class="p">,</span> <span class="nb">usize</span><span class="p">))</span> <span class="k">-&gt;</span> <span class="n">SolT</span> <span class="p">{</span>
+    <span class="k">let</span> <span class="n">bounds</span> <span class="o">=</span> <span class="nf">loss_bounds</span><span class="p">(</span><span class="n">grid</span><span class="p">,</span> <span class="n">w</span><span class="p">,</span> <span class="n">h</span><span class="p">);</span>
+    <span class="k">move</span> <span class="p">|(</span><span class="n">col</span><span class="p">,</span> <span class="n">row</span><span class="p">)|</span> <span class="n">bounds</span><span class="p">[</span><span class="n">col</span> <span class="o">+</span> <span class="n">row</span> <span class="o">*</span> <span class="n">w</span><span class="p">]</span>
+<span class="p">}</span>
+
+<span class="nd">#[cfg(feature</span> <span class="nd">=</span> <span class="s">"no-heuristic"</span><span class="nd">)]</span>
+<span class="k">fn</span> <span class="nf">loss_bounds_heuristic</span><span class="p">(</span><span class="n">_</span><span class="p">:</span> <span class="o">&amp;</span><span class="p">[</span><span class="nb">u8</span><span class="p">],</span> <span class="n">_</span><span class="p">:</span> <span class="nb">usize</span><span class="p">,</span> <span class="n">_</span><span class="p">:</span> <span class="nb">usize</span><span class="p">)</span> <span class="k">-&gt;</span> <span class="k">impl</span> <span class="nf">Fn</span><span class="p">((</span><span class="nb">usize</span><span class="p">,</span> <span class="nb">usize</span><span class="p">))</span> <span class="k">-&gt;</span> <span class="n">SolT</span> <span class="p">{</span>
+    <span class="p">|</span><span class="n">_</span><span class="p">|</span> <span class="mi">0</span>
+<span class="p">}</span>
+</pre></td></tr></tbody></table></code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>I implemented both variants. Since the second options requires less run-time, I chose this as default. The first variant can be chosen using feature <code>settle-early</code>.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight"><code data-lang="rust"><table class="linenotable"><tbody><tr><td class="linenos gl"><pre class="lineno"> 1
+ 2
+ 3
+ 4
+ 5
+ 6
+ 7
+ 8
+ 9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+26
+27
+28
+29
+30
+31
+32
+33
+34
+35
+36
+37
+38
+39
+40
+41
+42
+43
+44
+45
+46
+47
+48
+49
+50
+51
+52
+53
+54
+55
+56
+57
+58
+59
+60
+61
+62
+63
+64
+65
+</pre></td><td class="code"><pre><span class="nd">#[cfg(feature</span> <span class="nd">=</span> <span class="s">"settle-early"</span><span class="nd">)]</span>
+<span class="k">pub</span> <span class="k">fn</span> <span class="nf">optimize</span><span class="p">(</span><span class="n">grid</span><span class="p">:</span> <span class="o">&amp;</span><span class="p">[</span><span class="nb">u8</span><span class="p">],</span> <span class="n">w</span><span class="p">:</span> <span class="nb">usize</span><span class="p">,</span> <span class="n">h</span><span class="p">:</span> <span class="nb">usize</span><span class="p">,</span> <span class="n">s_max</span><span class="p">:</span> <span class="nb">u8</span><span class="p">,</span> <span class="n">s_min</span><span class="p">:</span> <span class="nb">u8</span><span class="p">)</span> <span class="k">-&gt;</span> <span class="n">SolT</span> <span class="p">{</span>
+    <span class="k">use</span> <span class="nn">std</span><span class="p">::</span><span class="nn">collections</span><span class="p">::{</span><span class="n">BinaryHeap</span><span class="p">,</span> <span class="n">HashSet</span><span class="p">};</span>
+    <span class="k">use</span> <span class="nn">std</span><span class="p">::</span><span class="nn">iter</span><span class="p">::</span><span class="n">successors</span><span class="p">;</span>
+
+    <span class="k">let</span> <span class="n">heuristic</span> <span class="o">=</span> <span class="nf">loss_bounds_heuristic</span><span class="p">(</span><span class="n">grid</span><span class="p">,</span> <span class="n">w</span><span class="p">,</span> <span class="n">h</span><span class="p">);</span>
+
+    <span class="k">let</span> <span class="n">start_cost</span> <span class="o">=</span> <span class="nf">heuristic</span><span class="p">((</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">));</span>
+    <span class="k">let</span> <span class="n">starts</span><span class="p">:</span> <span class="p">[(</span><span class="nb">usize</span><span class="p">,</span> <span class="n">NodeT</span><span class="p">);</span> <span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="p">(</span><span class="n">start_cost</span><span class="p">,</span> <span class="p">((</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">s_max</span><span class="p">))),</span>
+        <span class="p">(</span><span class="n">start_cost</span><span class="p">,</span> <span class="p">((</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="n">s_max</span><span class="p">))),</span>
+    <span class="p">];</span>
+
+    <span class="k">let</span> <span class="n">target_pos</span> <span class="o">=</span> <span class="p">(</span><span class="n">w</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="n">h</span> <span class="o">-</span> <span class="mi">1</span><span class="p">);</span>
+
+    <span class="k">let</span> <span class="k">mut</span> <span class="n">queue</span> <span class="o">=</span> <span class="nn">BinaryHeap</span><span class="p">::</span><span class="nf">new</span><span class="p">();</span>
+    <span class="k">let</span> <span class="k">mut</span> <span class="n">seen</span> <span class="o">=</span> <span class="nn">HashSet</span><span class="p">::</span><span class="nf">new</span><span class="p">();</span>
+    <span class="k">for</span> <span class="p">(</span><span class="n">cost</span><span class="p">,</span> <span class="n">node</span><span class="p">)</span> <span class="k">in</span> <span class="n">starts</span><span class="nf">.into_iter</span><span class="p">()</span> <span class="p">{</span>
+        <span class="n">queue</span><span class="nf">.push</span><span class="p">((</span><span class="nn">SolT</span><span class="p">::</span><span class="n">MAX</span> <span class="o">-</span> <span class="n">cost</span><span class="p">,</span> <span class="n">node</span><span class="p">));</span>
+        <span class="n">seen</span><span class="nf">.insert</span><span class="p">(</span><span class="n">node</span><span class="p">);</span>
+    <span class="p">}</span>
+
+    <span class="nd">#[cfg(feature</span> <span class="nd">=</span> <span class="s">"plot"</span><span class="nd">)]</span>
+    <span class="k">let</span> <span class="k">mut</span> <span class="n">parents</span> <span class="o">=</span> <span class="nn">HashMap</span><span class="p">::</span><span class="nf">new</span><span class="p">();</span>
+
+    <span class="k">while</span> <span class="k">let</span> <span class="nf">Some</span><span class="p">((</span><span class="n">cost_0</span><span class="p">,</span> <span class="p">((</span><span class="n">c0</span><span class="p">,</span> <span class="n">r0</span><span class="p">),</span> <span class="p">(</span><span class="n">hd0</span><span class="p">,</span> <span class="n">s0</span><span class="p">))))</span> <span class="o">=</span> <span class="n">queue</span><span class="nf">.pop</span><span class="p">()</span> <span class="p">{</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">c0</span><span class="p">,</span> <span class="n">r0</span><span class="p">)</span> <span class="o">==</span> <span class="n">target_pos</span> <span class="p">{</span>
+            <span class="nd">#[cfg(feature</span> <span class="nd">=</span> <span class="s">"plot"</span><span class="nd">)]</span>
+            <span class="nd">println!</span><span class="p">(</span><span class="s">"{}"</span><span class="p">,</span> <span class="nf">to_string</span><span class="p">(</span><span class="n">w</span><span class="p">,</span> <span class="n">h</span><span class="p">,</span> <span class="p">((</span><span class="n">c0</span><span class="p">,</span> <span class="n">r0</span><span class="p">),</span> <span class="p">(</span><span class="n">hd0</span><span class="p">,</span> <span class="n">s0</span><span class="p">)),</span> <span class="o">&amp;</span><span class="n">parents</span><span class="p">));</span>
+            <span class="k">return</span> <span class="nn">SolT</span><span class="p">::</span><span class="n">MAX</span> <span class="o">-</span> <span class="n">cost_0</span><span class="p">;</span>
         <span class="p">}</span>
 
-        <span class="k">let</span> <span class="n">dhs</span><span class="p">:</span> <span class="o">&amp;</span><span class="p">[</span><span class="nb">u8</span><span class="p">]</span> <span class="o">=</span> <span class="k">if</span> <span class="n">s0</span> <span class="o">==</span> <span class="mi">3</span> <span class="p">{</span> <span class="o">&amp;</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">]</span> <span class="p">}</span> <span class="k">else</span> <span class="p">{</span> <span class="o">&amp;</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">]</span> <span class="p">};</span>
-        <span class="k">for</span> <span class="p">(</span><span class="n">h1</span><span class="p">,</span> <span class="n">s1</span><span class="p">)</span> <span class="k">in</span> <span class="n">dhs</span>
+        <span class="k">let</span> <span class="n">dhs</span><span class="p">:</span> <span class="o">&amp;</span><span class="p">[</span><span class="nb">u8</span><span class="p">]</span> <span class="o">=</span> <span class="k">if</span> <span class="n">s0</span> <span class="o">&lt;</span> <span class="n">s_max</span> <span class="p">{</span> <span class="o">&amp;</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">]</span> <span class="p">}</span> <span class="k">else</span> <span class="p">{</span> <span class="o">&amp;</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">]</span> <span class="p">};</span>
+        <span class="k">for</span> <span class="p">(</span><span class="n">cost_1</span><span class="p">,</span> <span class="n">node_1</span><span class="p">)</span> <span class="k">in</span> <span class="n">dhs</span>
             <span class="nf">.iter</span><span class="p">()</span>
-            <span class="nf">.map</span><span class="p">(|</span><span class="o">&amp;</span><span class="n">dh</span><span class="p">|</span> <span class="p">((</span><span class="n">h0</span> <span class="o">+</span> <span class="n">dh</span><span class="p">)</span> <span class="o">&amp;</span> <span class="mi">3</span><span class="p">,</span> <span class="k">if</span> <span class="n">dh</span> <span class="o">==</span> <span class="mi">0</span> <span class="p">{</span> <span class="n">s0</span> <span class="o">+</span> <span class="mi">1</span> <span class="p">}</span> <span class="k">else</span> <span class="p">{</span> <span class="mi">1</span> <span class="p">}))</span>
+            <span class="nf">.map</span><span class="p">(</span><span class="k">move</span> <span class="p">|</span><span class="o">&amp;</span><span class="n">dh</span><span class="p">|</span> <span class="p">((</span><span class="n">hd0</span> <span class="o">+</span> <span class="n">dh</span><span class="p">)</span> <span class="o">&amp;</span> <span class="mi">3</span><span class="p">,</span> <span class="k">if</span> <span class="n">dh</span> <span class="o">==</span> <span class="mi">0</span> <span class="p">{</span> <span class="n">s0</span> <span class="p">}</span> <span class="k">else</span> <span class="p">{</span> <span class="mi">0</span> <span class="p">}))</span>
+            <span class="nf">.filter_map</span><span class="p">(|(</span><span class="n">hd1</span><span class="p">,</span> <span class="n">s1</span><span class="p">)|</span> <span class="p">{</span>
+                <span class="c1">// move one step or enough to complete s_min, whatever is more</span>
+                <span class="k">let</span> <span class="n">to_go</span> <span class="o">=</span> <span class="mi">1</span><span class="nf">.max</span><span class="p">(</span><span class="n">s_min</span> <span class="o">-</span> <span class="n">s1</span><span class="nf">.min</span><span class="p">(</span><span class="n">s_min</span><span class="p">));</span>
+                <span class="k">let</span> <span class="p">(</span><span class="n">dc</span><span class="p">,</span> <span class="n">dr</span><span class="p">)</span> <span class="o">=</span> <span class="n">D</span><span class="p">[</span><span class="n">hd1</span> <span class="k">as</span> <span class="nb">usize</span><span class="p">];</span>
+                <span class="nf">successors</span><span class="p">(</span><span class="nf">Some</span><span class="p">((</span><span class="mi">0</span><span class="p">,</span> <span class="n">c0</span><span class="p">,</span> <span class="n">r0</span><span class="p">)),</span> <span class="p">|(</span><span class="n">weight</span><span class="p">,</span> <span class="n">c</span><span class="p">,</span> <span class="n">r</span><span class="p">)|</span> <span class="p">{</span>
+                    <span class="c1">// return Some - summing weights - while in bounds</span>
+                    <span class="k">let</span> <span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="n">r</span><span class="p">)</span> <span class="o">=</span> <span class="p">(</span><span class="n">c</span><span class="nf">.wrapping_add_signed</span><span class="p">(</span><span class="n">dc</span><span class="p">),</span> <span class="n">r</span><span class="nf">.wrapping_add_signed</span><span class="p">(</span><span class="n">dr</span><span class="p">));</span>
+                    <span class="p">(</span><span class="n">c</span> <span class="o">&lt;</span> <span class="n">w</span> <span class="o">&amp;&amp;</span> <span class="n">r</span> <span class="o">&lt;</span> <span class="n">h</span><span class="p">)</span>
+                        <span class="nf">.then</span><span class="p">(||</span> <span class="p">(</span><span class="n">weight</span> <span class="o">+</span> <span class="p">(</span><span class="n">grid</span><span class="p">[</span><span class="n">c</span> <span class="o">+</span> <span class="n">r</span> <span class="o">*</span> <span class="p">(</span><span class="n">w</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)]</span> <span class="o">-</span> <span class="sc">b'0'</span><span class="p">)</span> <span class="k">as</span> <span class="n">SolT</span><span class="p">,</span> <span class="n">c</span><span class="p">,</span> <span class="n">r</span><span class="p">))</span>
+                <span class="p">})</span>
+                <span class="nf">.nth</span><span class="p">(</span><span class="n">to_go</span> <span class="k">as</span> <span class="n">_</span><span class="p">)</span>
+                <span class="nf">.map</span><span class="p">(|(</span><span class="n">weight</span><span class="p">,</span> <span class="n">c1</span><span class="p">,</span> <span class="n">r1</span><span class="p">)|</span> <span class="p">{</span>
+                    <span class="p">(</span>
+                        <span class="n">cost_0</span> <span class="o">-</span> <span class="n">weight</span> <span class="o">+</span> <span class="nf">heuristic</span><span class="p">((</span><span class="n">c0</span><span class="p">,</span> <span class="n">r0</span><span class="p">))</span> <span class="o">-</span> <span class="nf">heuristic</span><span class="p">((</span><span class="n">c1</span><span class="p">,</span> <span class="n">r1</span><span class="p">)),</span>
+                        <span class="p">((</span><span class="n">c1</span><span class="p">,</span> <span class="n">r1</span><span class="p">),</span> <span class="p">(</span><span class="n">hd1</span><span class="p">,</span> <span class="n">s1</span> <span class="o">+</span> <span class="n">to_go</span><span class="p">)),</span>
+                    <span class="p">)</span>
+                <span class="p">})</span>
+            <span class="p">})</span>
         <span class="p">{</span>
-            <span class="k">let</span> <span class="p">(</span><span class="n">dc</span><span class="p">,</span> <span class="n">dr</span><span class="p">)</span> <span class="o">=</span> <span class="n">D</span><span class="p">[</span><span class="n">h1</span> <span class="k">as</span> <span class="nb">usize</span><span class="p">];</span>
-            <span class="k">let</span> <span class="p">(</span><span class="n">c1</span><span class="p">,</span> <span class="n">r1</span><span class="p">)</span> <span class="o">=</span> <span class="p">(</span><span class="n">c0</span><span class="nf">.wrapping_add_signed</span><span class="p">(</span><span class="n">dc</span><span class="p">),</span> <span class="n">r0</span><span class="nf">.wrapping_add_signed</span><span class="p">(</span><span class="n">dr</span><span class="p">));</span>
-            <span class="k">if</span> <span class="n">c1</span> <span class="o">&lt;</span> <span class="n">w</span> <span class="o">&amp;&amp;</span> <span class="n">r1</span> <span class="o">&lt;</span> <span class="n">h</span> <span class="o">&amp;&amp;</span> <span class="n">seen</span><span class="nf">.insert</span><span class="p">(((</span><span class="n">c1</span><span class="p">,</span> <span class="n">r1</span><span class="p">),</span> <span class="p">(</span><span class="n">h1</span><span class="p">,</span> <span class="n">s1</span><span class="p">)))</span> <span class="p">{</span>
-                <span class="n">queue</span><span class="nf">.push</span><span class="p">((</span>
-                    <span class="n">loss</span> <span class="o">-</span> <span class="p">(</span><span class="n">grid</span><span class="p">[</span><span class="n">c1</span> <span class="o">+</span> <span class="n">r1</span> <span class="o">*</span> <span class="p">(</span><span class="n">w</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)]</span> <span class="o">-</span> <span class="sc">b'0'</span><span class="p">)</span> <span class="k">as</span> <span class="n">SolT</span><span class="p">,</span>
-                    <span class="p">((</span><span class="n">c1</span><span class="p">,</span> <span class="n">r1</span><span class="p">),</span> <span class="p">(</span><span class="n">h1</span><span class="p">,</span> <span class="n">s1</span><span class="p">)),</span>
-                <span class="p">));</span>
+            <span class="k">if</span> <span class="n">seen</span><span class="nf">.insert</span><span class="p">(</span><span class="n">node_1</span><span class="p">)</span> <span class="p">{</span>
+                <span class="n">queue</span><span class="nf">.push</span><span class="p">((</span><span class="n">cost_1</span><span class="p">,</span> <span class="n">node_1</span><span class="p">));</span>
+                <span class="nd">#[cfg(feature</span> <span class="nd">=</span> <span class="s">"plot"</span><span class="nd">)]</span>
+                <span class="n">parents</span><span class="nf">.insert</span><span class="p">(</span><span class="n">node_1</span><span class="p">,</span> <span class="p">((</span><span class="n">c0</span><span class="p">,</span> <span class="n">r0</span><span class="p">),</span> <span class="p">(</span><span class="n">hd0</span><span class="p">,</span> <span class="n">s0</span><span class="p">)));</span>
             <span class="p">}</span>
         <span class="p">}</span>
     <span class="p">}</span>
 
-    <span class="nd">panic!</span><span class="p">(</span><span class="s">"No solution!"</span><span class="p">);</span>
+    <span class="nd">panic!</span><span class="p">(</span><span class="s">"No solution found."</span><span class="p">)</span>
+<span class="p">}</span>
+</pre></td></tr></tbody></table></code></pre>
+</div>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight"><code data-lang="rust"><table class="linenotable"><tbody><tr><td class="linenos gl"><pre class="lineno"> 1
+ 2
+ 3
+ 4
+ 5
+ 6
+ 7
+ 8
+ 9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+26
+27
+28
+29
+30
+31
+32
+33
+34
+35
+36
+37
+38
+39
+40
+41
+42
+43
+44
+45
+46
+47
+48
+49
+50
+51
+52
+53
+54
+55
+56
+57
+58
+59
+60
+61
+62
+63
+64
+65
+66
+67
+68
+69
+</pre></td><td class="code"><pre><span class="nd">#[cfg(not(feature</span> <span class="nd">=</span> <span class="s">"settle-early"</span><span class="nd">))]</span>
+<span class="k">pub</span> <span class="k">fn</span> <span class="nf">optimize</span><span class="p">(</span><span class="n">grid</span><span class="p">:</span> <span class="o">&amp;</span><span class="p">[</span><span class="nb">u8</span><span class="p">],</span> <span class="n">w</span><span class="p">:</span> <span class="nb">usize</span><span class="p">,</span> <span class="n">h</span><span class="p">:</span> <span class="nb">usize</span><span class="p">,</span> <span class="n">s_max</span><span class="p">:</span> <span class="nb">u8</span><span class="p">,</span> <span class="n">s_min</span><span class="p">:</span> <span class="nb">u8</span><span class="p">)</span> <span class="k">-&gt;</span> <span class="n">SolT</span> <span class="p">{</span>
+    <span class="k">use</span> <span class="nn">std</span><span class="p">::</span><span class="nn">collections</span><span class="p">::</span><span class="n">BinaryHeap</span><span class="p">;</span>
+    <span class="k">use</span> <span class="nn">std</span><span class="p">::</span><span class="nn">iter</span><span class="p">::</span><span class="n">successors</span><span class="p">;</span>
+
+    <span class="k">let</span> <span class="n">heuristic</span> <span class="o">=</span> <span class="o">&amp;</span><span class="nf">loss_bounds_heuristic</span><span class="p">(</span><span class="n">grid</span><span class="p">,</span> <span class="n">w</span><span class="p">,</span> <span class="n">h</span><span class="p">);</span>
+
+    <span class="k">let</span> <span class="n">start_cost</span> <span class="o">=</span> <span class="nn">SolT</span><span class="p">::</span><span class="n">MAX</span> <span class="o">-</span> <span class="nf">heuristic</span><span class="p">((</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">));</span>
+    <span class="k">let</span> <span class="n">starts</span><span class="p">:</span> <span class="p">[(</span><span class="nb">usize</span><span class="p">,</span> <span class="n">NodeT</span><span class="p">);</span> <span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="p">[(</span><span class="n">start_cost</span><span class="p">,</span> <span class="p">((</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="mi">0</span><span class="p">)),</span> <span class="p">(</span><span class="n">start_cost</span><span class="p">,</span> <span class="p">((</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="mi">3</span><span class="p">))];</span>
+
+    <span class="k">let</span> <span class="n">target_pos</span> <span class="o">=</span> <span class="p">(</span><span class="n">w</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="n">h</span> <span class="o">-</span> <span class="mi">1</span><span class="p">);</span>
+
+    <span class="k">let</span> <span class="k">mut</span> <span class="n">queue</span> <span class="o">=</span> <span class="nn">BinaryHeap</span><span class="p">::</span><span class="nf">new</span><span class="p">();</span>
+    <span class="k">let</span> <span class="k">mut</span> <span class="n">settled</span> <span class="o">=</span> <span class="nd">vec!</span><span class="p">[</span><span class="mi">0u8</span><span class="p">;</span> <span class="n">w</span> <span class="o">*</span> <span class="n">h</span><span class="p">];</span>
+    <span class="k">let</span> <span class="k">mut</span> <span class="n">costs</span> <span class="o">=</span> <span class="nd">vec!</span><span class="p">[</span><span class="mi">0</span><span class="p">;</span> <span class="n">w</span> <span class="o">*</span> <span class="n">h</span> <span class="o">*</span> <span class="mi">4</span><span class="p">];</span>
+    <span class="k">for</span> <span class="p">(</span><span class="n">cost</span><span class="p">,</span> <span class="p">((</span><span class="n">c</span><span class="p">,</span> <span class="n">r</span><span class="p">),</span> <span class="n">hd</span><span class="p">))</span> <span class="k">in</span> <span class="n">starts</span><span class="nf">.into_iter</span><span class="p">()</span> <span class="p">{</span>
+        <span class="n">queue</span><span class="nf">.push</span><span class="p">((</span><span class="n">cost</span><span class="p">,</span> <span class="p">((</span><span class="n">c</span><span class="p">,</span> <span class="n">r</span><span class="p">),</span> <span class="n">hd</span><span class="p">)));</span>
+        <span class="n">costs</span><span class="p">[</span><span class="n">c</span> <span class="o">+</span> <span class="n">r</span> <span class="o">*</span> <span class="n">w</span> <span class="o">+</span> <span class="p">(</span><span class="n">hd</span> <span class="k">as</span> <span class="nb">usize</span><span class="p">)</span> <span class="o">*</span> <span class="n">w</span> <span class="o">*</span> <span class="n">h</span><span class="p">]</span> <span class="o">=</span> <span class="n">cost</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="nd">#[cfg(feature</span> <span class="nd">=</span> <span class="s">"plot"</span><span class="nd">)]</span>
+    <span class="k">let</span> <span class="k">mut</span> <span class="n">parents</span> <span class="o">=</span> <span class="nn">HashMap</span><span class="p">::</span><span class="nf">new</span><span class="p">();</span>
+
+    <span class="k">while</span> <span class="k">let</span> <span class="nf">Some</span><span class="p">((</span><span class="n">cost_0</span><span class="p">,</span> <span class="p">((</span><span class="n">c0</span><span class="p">,</span> <span class="n">r0</span><span class="p">),</span> <span class="n">hd0</span><span class="p">)))</span> <span class="o">=</span> <span class="n">queue</span><span class="nf">.pop</span><span class="p">()</span> <span class="p">{</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">c0</span><span class="p">,</span> <span class="n">r0</span><span class="p">)</span> <span class="o">==</span> <span class="n">target_pos</span> <span class="p">{</span>
+            <span class="nd">#[cfg(feature</span> <span class="nd">=</span> <span class="s">"plot"</span><span class="nd">)]</span>
+            <span class="nd">println!</span><span class="p">(</span><span class="s">"{}"</span><span class="p">,</span> <span class="nf">to_string</span><span class="p">(</span><span class="n">w</span><span class="p">,</span> <span class="n">h</span><span class="p">,</span> <span class="p">((</span><span class="n">c0</span><span class="p">,</span> <span class="n">r0</span><span class="p">),</span> <span class="n">hd0</span><span class="p">),</span> <span class="o">&amp;</span><span class="n">settled</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">parents</span><span class="p">));</span>
+            <span class="k">return</span> <span class="nn">SolT</span><span class="p">::</span><span class="n">MAX</span> <span class="o">-</span> <span class="n">cost_0</span><span class="p">;</span>
+        <span class="p">}</span>
+
+        <span class="k">if</span> <span class="n">settled</span><span class="p">[</span><span class="n">c0</span> <span class="o">+</span> <span class="n">r0</span> <span class="o">*</span> <span class="n">w</span><span class="p">]</span> <span class="o">&amp;</span> <span class="p">(</span><span class="mi">1</span> <span class="o">&lt;&lt;</span> <span class="n">hd0</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span> <span class="p">{</span>
+            <span class="n">settled</span><span class="p">[</span><span class="n">c0</span> <span class="o">+</span> <span class="n">r0</span> <span class="o">*</span> <span class="n">w</span><span class="p">]</span> <span class="p">|</span><span class="o">=</span> <span class="mi">1</span> <span class="o">&lt;&lt;</span> <span class="n">hd0</span><span class="p">;</span>
+        <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+            <span class="k">continue</span><span class="p">;</span>
+        <span class="p">}</span>
+
+        <span class="k">for</span> <span class="p">(</span><span class="n">cost_1</span><span class="p">,</span> <span class="p">((</span><span class="n">c1</span><span class="p">,</span> <span class="n">r1</span><span class="p">),</span> <span class="n">hd1</span><span class="p">))</span> <span class="k">in</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">]</span>
+            <span class="nf">.iter</span><span class="p">()</span>
+            <span class="nf">.map</span><span class="p">(</span><span class="k">move</span> <span class="p">|</span><span class="o">&amp;</span><span class="n">dh</span><span class="p">|</span> <span class="p">(</span><span class="n">hd0</span> <span class="o">+</span> <span class="n">dh</span><span class="p">)</span> <span class="o">&amp;</span> <span class="mi">3</span><span class="p">)</span>
+            <span class="nf">.flat_map</span><span class="p">(|</span><span class="n">hd1</span><span class="p">|</span> <span class="p">{</span>
+                <span class="k">let</span> <span class="p">(</span><span class="n">dc</span><span class="p">,</span> <span class="n">dr</span><span class="p">)</span> <span class="o">=</span> <span class="n">D</span><span class="p">[</span><span class="n">hd1</span> <span class="k">as</span> <span class="nb">usize</span><span class="p">];</span>
+                <span class="nf">successors</span><span class="p">(</span><span class="nf">Some</span><span class="p">((</span><span class="mi">0</span><span class="p">,</span> <span class="n">c0</span><span class="p">,</span> <span class="n">r0</span><span class="p">)),</span> <span class="k">move</span> <span class="p">|(</span><span class="n">weight</span><span class="p">,</span> <span class="n">c</span><span class="p">,</span> <span class="n">r</span><span class="p">)|</span> <span class="p">{</span>
+                    <span class="k">let</span> <span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="n">r</span><span class="p">)</span> <span class="o">=</span> <span class="p">(</span><span class="n">c</span><span class="nf">.wrapping_add_signed</span><span class="p">(</span><span class="n">dc</span><span class="p">),</span> <span class="n">r</span><span class="nf">.wrapping_add_signed</span><span class="p">(</span><span class="n">dr</span><span class="p">));</span>
+                    <span class="p">(</span><span class="n">c</span> <span class="o">&lt;</span> <span class="n">w</span> <span class="o">&amp;&amp;</span> <span class="n">r</span> <span class="o">&lt;</span> <span class="n">h</span><span class="p">)</span>
+                        <span class="nf">.then</span><span class="p">(||</span> <span class="p">(</span><span class="n">weight</span> <span class="o">+</span> <span class="p">(</span><span class="n">grid</span><span class="p">[</span><span class="n">c</span> <span class="o">+</span> <span class="n">r</span> <span class="o">*</span> <span class="p">(</span><span class="n">w</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)]</span> <span class="o">-</span> <span class="sc">b'0'</span><span class="p">)</span> <span class="k">as</span> <span class="n">SolT</span><span class="p">,</span> <span class="n">c</span><span class="p">,</span> <span class="n">r</span><span class="p">))</span>
+                <span class="p">})</span>
+                <span class="nf">.take</span><span class="p">(</span><span class="n">s_max</span> <span class="k">as</span> <span class="nb">usize</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+                <span class="nf">.skip</span><span class="p">(</span><span class="mi">1</span><span class="nf">.max</span><span class="p">(</span><span class="n">s_min</span> <span class="k">as</span> <span class="n">_</span><span class="p">))</span>
+                <span class="nf">.map</span><span class="p">(</span><span class="k">move</span> <span class="p">|(</span><span class="n">weight</span><span class="p">,</span> <span class="n">c1</span><span class="p">,</span> <span class="n">r1</span><span class="p">)|</span> <span class="p">{</span>
+                    <span class="p">(</span>
+                        <span class="n">cost_0</span> <span class="o">-</span> <span class="n">weight</span> <span class="o">+</span> <span class="nf">heuristic</span><span class="p">((</span><span class="n">c0</span><span class="p">,</span> <span class="n">r0</span><span class="p">))</span> <span class="o">-</span> <span class="nf">heuristic</span><span class="p">((</span><span class="n">c1</span><span class="p">,</span> <span class="n">r1</span><span class="p">)),</span>
+                        <span class="p">((</span><span class="n">c1</span><span class="p">,</span> <span class="n">r1</span><span class="p">),</span> <span class="n">hd1</span><span class="p">),</span>
+                    <span class="p">)</span>
+                <span class="p">})</span>
+            <span class="p">})</span>
+            <span class="nf">.filter</span><span class="p">(|(</span><span class="n">_</span><span class="p">,</span> <span class="p">((</span><span class="n">r1</span><span class="p">,</span> <span class="n">c1</span><span class="p">),</span> <span class="n">hd1</span><span class="p">))|</span> <span class="n">settled</span><span class="p">[</span><span class="n">r1</span> <span class="o">+</span> <span class="n">c1</span> <span class="o">*</span> <span class="n">w</span><span class="p">]</span> <span class="o">&amp;</span> <span class="p">(</span><span class="mi">1</span> <span class="o">&lt;&lt;</span> <span class="n">hd1</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="k">let</span> <span class="n">cost_1_prev</span> <span class="o">=</span> <span class="o">&amp;</span><span class="k">mut</span> <span class="n">costs</span><span class="p">[</span><span class="n">c1</span> <span class="o">+</span> <span class="n">r1</span> <span class="o">*</span> <span class="n">w</span> <span class="o">+</span> <span class="p">(</span><span class="n">hd1</span> <span class="k">as</span> <span class="nb">usize</span><span class="p">)</span> <span class="o">*</span> <span class="n">w</span> <span class="o">*</span> <span class="n">h</span><span class="p">];</span>
+            <span class="k">if</span> <span class="n">cost_1</span> <span class="o">&gt;</span> <span class="o">*</span><span class="n">cost_1_prev</span> <span class="p">{</span>
+                <span class="o">*</span><span class="n">cost_1_prev</span> <span class="o">=</span> <span class="n">cost_1</span><span class="p">;</span>
+                <span class="n">queue</span><span class="nf">.push</span><span class="p">((</span><span class="n">cost_1</span><span class="p">,</span> <span class="p">((</span><span class="n">c1</span><span class="p">,</span> <span class="n">r1</span><span class="p">),</span> <span class="n">hd1</span><span class="p">)));</span>
+                <span class="nd">#[cfg(feature</span> <span class="nd">=</span> <span class="s">"plot"</span><span class="nd">)]</span>
+                <span class="n">parents</span><span class="nf">.insert</span><span class="p">(((</span><span class="n">c1</span><span class="p">,</span> <span class="n">r1</span><span class="p">),</span> <span class="n">hd1</span><span class="p">),</span> <span class="p">((</span><span class="n">c0</span><span class="p">,</span> <span class="n">r0</span><span class="p">),</span> <span class="n">hd0</span><span class="p">));</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+
+    <span class="nd">panic!</span><span class="p">(</span><span class="s">"No solution found."</span><span class="p">)</span>
 <span class="p">}</span>
 </pre></td></tr></tbody></table></code></pre>
 </div>
@@ -6363,6 +6452,7 @@ O.#..O.#.#
 66
 67
 68
+69
 </pre></td><td class="code"><pre><span class="nd">#[cfg(test)]</span>
 <span class="k">mod</span> <span class="n">tests</span> <span class="p">{</span>
     <span class="k">use</span> <span class="k">super</span><span class="p">::</span><span class="o">*</span><span class="p">;</span>
@@ -6408,6 +6498,7 @@ O.#..O.#.#
         <span class="nd">assert_eq!</span><span class="p">(</span><span class="mi">71</span><span class="p">,</span> <span class="nf">star_2</span><span class="p">(</span><span class="o">&amp;</span><span class="n">CONTENT_2</span><span class="nf">.into</span><span class="p">()));</span>
     <span class="p">}</span>
 
+    <span class="nd">#[cfg(not(feature</span> <span class="nd">=</span> <span class="s">"no-heuristic"</span><span class="nd">))]</span>
     <span class="nd">#[test]</span>
     <span class="k">pub</span> <span class="k">fn</span> <span class="nf">test_loss_bounds</span><span class="p">()</span> <span class="p">{</span>
         <span class="k">let</span> <span class="nf">PuzzleData</span><span class="p">(</span><span class="n">grid</span><span class="p">,</span> <span class="n">w</span><span class="p">,</span> <span class="n">h</span><span class="p">)</span> <span class="o">=</span> <span class="n">CONTENT_2</span><span class="nf">.into</span><span class="p">();</span>
@@ -6861,6 +6952,12 @@ U 2 (#7a21e3)
 </div>
 <div class="sect2">
 <h3 id="_star_2_20">Star 2</h3>
+<div class="paragraph">
+<p>Divide and conquer!</p>
+</div>
+<div class="paragraph">
+<p>Any rule splits the allowed ranges in one part which matches the rule and another part which does not (both are possibly empty). These two parts are then handled separately. The part with matches by recursing to the target workflow of the rule, the part which does not match by checking the next rule in the workflow.</p>
+</div>
 <div class="listingblock">
 <div class="content">
 <pre class="rouge highlight"><code data-lang="rust"><table class="linenotable"><tbody><tr><td class="linenos gl"><pre class="lineno"> 1
@@ -7079,7 +7176,7 @@ hdj{m&gt;838:A,pv}
 </div>
 <div id="footer">
     <div id="footer-text">
-        Generated from <a href="https://github.com/mr-kaffee/aoc-2023/">github.com/mr-kaffee/aoc-2023/</a> on 2023-12-19 07:46:54 UTC
+        Generated from <a href="https://github.com/mr-kaffee/aoc-2023/">github.com/mr-kaffee/aoc-2023/</a> on 2023-12-19 21:48:06 UTC
         with <a href="https://asciidoctor.org">asciidoctor</a>.
     </div>
 </div>
