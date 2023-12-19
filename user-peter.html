@@ -195,6 +195,14 @@
 <li><a href="#_tests_18">Tests</a></li>
 </ul>
 </li>
+<li><a href="#sol-rust-19">Rust | Day 19: Aplenty</a>
+<ul class="sectlevel2">
+<li><a href="#_input_15">Input</a></li>
+<li><a href="#_star_1_20">Star 1</a></li>
+<li><a href="#_star_2_20">Star 2</a></li>
+<li><a href="#_tests_19">Tests</a></li>
+</ul>
+</li>
 </ul>
 </div>
 </div>
@@ -6627,10 +6635,451 @@ U 2 (#7a21e3)
 </div>
 </div>
 </div>
+<div class="sect1">
+<h2 id="sol-rust-19">Rust | Day 19: Aplenty</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p><a href="https://rust-lang.org">Rust</a> solution to <a href="https://adventofcode.com/2023/day/19">AoC|2023|19</a>.</p>
+</div>
+<div class="sect2">
+<h3 id="_input_15">Input</h3>
+<div class="paragraph">
+<p>Input parsing was a bit tedious today. Maybe regex would have worked faster here, but I still only use standard library.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight"><code data-lang="rust"><table class="linenotable"><tbody><tr><td class="linenos gl"><pre class="lineno"> 1
+ 2
+ 3
+ 4
+ 5
+ 6
+ 7
+ 8
+ 9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+26
+27
+28
+29
+30
+31
+32
+33
+34
+35
+36
+37
+38
+39
+40
+41
+42
+43
+44
+45
+46
+47
+48
+49
+50
+51
+52
+53
+54
+55
+56
+57
+58
+59
+60
+61
+62
+63
+64
+65
+66
+67
+68
+69
+70
+71
+72
+73
+74
+75
+76
+77
+</pre></td><td class="code"><pre><span class="k">pub</span> <span class="k">mod</span> <span class="n">input</span> <span class="p">{</span>
+    <span class="k">use</span> <span class="nn">std</span><span class="p">::{</span><span class="nn">cmp</span><span class="p">::</span><span class="n">Ordering</span><span class="p">,</span> <span class="nn">collections</span><span class="p">::</span><span class="n">HashMap</span><span class="p">};</span>
+
+    <span class="k">pub</span> <span class="k">type</span> <span class="n">ValT</span> <span class="o">=</span> <span class="nb">usize</span><span class="p">;</span>
+    <span class="k">pub</span> <span class="k">type</span> <span class="n">RuleT</span><span class="o">&lt;</span><span class="nv">'a</span><span class="o">&gt;</span> <span class="o">=</span> <span class="p">(</span><span class="nb">Option</span><span class="o">&lt;</span><span class="p">(</span><span class="nb">usize</span><span class="p">,</span> <span class="n">Ordering</span><span class="p">,</span> <span class="n">ValT</span><span class="p">)</span><span class="o">&gt;</span><span class="p">,</span> <span class="o">&amp;</span><span class="nv">'a</span> <span class="nb">str</span><span class="p">);</span>
+    <span class="k">pub</span> <span class="k">type</span> <span class="n">PartT</span> <span class="o">=</span> <span class="p">[</span><span class="n">ValT</span><span class="p">;</span> <span class="mi">4</span><span class="p">];</span>
+
+    <span class="nd">#[derive(Debug)]</span>
+    <span class="k">pub</span> <span class="k">struct</span> <span class="n">PuzzleData</span><span class="o">&lt;</span><span class="nv">'a</span><span class="o">&gt;</span><span class="p">(</span><span class="k">pub</span> <span class="n">HashMap</span><span class="o">&lt;&amp;</span><span class="nv">'a</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">Vec</span><span class="o">&lt;</span><span class="n">RuleT</span><span class="o">&lt;</span><span class="nv">'a</span><span class="o">&gt;&gt;&gt;</span><span class="p">,</span> <span class="k">pub</span> <span class="nb">Vec</span><span class="o">&lt;</span><span class="n">PartT</span><span class="o">&gt;</span><span class="p">);</span>
+
+    <span class="k">fn</span> <span class="nf">parse_rule</span><span class="p">(</span><span class="n">rule</span><span class="p">:</span> <span class="o">&amp;</span><span class="nb">str</span><span class="p">)</span> <span class="k">-&gt;</span> <span class="n">RuleT</span> <span class="p">{</span>
+        <span class="n">rule</span><span class="nf">.split_once</span><span class="p">(</span><span class="sc">':'</span><span class="p">)</span>
+            <span class="nf">.map</span><span class="p">(|(</span><span class="n">cond</span><span class="p">,</span> <span class="n">target</span><span class="p">)|</span> <span class="p">{</span>
+                <span class="p">(</span>
+                    <span class="nf">Some</span><span class="p">((</span>
+                        <span class="k">match</span> <span class="n">cond</span><span class="nf">.as_bytes</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span> <span class="p">{</span>
+                            <span class="sc">b'x'</span> <span class="k">=&gt;</span> <span class="mi">0</span><span class="p">,</span>
+                            <span class="sc">b'm'</span> <span class="k">=&gt;</span> <span class="mi">1</span><span class="p">,</span>
+                            <span class="sc">b'a'</span> <span class="k">=&gt;</span> <span class="mi">2</span><span class="p">,</span>
+                            <span class="sc">b's'</span> <span class="k">=&gt;</span> <span class="mi">3</span><span class="p">,</span>
+                            <span class="n">b</span> <span class="k">=&gt;</span> <span class="nd">panic!</span><span class="p">(</span><span class="s">"Bad symbol: '{}'"</span><span class="p">,</span> <span class="n">b</span> <span class="k">as</span> <span class="nb">char</span><span class="p">),</span>
+                        <span class="p">},</span>
+                        <span class="k">match</span> <span class="n">cond</span><span class="nf">.as_bytes</span><span class="p">()[</span><span class="mi">1</span><span class="p">]</span> <span class="p">{</span>
+                            <span class="sc">b'&gt;'</span> <span class="k">=&gt;</span> <span class="nn">Ordering</span><span class="p">::</span><span class="n">Greater</span><span class="p">,</span>
+                            <span class="sc">b'&lt;'</span> <span class="k">=&gt;</span> <span class="nn">Ordering</span><span class="p">::</span><span class="n">Less</span><span class="p">,</span>
+                            <span class="n">b</span> <span class="k">=&gt;</span> <span class="nd">panic!</span><span class="p">(</span><span class="s">"Bad symbol: '{}'"</span><span class="p">,</span> <span class="n">b</span> <span class="k">as</span> <span class="nb">char</span><span class="p">),</span>
+                        <span class="p">},</span>
+                        <span class="n">cond</span><span class="p">[</span><span class="mi">2</span><span class="o">..</span><span class="p">]</span><span class="nf">.parse</span><span class="p">()</span><span class="nf">.unwrap</span><span class="p">(),</span>
+                    <span class="p">)),</span>
+                    <span class="n">target</span><span class="p">,</span>
+                <span class="p">)</span>
+            <span class="p">})</span>
+            <span class="nf">.unwrap_or</span><span class="p">((</span><span class="nb">None</span><span class="p">,</span> <span class="n">rule</span><span class="p">))</span>
+    <span class="p">}</span>
+
+    <span class="k">fn</span> <span class="nf">parse_workflows</span><span class="p">(</span><span class="n">workflow</span><span class="p">:</span> <span class="o">&amp;</span><span class="nb">str</span><span class="p">)</span> <span class="k">-&gt;</span> <span class="n">HashMap</span><span class="o">&lt;&amp;</span><span class="nb">str</span><span class="p">,</span> <span class="nb">Vec</span><span class="o">&lt;</span><span class="n">RuleT</span><span class="o">&gt;&gt;</span> <span class="p">{</span>
+        <span class="n">workflow</span>
+            <span class="nf">.lines</span><span class="p">()</span>
+            <span class="nf">.map</span><span class="p">(|</span><span class="n">line</span><span class="p">|</span> <span class="p">{</span>
+                <span class="n">line</span><span class="nf">.split_once</span><span class="p">(</span><span class="sc">'{'</span><span class="p">)</span>
+                    <span class="nf">.and_then</span><span class="p">(|(</span><span class="n">label</span><span class="p">,</span> <span class="n">rules</span><span class="p">)|</span> <span class="n">rules</span><span class="nf">.strip_suffix</span><span class="p">(</span><span class="sc">'}'</span><span class="p">)</span><span class="nf">.map</span><span class="p">(|</span><span class="n">rules</span><span class="p">|</span> <span class="p">(</span><span class="n">label</span><span class="p">,</span> <span class="n">rules</span><span class="p">)))</span>
+                    <span class="nf">.unwrap</span><span class="p">()</span>
+            <span class="p">})</span>
+            <span class="nf">.map</span><span class="p">(|(</span><span class="n">label</span><span class="p">,</span> <span class="n">rules</span><span class="p">)|</span> <span class="p">(</span><span class="n">label</span><span class="p">,</span> <span class="n">rules</span><span class="nf">.split</span><span class="p">(</span><span class="sc">','</span><span class="p">)</span><span class="nf">.map</span><span class="p">(</span><span class="n">parse_rule</span><span class="p">)</span><span class="nf">.collect</span><span class="p">()))</span>
+            <span class="nf">.collect</span><span class="p">()</span>
+    <span class="p">}</span>
+
+    <span class="k">fn</span> <span class="nf">parse_parts</span><span class="p">(</span><span class="n">parts</span><span class="p">:</span> <span class="o">&amp;</span><span class="nb">str</span><span class="p">)</span> <span class="k">-&gt;</span> <span class="nb">Vec</span><span class="o">&lt;</span><span class="n">PartT</span><span class="o">&gt;</span> <span class="p">{</span>
+        <span class="n">parts</span>
+            <span class="nf">.lines</span><span class="p">()</span>
+            <span class="nf">.map</span><span class="p">(|</span><span class="n">part</span><span class="p">|</span> <span class="p">{</span>
+                <span class="k">let</span> <span class="k">mut</span> <span class="n">values</span> <span class="o">=</span> <span class="n">part</span>
+                    <span class="py">.trim_matches</span><span class="p">::</span><span class="o">&lt;&amp;</span><span class="p">[</span><span class="nb">char</span><span class="p">]</span><span class="o">&gt;</span><span class="p">(</span><span class="o">&amp;</span><span class="p">[</span><span class="sc">'{'</span><span class="p">,</span> <span class="sc">'}'</span><span class="p">])</span>
+                    <span class="nf">.split</span><span class="p">(</span><span class="sc">','</span><span class="p">)</span>
+                    <span class="nf">.map</span><span class="p">(|</span><span class="n">n</span><span class="p">|</span> <span class="n">n</span><span class="p">[</span><span class="mi">2</span><span class="o">..</span><span class="p">]</span><span class="nf">.parse</span><span class="p">()</span><span class="nf">.unwrap</span><span class="p">());</span>
+                <span class="p">[</span>
+                    <span class="n">values</span><span class="nf">.next</span><span class="p">()</span><span class="nf">.unwrap</span><span class="p">(),</span>
+                    <span class="n">values</span><span class="nf">.next</span><span class="p">()</span><span class="nf">.unwrap</span><span class="p">(),</span>
+                    <span class="n">values</span><span class="nf">.next</span><span class="p">()</span><span class="nf">.unwrap</span><span class="p">(),</span>
+                    <span class="n">values</span><span class="nf">.next</span><span class="p">()</span><span class="nf">.unwrap</span><span class="p">(),</span>
+                <span class="p">]</span>
+            <span class="p">})</span>
+            <span class="nf">.collect</span><span class="p">()</span>
+    <span class="p">}</span>
+
+    <span class="k">impl</span><span class="o">&lt;</span><span class="nv">'a</span><span class="p">,</span> <span class="n">T</span><span class="o">&gt;</span> <span class="nb">From</span><span class="o">&lt;&amp;</span><span class="nv">'a</span> <span class="n">T</span><span class="o">&gt;</span> <span class="k">for</span> <span class="n">PuzzleData</span><span class="o">&lt;</span><span class="nv">'a</span><span class="o">&gt;</span>
+    <span class="k">where</span>
+        <span class="n">T</span><span class="p">:</span> <span class="nb">AsRef</span><span class="o">&lt;</span><span class="nb">str</span><span class="o">&gt;</span> <span class="o">+</span> <span class="nv">'a</span> <span class="o">+</span> <span class="o">?</span><span class="nb">Sized</span><span class="p">,</span>
+    <span class="p">{</span>
+        <span class="k">fn</span> <span class="nf">from</span><span class="p">(</span><span class="n">s</span><span class="p">:</span> <span class="o">&amp;</span><span class="nv">'a</span> <span class="n">T</span><span class="p">)</span> <span class="k">-&gt;</span> <span class="k">Self</span> <span class="p">{</span>
+            <span class="n">s</span><span class="nf">.as_ref</span><span class="p">()</span>
+                <span class="nf">.split_once</span><span class="p">(</span><span class="s">"</span><span class="se">\n\n</span><span class="s">"</span><span class="p">)</span>
+                <span class="nf">.map</span><span class="p">(|(</span><span class="n">workflows</span><span class="p">,</span> <span class="n">parts</span><span class="p">)|</span> <span class="k">Self</span><span class="p">(</span><span class="nf">parse_workflows</span><span class="p">(</span><span class="n">workflows</span><span class="p">),</span> <span class="nf">parse_parts</span><span class="p">(</span><span class="n">parts</span><span class="p">)))</span>
+                <span class="nf">.unwrap</span><span class="p">()</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</pre></td></tr></tbody></table></code></pre>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_star_1_20">Star 1</h3>
+<div class="paragraph">
+<p>Just recurse through the workflows until a part is accepted or rejected. Recursion is done using a <code>successors</code> iterator.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight"><code data-lang="rust"><table class="linenotable"><tbody><tr><td class="linenos gl"><pre class="lineno"> 1
+ 2
+ 3
+ 4
+ 5
+ 6
+ 7
+ 8
+ 9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+</pre></td><td class="code"><pre><span class="k">pub</span> <span class="k">fn</span> <span class="nf">star_1</span><span class="p">(</span><span class="nf">PuzzleData</span><span class="p">(</span><span class="n">workflows</span><span class="p">,</span> <span class="n">parts</span><span class="p">):</span> <span class="o">&amp;</span><span class="n">PuzzleData</span><span class="p">)</span> <span class="k">-&gt;</span> <span class="n">SolT</span> <span class="p">{</span>
+    <span class="n">parts</span>
+        <span class="nf">.iter</span><span class="p">()</span>
+        <span class="nf">.filter</span><span class="p">(|</span><span class="n">part</span><span class="p">|</span> <span class="p">{</span>
+            <span class="nf">Some</span><span class="p">(</span><span class="s">"A"</span><span class="p">)</span>
+                <span class="o">==</span> <span class="nf">successors</span><span class="p">(</span><span class="nf">Some</span><span class="p">(</span><span class="s">"in"</span><span class="p">),</span> <span class="p">|</span><span class="o">&amp;</span><span class="n">target</span><span class="p">|</span> <span class="p">{</span>
+                    <span class="n">workflows</span><span class="nf">.get</span><span class="p">(</span><span class="n">target</span><span class="p">)</span><span class="nf">.and_then</span><span class="p">(|</span><span class="n">workflow</span><span class="p">|</span> <span class="p">{</span>
+                        <span class="n">workflow</span>
+                            <span class="nf">.iter</span><span class="p">()</span>
+                            <span class="nf">.find</span><span class="p">(|(</span><span class="n">cond</span><span class="p">,</span> <span class="n">_</span><span class="p">)|</span> <span class="p">{</span>
+                                <span class="n">cond</span><span class="nf">.map</span><span class="p">(|(</span><span class="n">idx</span><span class="p">,</span> <span class="n">ord</span><span class="p">,</span> <span class="n">val</span><span class="p">)|</span> <span class="n">part</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span><span class="nf">.cmp</span><span class="p">(</span><span class="o">&amp;</span><span class="n">val</span><span class="p">)</span> <span class="o">==</span> <span class="n">ord</span><span class="p">)</span>
+                                    <span class="nf">.unwrap_or</span><span class="p">(</span><span class="k">true</span><span class="p">)</span>
+                            <span class="p">})</span>
+                            <span class="nf">.map</span><span class="p">(|</span><span class="o">&amp;</span><span class="p">(</span><span class="n">_</span><span class="p">,</span> <span class="n">target</span><span class="p">)|</span> <span class="n">target</span><span class="p">)</span>
+                    <span class="p">})</span>
+                <span class="p">})</span>
+                <span class="nf">.last</span><span class="p">()</span>
+        <span class="p">})</span>
+        <span class="nf">.map</span><span class="p">(|</span><span class="n">part</span><span class="p">|</span> <span class="n">part</span><span class="nf">.iter</span><span class="p">()</span><span class="py">.sum</span><span class="p">::</span><span class="o">&lt;</span><span class="n">SolT</span><span class="o">&gt;</span><span class="p">())</span>
+        <span class="nf">.sum</span><span class="p">()</span>
+<span class="p">}</span>
+</pre></td></tr></tbody></table></code></pre>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_star_2_20">Star 2</h3>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight"><code data-lang="rust"><table class="linenotable"><tbody><tr><td class="linenos gl"><pre class="lineno"> 1
+ 2
+ 3
+ 4
+ 5
+ 6
+ 7
+ 8
+ 9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+26
+27
+28
+29
+30
+31
+32
+33
+34
+35
+36
+37
+38
+39
+40
+41
+42
+43
+44
+45
+46
+47
+48
+49
+50
+51
+52
+53
+54
+55
+56
+57
+58
+59
+</pre></td><td class="code"><pre><span class="k">pub</span> <span class="k">fn</span> <span class="nf">star_2_rec</span><span class="p">(</span>
+    <span class="n">workflows</span><span class="p">:</span> <span class="o">&amp;</span><span class="n">HashMap</span><span class="o">&lt;&amp;</span><span class="nb">str</span><span class="p">,</span> <span class="nb">Vec</span><span class="o">&lt;</span><span class="n">RuleT</span><span class="o">&gt;&gt;</span><span class="p">,</span>
+    <span class="n">target</span><span class="p">:</span> <span class="o">&amp;</span><span class="nb">str</span><span class="p">,</span>
+    <span class="k">mut</span> <span class="n">v_min</span><span class="p">:</span> <span class="n">PartT</span><span class="p">,</span>
+    <span class="k">mut</span> <span class="n">v_max</span><span class="p">:</span> <span class="n">PartT</span><span class="p">,</span>
+<span class="p">)</span> <span class="k">-&gt;</span> <span class="n">SolT</span> <span class="p">{</span>
+    <span class="k">match</span> <span class="n">target</span> <span class="p">{</span>
+        <span class="s">"A"</span> <span class="k">=&gt;</span> <span class="p">{</span>
+            <span class="k">return</span> <span class="p">(</span><span class="mi">0</span><span class="o">..</span><span class="mi">4</span><span class="p">)</span>
+                <span class="nf">.map</span><span class="p">(|</span><span class="n">idx</span><span class="p">|</span> <span class="p">(</span><span class="n">v_max</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span> <span class="o">-</span> <span class="n">v_min</span><span class="p">[</span><span class="n">idx</span><span class="p">])</span> <span class="k">as</span> <span class="n">SolT</span><span class="p">)</span>
+                <span class="nf">.product</span><span class="p">()</span>
+        <span class="p">}</span>
+        <span class="s">"R"</span> <span class="k">=&gt;</span> <span class="k">return</span> <span class="mi">0</span><span class="p">,</span>
+        <span class="n">_</span> <span class="k">=&gt;</span> <span class="p">(),</span>
+    <span class="p">}</span>
+
+    <span class="k">let</span> <span class="k">mut</span> <span class="n">count</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+    <span class="k">for</span> <span class="p">(</span><span class="n">rule</span><span class="p">,</span> <span class="n">next</span><span class="p">)</span> <span class="k">in</span> <span class="n">workflows</span><span class="nf">.get</span><span class="p">(</span><span class="n">target</span><span class="p">)</span><span class="nf">.unwrap</span><span class="p">()</span> <span class="p">{</span>
+        <span class="k">match</span> <span class="n">rule</span>
+            <span class="nf">.map</span><span class="p">(|(</span><span class="n">idx</span><span class="p">,</span> <span class="n">ord</span><span class="p">,</span> <span class="n">val</span><span class="p">)|</span> <span class="p">{</span>
+                <span class="p">(</span>
+                    <span class="n">idx</span><span class="p">,</span>
+                    <span class="n">val</span><span class="p">,</span>
+                    <span class="n">v_min</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span><span class="nf">.cmp</span><span class="p">(</span><span class="o">&amp;</span><span class="n">val</span><span class="p">)</span> <span class="o">==</span> <span class="n">ord</span><span class="p">,</span>
+                    <span class="p">(</span><span class="n">v_max</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span><span class="nf">.cmp</span><span class="p">(</span><span class="o">&amp;</span><span class="n">val</span><span class="p">)</span> <span class="o">==</span> <span class="n">ord</span><span class="p">,</span>
+                <span class="p">)</span>
+            <span class="p">})</span>
+            <span class="nf">.unwrap_or</span><span class="p">((</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="k">true</span><span class="p">,</span> <span class="k">true</span><span class="p">))</span>
+        <span class="p">{</span>
+            <span class="p">(</span><span class="n">_</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="k">false</span><span class="p">,</span> <span class="k">false</span><span class="p">)</span> <span class="k">=&gt;</span> <span class="p">(),</span> <span class="c1">// rule does not match at all -&gt; check next rule</span>
+            <span class="p">(</span><span class="n">_</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="k">true</span><span class="p">,</span> <span class="k">true</span><span class="p">)</span> <span class="k">=&gt;</span> <span class="p">{</span>
+                <span class="c1">// rule fully matches -&gt; recurse and stop checking further rules here</span>
+                <span class="k">return</span> <span class="n">count</span> <span class="o">+</span> <span class="nf">star_2_rec</span><span class="p">(</span><span class="n">workflows</span><span class="p">,</span> <span class="n">next</span><span class="p">,</span> <span class="n">v_min</span><span class="p">,</span> <span class="n">v_max</span><span class="p">);</span>
+            <span class="p">}</span>
+            <span class="p">(</span><span class="n">idx</span><span class="p">,</span> <span class="n">val</span><span class="p">,</span> <span class="k">true</span><span class="p">,</span> <span class="k">false</span><span class="p">)</span> <span class="k">=&gt;</span> <span class="p">{</span>
+                <span class="c1">// rule matches for values_min_match[idx]..val -&gt; recurse</span>
+                <span class="k">let</span> <span class="p">(</span><span class="n">v_min_rec</span><span class="p">,</span> <span class="k">mut</span> <span class="n">v_max_rec</span><span class="p">)</span> <span class="o">=</span> <span class="p">(</span><span class="n">v_min</span><span class="p">,</span> <span class="n">v_max</span><span class="p">);</span>
+                <span class="n">v_max_rec</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span> <span class="o">=</span> <span class="n">val</span><span class="p">;</span>
+                <span class="n">count</span> <span class="o">+=</span> <span class="nf">star_2_rec</span><span class="p">(</span><span class="n">workflows</span><span class="p">,</span> <span class="n">next</span><span class="p">,</span> <span class="n">v_min_rec</span><span class="p">,</span> <span class="n">v_max_rec</span><span class="p">);</span>
+                <span class="c1">// rule does not match for val..values_max[idx] -&gt; check next rule</span>
+                <span class="n">v_min</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span> <span class="o">=</span> <span class="n">val</span><span class="p">;</span>
+            <span class="p">}</span>
+            <span class="p">(</span><span class="n">idx</span><span class="p">,</span> <span class="n">val</span><span class="p">,</span> <span class="k">false</span><span class="p">,</span> <span class="k">true</span><span class="p">)</span> <span class="k">=&gt;</span> <span class="p">{</span>
+                <span class="c1">// rule matches for val + 1..values_max_match[idx] -&gt; recurse</span>
+                <span class="k">let</span> <span class="p">(</span><span class="k">mut</span> <span class="n">v_min_rec</span><span class="p">,</span> <span class="n">v_max_rec</span><span class="p">)</span> <span class="o">=</span> <span class="p">(</span><span class="n">v_min</span><span class="p">,</span> <span class="n">v_max</span><span class="p">);</span>
+                <span class="n">v_min_rec</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span> <span class="o">=</span> <span class="n">val</span> <span class="o">+</span> <span class="mi">1</span><span class="p">;</span>
+                <span class="n">count</span> <span class="o">+=</span> <span class="nf">star_2_rec</span><span class="p">(</span><span class="n">workflows</span><span class="p">,</span> <span class="n">next</span><span class="p">,</span> <span class="n">v_min_rec</span><span class="p">,</span> <span class="n">v_max_rec</span><span class="p">);</span>
+                <span class="c1">// rule does not match for values_min[idx]..val + 1 -&gt; check next rule</span>
+                <span class="n">v_max</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span> <span class="o">=</span> <span class="n">val</span> <span class="o">+</span> <span class="mi">1</span><span class="p">;</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+
+    <span class="nd">unreachable!</span><span class="p">(</span><span class="s">"Eventually everything shall match"</span><span class="p">)</span>
+<span class="p">}</span>
+
+<span class="k">pub</span> <span class="k">fn</span> <span class="nf">star_2</span><span class="p">(</span><span class="nf">PuzzleData</span><span class="p">(</span><span class="n">workflows</span><span class="p">,</span> <span class="n">_</span><span class="p">):</span> <span class="o">&amp;</span><span class="n">PuzzleData</span><span class="p">)</span> <span class="k">-&gt;</span> <span class="n">SolT</span> <span class="p">{</span>
+    <span class="nf">star_2_rec</span><span class="p">(</span><span class="n">workflows</span><span class="p">,</span> <span class="s">"in"</span><span class="p">,</span> <span class="p">[</span><span class="mi">1</span><span class="p">;</span> <span class="mi">4</span><span class="p">],</span> <span class="p">[</span><span class="mi">4001</span><span class="p">;</span> <span class="mi">4</span><span class="p">])</span>
+<span class="p">}</span>
+</pre></td></tr></tbody></table></code></pre>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_tests_19">Tests</h3>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight"><code data-lang="rust"><table class="linenotable"><tbody><tr><td class="linenos gl"><pre class="lineno"> 1
+ 2
+ 3
+ 4
+ 5
+ 6
+ 7
+ 8
+ 9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+26
+27
+28
+29
+30
+31
+32
+33
+34
+35
+36
+37
+38
+39
+</pre></td><td class="code"><pre><span class="nd">#[cfg(test)]</span>
+<span class="k">mod</span> <span class="n">tests</span> <span class="p">{</span>
+    <span class="k">use</span> <span class="k">super</span><span class="p">::</span><span class="o">*</span><span class="p">;</span>
+
+    <span class="k">const</span> <span class="n">CONTENT</span><span class="p">:</span> <span class="o">&amp;</span><span class="nb">str</span> <span class="o">=</span> <span class="s">r#"px{a&lt;2006:qkq,m&gt;2090:A,rfg}
+pv{a&gt;1716:R,A}
+lnx{m&gt;1548:A,A}
+rfg{s&lt;537:gd,x&gt;2440:R,A}
+qs{s&gt;3448:A,lnx}
+qkq{x&lt;1416:A,crn}
+crn{x&gt;2662:A,R}
+in{s&lt;1351:px,qqz}
+qqz{s&gt;2770:qs,m&lt;1801:hdj,R}
+gd{a&gt;3333:R,R}
+hdj{m&gt;838:A,pv}
+
+{x=787,m=2655,a=1222,s=2876}
+{x=1679,m=44,a=2067,s=496}
+{x=2036,m=264,a=79,s=2244}
+{x=2461,m=1339,a=466,s=291}
+{x=2127,m=1623,a=2188,s=1013}
+"#</span><span class="p">;</span>
+
+    <span class="nd">#[test]</span>
+    <span class="k">pub</span> <span class="k">fn</span> <span class="nf">test_from</span><span class="p">()</span> <span class="p">{</span>
+        <span class="k">let</span> <span class="n">data</span> <span class="o">=</span> <span class="nn">PuzzleData</span><span class="p">::</span><span class="nf">from</span><span class="p">(</span><span class="n">CONTENT</span><span class="p">);</span>
+        <span class="nd">println!</span><span class="p">(</span><span class="s">"{data:?}"</span><span class="p">);</span>
+    <span class="p">}</span>
+
+    <span class="nd">#[test]</span>
+    <span class="k">pub</span> <span class="k">fn</span> <span class="nf">test_star_1</span><span class="p">()</span> <span class="p">{</span>
+        <span class="nd">assert_eq!</span><span class="p">(</span><span class="mi">19_114</span><span class="p">,</span> <span class="nf">star_1</span><span class="p">(</span><span class="o">&amp;</span><span class="n">CONTENT</span><span class="nf">.into</span><span class="p">()));</span>
+    <span class="p">}</span>
+
+    <span class="nd">#[test]</span>
+    <span class="k">pub</span> <span class="k">fn</span> <span class="nf">test_star_2</span><span class="p">()</span> <span class="p">{</span>
+        <span class="nd">assert_eq!</span><span class="p">(</span><span class="mi">167_409_079_868_000</span><span class="p">,</span> <span class="nf">star_2</span><span class="p">(</span><span class="o">&amp;</span><span class="n">CONTENT</span><span class="nf">.into</span><span class="p">()));</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</pre></td></tr></tbody></table></code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p><a href="#top">Top</a></p>
+</div>
+</div>
+</div>
+</div>
 </div>
 <div id="footer">
     <div id="footer-text">
-        Generated from <a href="https://github.com/mr-kaffee/aoc-2023/">github.com/mr-kaffee/aoc-2023/</a> on 2023-12-19 00:10:37 UTC
+        Generated from <a href="https://github.com/mr-kaffee/aoc-2023/">github.com/mr-kaffee/aoc-2023/</a> on 2023-12-19 07:46:54 UTC
         with <a href="https://asciidoctor.org">asciidoctor</a>.
     </div>
 </div>
