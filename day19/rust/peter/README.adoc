@@ -22,6 +22,10 @@ include::src/lib.rs[tags=star_1]
 
 === Star 2
 
+Divide and conquer!
+
+Any rule splits the allowed ranges in one part which matches the rule and another part which does not (both are possibly empty). These two parts are then handled separately. The part with matches by recursing to the target workflow of the rule, the part which does not match by checking the next rule in the workflow.
+
 [source,rust,numbered]
 ----
 include::src/lib.rs[tags=star_2]
