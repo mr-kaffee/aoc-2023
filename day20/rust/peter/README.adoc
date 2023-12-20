@@ -1,0 +1,67 @@
+== Rust | Day 20: Pulse Propagation
+
+https://rust-lang.org[Rust] solution to https://adventofcode.com/2023/day/20[AoC|2023|20].
+
+=== Input
+
+Reading and understanding the puzzle description was a bit of a challenge today.
+
+The puzzle contains nodes that have a type (plain, flip-flop, conjunction) and an identifier. Each node has zero to many target nodes it sends to.
+
+To avoid expensive lookups later on, I assign a unique id to each node, which can be used directly as index into vectors. 
+
+The input is modeled as a vector of vectors for the targets, a vector of types (`u8`) and the ids of the `broadcaster` and, if present, the `rx` node (needed for part 2).
+
+[source,rust,numbered]
+----
+include::src/lib.rs[tags=input]
+----
+
+=== Star 1
+
+Nodes may have memory assigned to them. Flip-flops have a single bit, conjunctions have multiple bits, and plain nodes do not have any memory. For conjunction nodes, each bit of memory is reserved to receive data from one specific source.
+
+[source,rust,numbered]
+----
+include::src/lib.rs[tags=memory]
+----
+
+To solve the first part, I first implemented a function that simulates a single button press. It accepts a callback to do something upon transmissions. Packets are pushed in a FIFO queue to make sure the order is preserved.
+
+[source,rust,numbered]
+----
+include::src/lib.rs[tags=press_button]
+----
+
+I then created a `SendCounter` struct, which provides the callback and does the counting, and that's basically it.
+
+[source,rust,numbered]
+----
+include::src/lib.rs[tags=star_1]
+----
+
+=== Star 2
+
+I am not sure how much I like that second part.
+
+It is one of the challenges, where we need to exploit properties of the puzzle input, that the description does not disclose.
+
+It turned out quite quickly, that there is no periodicity that can be reasonable exploited (obviously there is periodicity, since there is a finite number of states, 91 bits in my case)
+
+After playing around a while, I realized that there is a single node that sends to `rx`, which is a conjunction. All nodes that send to this conjunction turn out to send `high` with a periodicity of some large prime number. So the answer is the product of those prime numbers.
+
+There is again a struct, `Sources`, which is used to determine the number of steps it takes to reach all nodes that send to the single source node of `rx`.
+
+[source,rust,numbered]
+----
+include::src/lib.rs[tags=star_2]
+----
+
+=== Tests
+
+Today was more a day for exploratory testing (aka run, print debug statements, run again, try this and that, find patterns, ...). The `dump_memory` function is a left-over from this.
+
+[source,rust,numbered]
+----
+include::src/lib.rs[tags=tests]
+----
