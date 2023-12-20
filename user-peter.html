@@ -202,6 +202,14 @@
 <li><a href="#_tests_19">Tests</a></li>
 </ul>
 </li>
+<li><a href="#sol-rust-20">Rust | Day 20: Pulse Propagation</a>
+<ul class="sectlevel2">
+<li><a href="#_input_16">Input</a></li>
+<li><a href="#_star_1_21">Star 1</a></li>
+<li><a href="#_star_2_21">Star 2</a></li>
+<li><a href="#_tests_20">Tests</a></li>
+</ul>
+</li>
 </ul>
 </div>
 </div>
@@ -7173,10 +7181,760 @@ hdj{m&gt;838:A,pv}
 </div>
 </div>
 </div>
+<div class="sect1">
+<h2 id="sol-rust-20">Rust | Day 20: Pulse Propagation</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p><a href="https://rust-lang.org">Rust</a> solution to <a href="https://adventofcode.com/2023/day/20">AoC|2023|20</a>.</p>
+</div>
+<div class="sect2">
+<h3 id="_input_16">Input</h3>
+<div class="paragraph">
+<p>Reading and understanding the puzzle description was a bit of a challenge today.</p>
+</div>
+<div class="paragraph">
+<p>The puzzle contains nodes that have a type (plain, flip-flop, conjunction) and an identifier. Each node has zero to many target nodes it sends to.</p>
+</div>
+<div class="paragraph">
+<p>To avoid expensive lookups later on, I assign a unique id to each node, which can be used directly as index into vectors.</p>
+</div>
+<div class="paragraph">
+<p>The input is modeled as a vector of vectors for the targets, a vector of types (<code>u8</code>) and the ids of the <code>broadcaster</code> and, if present, the <code>rx</code> node (needed for part 2).</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight"><code data-lang="rust"><table class="linenotable"><tbody><tr><td class="linenos gl"><pre class="lineno"> 1
+ 2
+ 3
+ 4
+ 5
+ 6
+ 7
+ 8
+ 9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+26
+27
+28
+29
+30
+31
+32
+33
+34
+35
+36
+37
+38
+39
+40
+41
+42
+43
+44
+45
+46
+47
+48
+49
+50
+51
+52
+53
+54
+55
+56
+57
+58
+59
+60
+61
+62
+63
+64
+</pre></td><td class="code"><pre><span class="k">pub</span> <span class="k">mod</span> <span class="n">input</span> <span class="p">{</span>
+    <span class="nd">#[derive(Debug,</span> <span class="nd">PartialEq,</span> <span class="nd">Eq)]</span>
+    <span class="k">pub</span> <span class="k">struct</span> <span class="n">PuzzleData</span> <span class="p">{</span>
+        <span class="k">pub</span> <span class="n">bc</span><span class="p">:</span> <span class="nb">usize</span><span class="p">,</span>
+        <span class="k">pub</span> <span class="n">rx</span><span class="p">:</span> <span class="nb">Option</span><span class="o">&lt;</span><span class="nb">usize</span><span class="o">&gt;</span><span class="p">,</span>
+        <span class="k">pub</span> <span class="n">targets</span><span class="p">:</span> <span class="nb">Vec</span><span class="o">&lt;</span><span class="nb">Vec</span><span class="o">&lt;</span><span class="nb">usize</span><span class="o">&gt;&gt;</span><span class="p">,</span>
+        <span class="k">pub</span> <span class="n">types</span><span class="p">:</span> <span class="nb">Vec</span><span class="o">&lt;</span><span class="nb">u8</span><span class="o">&gt;</span><span class="p">,</span>
+    <span class="p">}</span>
+
+    <span class="k">fn</span> <span class="n">get_id</span><span class="o">&lt;</span><span class="nv">'a</span><span class="o">&gt;</span><span class="p">(</span><span class="n">nodes</span><span class="p">:</span> <span class="o">&amp;</span><span class="k">mut</span> <span class="nb">Vec</span><span class="o">&lt;&amp;</span><span class="nv">'a</span> <span class="nb">str</span><span class="o">&gt;</span><span class="p">,</span> <span class="n">node</span><span class="p">:</span> <span class="o">&amp;</span><span class="nv">'a</span> <span class="nb">str</span><span class="p">)</span> <span class="k">-&gt;</span> <span class="nb">usize</span> <span class="p">{</span>
+        <span class="k">let</span> <span class="n">id</span> <span class="o">=</span> <span class="n">nodes</span><span class="nf">.iter</span><span class="p">()</span><span class="nf">.position</span><span class="p">(|</span><span class="o">&amp;</span><span class="n">n</span><span class="p">|</span> <span class="n">n</span> <span class="o">==</span> <span class="n">node</span><span class="p">)</span><span class="nf">.unwrap_or</span><span class="p">(</span><span class="n">nodes</span><span class="nf">.len</span><span class="p">());</span>
+        <span class="k">if</span> <span class="n">id</span> <span class="o">==</span> <span class="n">nodes</span><span class="nf">.len</span><span class="p">()</span> <span class="p">{</span>
+            <span class="n">nodes</span><span class="nf">.push</span><span class="p">(</span><span class="n">node</span><span class="p">);</span>
+        <span class="p">}</span>
+        <span class="n">id</span>
+    <span class="p">}</span>
+
+    <span class="k">impl</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span> <span class="nb">From</span><span class="o">&lt;&amp;</span><span class="n">T</span><span class="o">&gt;</span> <span class="k">for</span> <span class="n">PuzzleData</span>
+    <span class="k">where</span>
+        <span class="n">T</span><span class="p">:</span> <span class="nb">AsRef</span><span class="o">&lt;</span><span class="nb">str</span><span class="o">&gt;</span> <span class="o">+</span> <span class="o">?</span><span class="nb">Sized</span><span class="p">,</span>
+    <span class="p">{</span>
+        <span class="k">fn</span> <span class="nf">from</span><span class="p">(</span><span class="n">s</span><span class="p">:</span> <span class="o">&amp;</span><span class="n">T</span><span class="p">)</span> <span class="k">-&gt;</span> <span class="k">Self</span> <span class="p">{</span>
+            <span class="k">let</span> <span class="k">mut</span> <span class="n">nodes</span> <span class="o">=</span> <span class="nn">Vec</span><span class="p">::</span><span class="nf">new</span><span class="p">();</span>
+            <span class="k">let</span> <span class="k">mut</span> <span class="n">targets</span> <span class="o">=</span> <span class="nn">Vec</span><span class="p">::</span><span class="nf">new</span><span class="p">();</span>
+            <span class="k">let</span> <span class="k">mut</span> <span class="n">types</span> <span class="o">=</span> <span class="nn">Vec</span><span class="p">::</span><span class="nf">new</span><span class="p">();</span>
+            <span class="k">for</span> <span class="n">line</span> <span class="k">in</span> <span class="n">s</span><span class="nf">.as_ref</span><span class="p">()</span><span class="nf">.lines</span><span class="p">()</span> <span class="p">{</span>
+                <span class="k">let</span> <span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="n">targets_part</span><span class="p">)</span> <span class="o">=</span> <span class="n">line</span><span class="nf">.split_once</span><span class="p">(</span><span class="s">" -&gt; "</span><span class="p">)</span><span class="nf">.unwrap</span><span class="p">();</span>
+                <span class="k">let</span> <span class="p">(</span><span class="n">source_type</span><span class="p">,</span> <span class="n">source</span><span class="p">)</span> <span class="o">=</span> <span class="k">match</span> <span class="n">source</span><span class="nf">.as_bytes</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span> <span class="p">{</span>
+                    <span class="sc">b'%'</span> <span class="k">=&gt;</span> <span class="p">(</span><span class="sc">b'%'</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">source</span><span class="p">[</span><span class="mi">1</span><span class="o">..</span><span class="p">]),</span>
+                    <span class="sc">b'&amp;'</span> <span class="k">=&gt;</span> <span class="p">(</span><span class="sc">b'&amp;'</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">source</span><span class="p">[</span><span class="mi">1</span><span class="o">..</span><span class="p">]),</span>
+                    <span class="n">b</span> <span class="k">if</span> <span class="n">b</span><span class="nf">.is_ascii_alphabetic</span><span class="p">()</span> <span class="k">=&gt;</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">source</span><span class="p">),</span>
+                    <span class="n">_</span> <span class="k">=&gt;</span> <span class="nd">panic!</span><span class="p">(),</span>
+                <span class="p">};</span>
+
+                <span class="k">let</span> <span class="n">source_id</span> <span class="o">=</span> <span class="nf">get_id</span><span class="p">(</span><span class="o">&amp;</span><span class="k">mut</span> <span class="n">nodes</span><span class="p">,</span> <span class="n">source</span><span class="p">);</span>
+                <span class="k">let</span> <span class="n">target_ids</span> <span class="o">=</span> <span class="n">targets_part</span>
+                    <span class="nf">.split</span><span class="p">(</span><span class="s">", "</span><span class="p">)</span>
+                    <span class="py">.collect</span><span class="p">::</span><span class="o">&lt;</span><span class="nb">Vec</span><span class="o">&lt;</span><span class="n">_</span><span class="o">&gt;&gt;</span><span class="p">()</span>
+                    <span class="nf">.iter</span><span class="p">()</span>
+                    <span class="nf">.map</span><span class="p">(|</span><span class="o">&amp;</span><span class="n">target</span><span class="p">|</span> <span class="nf">get_id</span><span class="p">(</span><span class="o">&amp;</span><span class="k">mut</span> <span class="n">nodes</span><span class="p">,</span> <span class="n">target</span><span class="p">))</span>
+                    <span class="py">.collect</span><span class="p">::</span><span class="o">&lt;</span><span class="nb">Vec</span><span class="o">&lt;</span><span class="n">_</span><span class="o">&gt;&gt;</span><span class="p">();</span>
+
+                <span class="n">targets</span><span class="nf">.resize</span><span class="p">(</span><span class="n">nodes</span><span class="nf">.len</span><span class="p">(),</span> <span class="nn">Vec</span><span class="p">::</span><span class="nf">default</span><span class="p">());</span>
+                <span class="n">targets</span><span class="p">[</span><span class="n">source_id</span><span class="p">]</span> <span class="o">=</span> <span class="n">target_ids</span><span class="p">;</span>
+
+                <span class="n">types</span><span class="nf">.resize</span><span class="p">(</span><span class="n">nodes</span><span class="nf">.len</span><span class="p">(),</span> <span class="mi">0</span><span class="p">);</span>
+                <span class="n">types</span><span class="p">[</span><span class="n">source_id</span><span class="p">]</span> <span class="o">=</span> <span class="n">source_type</span><span class="p">;</span>
+            <span class="p">}</span>
+
+            <span class="k">let</span> <span class="n">bc</span> <span class="o">=</span> <span class="n">nodes</span>
+                <span class="nf">.iter</span><span class="p">()</span>
+                <span class="nf">.position</span><span class="p">(|</span><span class="o">&amp;</span><span class="n">name</span><span class="p">|</span> <span class="n">name</span> <span class="o">==</span> <span class="s">"broadcaster"</span><span class="p">)</span>
+                <span class="nf">.unwrap</span><span class="p">();</span>
+            <span class="k">let</span> <span class="n">rx</span> <span class="o">=</span> <span class="n">nodes</span><span class="nf">.iter</span><span class="p">()</span><span class="nf">.position</span><span class="p">(|</span><span class="o">&amp;</span><span class="n">name</span><span class="p">|</span> <span class="n">name</span> <span class="o">==</span> <span class="s">"rx"</span><span class="p">);</span>
+
+            <span class="k">Self</span> <span class="p">{</span>
+                <span class="n">bc</span><span class="p">,</span>
+                <span class="n">rx</span><span class="p">,</span>
+                <span class="n">targets</span><span class="p">,</span>
+                <span class="n">types</span><span class="p">,</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</pre></td></tr></tbody></table></code></pre>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_star_1_21">Star 1</h3>
+<div class="paragraph">
+<p>Nodes may have memory assigned to them. Flip-flops have a single bit, conjunctions have multiple bits, and plain nodes do not have any memory. For conjunction nodes, each bit of memory is reserved to receive data from one specific source.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight"><code data-lang="rust"><table class="linenotable"><tbody><tr><td class="linenos gl"><pre class="lineno"> 1
+ 2
+ 3
+ 4
+ 5
+ 6
+ 7
+ 8
+ 9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+26
+27
+28
+29
+30
+31
+32
+33
+34
+35
+36
+37
+38
+</pre></td><td class="code"><pre><span class="nd">#[derive(Clone,</span> <span class="nd">PartialEq,</span> <span class="nd">Eq)]</span>
+<span class="k">pub</span> <span class="k">enum</span> <span class="n">Mem</span> <span class="p">{</span>
+    <span class="n">Plain</span><span class="p">,</span>
+    <span class="nf">FlipFlop</span><span class="p">(</span><span class="nb">bool</span><span class="p">),</span>
+    <span class="nf">Conjunction</span><span class="p">(</span><span class="nb">Vec</span><span class="o">&lt;</span><span class="p">(</span><span class="nb">usize</span><span class="p">,</span> <span class="nb">bool</span><span class="p">)</span><span class="o">&gt;</span><span class="p">),</span>
+<span class="p">}</span>
+
+<span class="k">pub</span> <span class="k">fn</span> <span class="nf">dump_memory</span><span class="p">(</span><span class="n">mems</span><span class="p">:</span> <span class="o">&amp;</span><span class="p">[</span><span class="n">Mem</span><span class="p">])</span> <span class="k">-&gt;</span> <span class="p">(</span><span class="nb">u128</span><span class="p">,</span> <span class="nb">u128</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">mems</span><span class="nf">.iter</span><span class="p">()</span><span class="nf">.fold</span><span class="p">((</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="p">|(</span><span class="n">dump</span><span class="p">,</span> <span class="n">mask</span><span class="p">),</span> <span class="n">mem</span><span class="p">|</span> <span class="k">match</span> <span class="n">mem</span> <span class="p">{</span>
+        <span class="nn">Mem</span><span class="p">::</span><span class="n">Plain</span> <span class="k">=&gt;</span> <span class="p">(</span><span class="n">dump</span><span class="p">,</span> <span class="n">mask</span><span class="p">),</span>
+        <span class="nn">Mem</span><span class="p">::</span><span class="nf">FlipFlop</span><span class="p">(</span><span class="n">val</span><span class="p">)</span> <span class="k">=&gt;</span> <span class="p">(</span><span class="n">dump</span> <span class="o">&lt;&lt;</span> <span class="mi">1</span> <span class="p">|</span> <span class="o">*</span><span class="n">val</span> <span class="k">as</span> <span class="nb">u128</span><span class="p">,</span> <span class="n">mask</span> <span class="o">&lt;&lt;</span> <span class="mi">1</span> <span class="p">|</span> <span class="mi">1</span><span class="p">),</span>
+        <span class="nn">Mem</span><span class="p">::</span><span class="nf">Conjunction</span><span class="p">(</span><span class="n">values</span><span class="p">)</span> <span class="k">=&gt;</span> <span class="n">values</span><span class="nf">.iter</span><span class="p">()</span><span class="nf">.fold</span><span class="p">((</span><span class="n">dump</span><span class="p">,</span> <span class="n">mask</span><span class="p">),</span> <span class="p">|(</span><span class="n">dump</span><span class="p">,</span> <span class="n">mask</span><span class="p">),</span> <span class="p">(</span><span class="n">_</span><span class="p">,</span> <span class="n">val</span><span class="p">)|</span> <span class="p">{</span>
+            <span class="p">(</span><span class="n">dump</span> <span class="o">&lt;&lt;</span> <span class="mi">1</span> <span class="p">|</span> <span class="o">*</span><span class="n">val</span> <span class="k">as</span> <span class="nb">u128</span><span class="p">,</span> <span class="n">mask</span> <span class="o">&lt;&lt;</span> <span class="mi">1</span> <span class="p">|</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="p">}),</span>
+    <span class="p">})</span>
+<span class="p">}</span>
+
+<span class="k">pub</span> <span class="k">fn</span> <span class="nf">init</span><span class="p">(</span><span class="n">targets</span><span class="p">:</span> <span class="o">&amp;</span><span class="p">[</span><span class="nb">Vec</span><span class="o">&lt;</span><span class="nb">usize</span><span class="o">&gt;</span><span class="p">],</span> <span class="n">types</span><span class="p">:</span> <span class="o">&amp;</span><span class="p">[</span><span class="nb">u8</span><span class="p">])</span> <span class="k">-&gt;</span> <span class="nb">Vec</span><span class="o">&lt;</span><span class="n">Mem</span><span class="o">&gt;</span> <span class="p">{</span>
+    <span class="k">let</span> <span class="k">mut</span> <span class="n">memories</span> <span class="o">=</span> <span class="n">types</span>
+        <span class="nf">.iter</span><span class="p">()</span>
+        <span class="nf">.map</span><span class="p">(|</span><span class="o">&amp;</span><span class="n">t</span><span class="p">|</span> <span class="k">match</span> <span class="n">t</span> <span class="p">{</span>
+            <span class="mi">0</span> <span class="k">=&gt;</span> <span class="nn">Mem</span><span class="p">::</span><span class="n">Plain</span><span class="p">,</span>
+            <span class="sc">b'&amp;'</span> <span class="k">=&gt;</span> <span class="nn">Mem</span><span class="p">::</span><span class="nf">Conjunction</span><span class="p">(</span><span class="nn">Vec</span><span class="p">::</span><span class="nf">new</span><span class="p">()),</span>
+            <span class="sc">b'%'</span> <span class="k">=&gt;</span> <span class="nn">Mem</span><span class="p">::</span><span class="nf">FlipFlop</span><span class="p">(</span><span class="k">false</span><span class="p">),</span>
+            <span class="n">_</span> <span class="k">=&gt;</span> <span class="nd">panic!</span><span class="p">(),</span>
+        <span class="p">})</span>
+        <span class="py">.collect</span><span class="p">::</span><span class="o">&lt;</span><span class="nb">Vec</span><span class="o">&lt;</span><span class="n">_</span><span class="o">&gt;&gt;</span><span class="p">();</span>
+
+    <span class="k">for</span> <span class="n">k</span> <span class="k">in</span> <span class="mi">0</span><span class="o">..</span><span class="n">types</span><span class="nf">.len</span><span class="p">()</span> <span class="p">{</span>
+        <span class="k">for</span> <span class="o">&amp;</span><span class="n">target</span> <span class="k">in</span> <span class="o">&amp;</span><span class="n">targets</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="p">{</span>
+            <span class="k">if</span> <span class="k">let</span> <span class="nn">Mem</span><span class="p">::</span><span class="nf">Conjunction</span><span class="p">(</span><span class="k">ref</span> <span class="k">mut</span> <span class="n">vec</span><span class="p">)</span> <span class="o">=</span> <span class="o">&amp;</span><span class="k">mut</span> <span class="n">memories</span><span class="p">[</span><span class="n">target</span><span class="p">]</span> <span class="p">{</span>
+                <span class="n">vec</span><span class="nf">.push</span><span class="p">((</span><span class="n">k</span><span class="p">,</span> <span class="k">false</span><span class="p">));</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+
+    <span class="n">memories</span>
+<span class="p">}</span>
+</pre></td></tr></tbody></table></code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>To solve the first part, I first implemented a function that simulates a single button press. It accepts a callback to do something upon transmissions. Packets are pushed in a FIFO queue to make sure the order is preserved.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight"><code data-lang="rust"><table class="linenotable"><tbody><tr><td class="linenos gl"><pre class="lineno"> 1
+ 2
+ 3
+ 4
+ 5
+ 6
+ 7
+ 8
+ 9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+26
+27
+28
+29
+30
+31
+32
+</pre></td><td class="code"><pre><span class="k">pub</span> <span class="k">fn</span> <span class="n">press_button</span><span class="o">&lt;</span><span class="n">F</span><span class="o">&gt;</span><span class="p">(</span><span class="n">memories</span><span class="p">:</span> <span class="o">&amp;</span><span class="k">mut</span> <span class="p">[</span><span class="n">Mem</span><span class="p">],</span> <span class="n">bc</span><span class="p">:</span> <span class="nb">usize</span><span class="p">,</span> <span class="n">targets</span><span class="p">:</span> <span class="o">&amp;</span><span class="p">[</span><span class="nb">Vec</span><span class="o">&lt;</span><span class="nb">usize</span><span class="o">&gt;</span><span class="p">],</span> <span class="k">mut</span> <span class="n">callback</span><span class="p">:</span> <span class="n">F</span><span class="p">)</span>
+<span class="k">where</span>
+    <span class="n">F</span><span class="p">:</span> <span class="nf">FnMut</span><span class="p">(</span><span class="nb">usize</span><span class="p">,</span> <span class="nb">usize</span><span class="p">,</span> <span class="nb">bool</span><span class="p">)</span> <span class="k">-&gt;</span> <span class="p">(),</span>
+<span class="p">{</span>
+    <span class="k">let</span> <span class="k">mut</span> <span class="n">queue</span> <span class="o">=</span> <span class="nn">VecDeque</span><span class="p">::</span><span class="nf">new</span><span class="p">();</span>
+
+    <span class="k">for</span> <span class="o">&amp;</span><span class="n">target</span> <span class="k">in</span> <span class="o">&amp;</span><span class="n">targets</span><span class="p">[</span><span class="n">bc</span><span class="p">]</span> <span class="p">{</span>
+        <span class="n">queue</span><span class="nf">.push_back</span><span class="p">((</span><span class="n">target</span><span class="p">,</span> <span class="n">bc</span><span class="p">,</span> <span class="k">false</span><span class="p">));</span>
+    <span class="p">}</span>
+
+    <span class="k">while</span> <span class="k">let</span> <span class="nf">Some</span><span class="p">((</span><span class="n">target</span><span class="p">,</span> <span class="n">source</span><span class="p">,</span> <span class="n">value</span><span class="p">))</span> <span class="o">=</span> <span class="n">queue</span><span class="nf">.pop_front</span><span class="p">()</span> <span class="p">{</span>
+        <span class="nf">callback</span><span class="p">(</span><span class="n">target</span><span class="p">,</span> <span class="n">source</span><span class="p">,</span> <span class="n">value</span><span class="p">);</span>
+
+        <span class="k">match</span> <span class="o">&amp;</span><span class="k">mut</span> <span class="n">memories</span><span class="p">[</span><span class="n">target</span><span class="p">]</span> <span class="p">{</span>
+            <span class="nn">Mem</span><span class="p">::</span><span class="nf">FlipFlop</span><span class="p">(</span><span class="k">ref</span> <span class="k">mut</span> <span class="n">mem</span><span class="p">)</span> <span class="k">if</span> <span class="o">!</span><span class="n">value</span> <span class="k">=&gt;</span> <span class="p">{</span>
+                <span class="o">*</span><span class="n">mem</span> <span class="o">=</span> <span class="o">!*</span><span class="n">mem</span><span class="p">;</span>
+                <span class="k">for</span> <span class="o">&amp;</span><span class="n">t</span> <span class="k">in</span> <span class="o">&amp;</span><span class="n">targets</span><span class="p">[</span><span class="n">target</span><span class="p">]</span> <span class="p">{</span>
+                    <span class="n">queue</span><span class="nf">.push_back</span><span class="p">((</span><span class="n">t</span><span class="p">,</span> <span class="n">target</span><span class="p">,</span> <span class="o">*</span><span class="n">mem</span><span class="p">));</span>
+                <span class="p">}</span>
+            <span class="p">}</span>
+            <span class="nn">Mem</span><span class="p">::</span><span class="nf">Conjunction</span><span class="p">(</span><span class="k">ref</span> <span class="k">mut</span> <span class="n">mems</span><span class="p">)</span> <span class="k">=&gt;</span> <span class="p">{</span>
+                <span class="k">let</span> <span class="p">(</span><span class="n">_</span><span class="p">,</span> <span class="n">mem</span><span class="p">)</span> <span class="o">=</span> <span class="n">mems</span><span class="nf">.iter_mut</span><span class="p">()</span><span class="nf">.find</span><span class="p">(|(</span><span class="n">id</span><span class="p">,</span> <span class="n">_</span><span class="p">)|</span> <span class="o">*</span><span class="n">id</span> <span class="o">==</span> <span class="n">source</span><span class="p">)</span><span class="nf">.unwrap</span><span class="p">();</span>
+                <span class="o">*</span><span class="n">mem</span> <span class="o">=</span> <span class="n">value</span><span class="p">;</span>
+                <span class="k">let</span> <span class="n">upd</span> <span class="o">=</span> <span class="o">!</span><span class="n">mems</span><span class="nf">.iter</span><span class="p">()</span><span class="nf">.all</span><span class="p">(|(</span><span class="n">_</span><span class="p">,</span> <span class="n">v</span><span class="p">)|</span> <span class="o">*</span><span class="n">v</span><span class="p">);</span>
+                <span class="k">for</span> <span class="o">&amp;</span><span class="n">t</span> <span class="k">in</span> <span class="o">&amp;</span><span class="n">targets</span><span class="p">[</span><span class="n">target</span><span class="p">]</span> <span class="p">{</span>
+                    <span class="n">queue</span><span class="nf">.push_back</span><span class="p">((</span><span class="n">t</span><span class="p">,</span> <span class="n">target</span><span class="p">,</span> <span class="n">upd</span><span class="p">));</span>
+                <span class="p">}</span>
+            <span class="p">}</span>
+            <span class="n">_</span> <span class="k">=&gt;</span> <span class="p">(),</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</pre></td></tr></tbody></table></code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>I then created a <code>SendCounter</code> struct, which provides the callback and does the counting, and that&#8217;s basically it.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight"><code data-lang="rust"><table class="linenotable"><tbody><tr><td class="linenos gl"><pre class="lineno"> 1
+ 2
+ 3
+ 4
+ 5
+ 6
+ 7
+ 8
+ 9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+26
+27
+28
+29
+30
+31
+32
+33
+34
+35
+36
+37
+38
+</pre></td><td class="code"><pre><span class="nd">#[derive(Debug,</span> <span class="nd">Default,</span> <span class="nd">PartialEq,</span> <span class="nd">Eq)]</span>
+<span class="k">struct</span> <span class="nf">SendCounter</span><span class="p">(</span><span class="nb">usize</span><span class="p">,</span> <span class="nb">usize</span><span class="p">);</span>
+
+<span class="k">impl</span> <span class="n">SendCounter</span> <span class="p">{</span>
+    <span class="k">fn</span> <span class="nf">callback</span><span class="p">(</span><span class="o">&amp;</span><span class="k">mut</span> <span class="k">self</span><span class="p">)</span> <span class="k">-&gt;</span> <span class="k">impl</span> <span class="nf">FnMut</span><span class="p">(</span><span class="nb">usize</span><span class="p">,</span> <span class="nb">usize</span><span class="p">,</span> <span class="nb">bool</span><span class="p">)</span> <span class="k">-&gt;</span> <span class="p">()</span> <span class="o">+</span> <span class="nv">'_</span> <span class="p">{</span>
+        <span class="p">|</span><span class="n">_</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">value</span><span class="p">|</span> <span class="k">self</span><span class="nf">.count</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+    <span class="p">}</span>
+
+    <span class="k">fn</span> <span class="nf">count</span><span class="p">(</span><span class="o">&amp;</span><span class="k">mut</span> <span class="k">self</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="nb">bool</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">if</span> <span class="n">value</span> <span class="p">{</span>
+            <span class="k">self</span><span class="na">.0</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+            <span class="k">self</span><span class="na">.1</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+
+    <span class="k">fn</span> <span class="nf">get</span><span class="p">(</span><span class="o">&amp;</span><span class="k">self</span><span class="p">)</span> <span class="k">-&gt;</span> <span class="nb">usize</span> <span class="p">{</span>
+        <span class="k">self</span><span class="na">.0</span> <span class="o">*</span> <span class="k">self</span><span class="na">.1</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="k">pub</span> <span class="k">fn</span> <span class="nf">star_1</span><span class="p">(</span>
+    <span class="n">PuzzleData</span> <span class="p">{</span>
+        <span class="n">bc</span><span class="p">,</span>
+        <span class="n">rx</span><span class="p">:</span> <span class="n">_</span><span class="p">,</span>
+        <span class="n">targets</span><span class="p">,</span>
+        <span class="n">types</span><span class="p">,</span>
+    <span class="p">}:</span> <span class="o">&amp;</span><span class="n">PuzzleData</span><span class="p">,</span>
+<span class="p">)</span> <span class="k">-&gt;</span> <span class="nb">usize</span> <span class="p">{</span>
+    <span class="k">let</span> <span class="k">mut</span> <span class="n">mem</span> <span class="o">=</span> <span class="nf">init</span><span class="p">(</span><span class="n">targets</span><span class="p">,</span> <span class="n">types</span><span class="p">);</span>
+
+    <span class="k">let</span> <span class="k">mut</span> <span class="n">counter</span> <span class="o">=</span> <span class="nn">SendCounter</span><span class="p">::</span><span class="nf">default</span><span class="p">();</span>
+    <span class="k">for</span> <span class="n">_</span> <span class="k">in</span> <span class="mi">0</span><span class="o">..</span><span class="mi">1_000</span> <span class="p">{</span>
+        <span class="n">counter</span><span class="nf">.count</span><span class="p">(</span><span class="k">false</span><span class="p">);</span> <span class="c1">// button press</span>
+        <span class="nf">press_button</span><span class="p">(</span><span class="o">&amp;</span><span class="k">mut</span> <span class="n">mem</span><span class="p">,</span> <span class="o">*</span><span class="n">bc</span><span class="p">,</span> <span class="n">targets</span><span class="p">,</span> <span class="n">counter</span><span class="nf">.callback</span><span class="p">());</span>
+    <span class="p">}</span>
+    <span class="n">counter</span><span class="nf">.get</span><span class="p">()</span>
+<span class="p">}</span>
+</pre></td></tr></tbody></table></code></pre>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_star_2_21">Star 2</h3>
+<div class="paragraph">
+<p>I am not sure how much I like that second part.</p>
+</div>
+<div class="paragraph">
+<p>It is one of the challenges, where we need to exploit properties of the puzzle input, that the description does not disclose.</p>
+</div>
+<div class="paragraph">
+<p>It turned out quite quickly, that there is no periodicity that can be reasonable exploited (obviously there is periodicity, since there is a finite number of states, 91 bits in my case)</p>
+</div>
+<div class="paragraph">
+<p>After playing around a while, I realized that there is a single node that sends to <code>rx</code>, which is a conjunction. All nodes that send to this conjunction turn out to send <code>high</code> with a periodicity of some large prime number. So the answer is the product of those prime numbers.</p>
+</div>
+<div class="paragraph">
+<p>There is again a struct, <code>Sources</code>, which is used to determine the number of steps it takes to reach all nodes that send to the single source node of <code>rx</code>.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight"><code data-lang="rust"><table class="linenotable"><tbody><tr><td class="linenos gl"><pre class="lineno"> 1
+ 2
+ 3
+ 4
+ 5
+ 6
+ 7
+ 8
+ 9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+26
+27
+28
+29
+30
+31
+32
+33
+34
+35
+36
+37
+38
+39
+40
+41
+42
+43
+44
+45
+46
+47
+48
+49
+50
+51
+52
+53
+54
+55
+56
+57
+58
+59
+60
+61
+62
+63
+64
+65
+66
+67
+68
+69
+70
+71
+72
+73
+74
+75
+76
+77
+</pre></td><td class="code"><pre><span class="k">struct</span> <span class="n">Sources</span> <span class="p">{</span>
+    <span class="n">values</span><span class="p">:</span> <span class="nb">Vec</span><span class="o">&lt;</span><span class="nb">Option</span><span class="o">&lt;</span><span class="nb">usize</span><span class="o">&gt;&gt;</span><span class="p">,</span>
+    <span class="n">source</span><span class="p">:</span> <span class="nb">usize</span><span class="p">,</span>
+    <span class="n">source_sources</span><span class="p">:</span> <span class="nb">Vec</span><span class="o">&lt;</span><span class="nb">usize</span><span class="o">&gt;</span><span class="p">,</span>
+    <span class="n">buttons</span><span class="p">:</span> <span class="nb">usize</span><span class="p">,</span>
+<span class="p">}</span>
+
+<span class="k">pub</span> <span class="k">fn</span> <span class="nf">find_sources</span><span class="p">(</span><span class="n">targets</span><span class="p">:</span> <span class="o">&amp;</span><span class="p">[</span><span class="nb">Vec</span><span class="o">&lt;</span><span class="nb">usize</span><span class="o">&gt;</span><span class="p">],</span> <span class="n">target</span><span class="p">:</span> <span class="nb">usize</span><span class="p">)</span> <span class="k">-&gt;</span> <span class="nb">Vec</span><span class="o">&lt;</span><span class="nb">usize</span><span class="o">&gt;</span> <span class="p">{</span>
+    <span class="n">targets</span>
+        <span class="nf">.iter</span><span class="p">()</span>
+        <span class="nf">.enumerate</span><span class="p">()</span>
+        <span class="nf">.filter</span><span class="p">(|(</span><span class="n">_</span><span class="p">,</span> <span class="n">targets</span><span class="p">)|</span> <span class="n">targets</span><span class="nf">.contains</span><span class="p">(</span><span class="o">&amp;</span><span class="n">target</span><span class="p">))</span>
+        <span class="nf">.map</span><span class="p">(|(</span><span class="n">pos</span><span class="p">,</span> <span class="n">_</span><span class="p">)|</span> <span class="n">pos</span><span class="p">)</span>
+        <span class="nf">.collect</span><span class="p">()</span>
+<span class="p">}</span>
+
+<span class="k">impl</span> <span class="n">Sources</span> <span class="p">{</span>
+    <span class="k">fn</span> <span class="nf">create</span><span class="p">(</span><span class="n">targets</span><span class="p">:</span> <span class="o">&amp;</span><span class="p">[</span><span class="nb">Vec</span><span class="o">&lt;</span><span class="nb">usize</span><span class="o">&gt;</span><span class="p">],</span> <span class="n">rx</span><span class="p">:</span> <span class="nb">usize</span><span class="p">)</span> <span class="k">-&gt;</span> <span class="k">Self</span> <span class="p">{</span>
+        <span class="k">let</span> <span class="n">sources</span> <span class="o">=</span> <span class="nf">find_sources</span><span class="p">(</span><span class="o">&amp;</span><span class="n">targets</span><span class="p">,</span> <span class="n">rx</span><span class="p">);</span>
+        <span class="nd">assert_eq!</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">sources</span><span class="nf">.len</span><span class="p">());</span>
+        <span class="k">let</span> <span class="n">source</span> <span class="o">=</span> <span class="n">sources</span><span class="p">[</span><span class="mi">0</span><span class="p">];</span>
+        <span class="k">let</span> <span class="n">source_sources</span> <span class="o">=</span> <span class="nf">find_sources</span><span class="p">(</span><span class="o">&amp;</span><span class="n">targets</span><span class="p">,</span> <span class="n">source</span><span class="p">);</span>
+        <span class="k">let</span> <span class="n">values</span> <span class="o">=</span> <span class="nd">vec!</span><span class="p">[</span><span class="nb">None</span><span class="p">;</span> <span class="n">source_sources</span><span class="nf">.len</span><span class="p">()];</span>
+
+        <span class="k">Self</span> <span class="p">{</span>
+            <span class="n">values</span><span class="p">,</span>
+            <span class="n">source</span><span class="p">,</span>
+            <span class="n">source_sources</span><span class="p">,</span>
+            <span class="n">buttons</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+
+    <span class="k">fn</span> <span class="nf">callback</span><span class="p">(</span><span class="o">&amp;</span><span class="k">mut</span> <span class="k">self</span><span class="p">)</span> <span class="k">-&gt;</span> <span class="k">impl</span> <span class="nf">FnMut</span><span class="p">(</span><span class="nb">usize</span><span class="p">,</span> <span class="nb">usize</span><span class="p">,</span> <span class="nb">bool</span><span class="p">)</span> <span class="k">-&gt;</span> <span class="p">()</span> <span class="o">+</span> <span class="nv">'_</span> <span class="p">{</span>
+        <span class="p">|</span><span class="n">target</span><span class="p">,</span> <span class="n">source</span><span class="p">,</span> <span class="n">value</span><span class="p">|</span> <span class="p">{</span>
+            <span class="k">if</span> <span class="n">target</span> <span class="o">==</span> <span class="k">self</span><span class="py">.source</span> <span class="o">&amp;&amp;</span> <span class="n">value</span> <span class="p">{</span>
+                <span class="k">let</span> <span class="n">id</span> <span class="o">=</span> <span class="k">self</span>
+                    <span class="py">.source_sources</span>
+                    <span class="nf">.iter</span><span class="p">()</span>
+                    <span class="nf">.position</span><span class="p">(|</span><span class="o">&amp;</span><span class="n">id</span><span class="p">|</span> <span class="n">id</span> <span class="o">==</span> <span class="n">source</span><span class="p">)</span>
+                    <span class="nf">.unwrap</span><span class="p">();</span>
+                <span class="k">if</span> <span class="k">self</span><span class="py">.values</span><span class="p">[</span><span class="n">id</span><span class="p">]</span><span class="nf">.is_none</span><span class="p">()</span> <span class="p">{</span>
+                    <span class="k">self</span><span class="py">.values</span><span class="p">[</span><span class="n">id</span><span class="p">]</span> <span class="o">=</span> <span class="nf">Some</span><span class="p">(</span><span class="k">self</span><span class="py">.buttons</span><span class="p">);</span>
+                <span class="p">}</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+
+    <span class="k">fn</span> <span class="nf">button</span><span class="p">(</span><span class="o">&amp;</span><span class="k">mut</span> <span class="k">self</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">self</span><span class="py">.buttons</span> <span class="o">+=</span> <span class="mi">1</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="k">fn</span> <span class="nf">done</span><span class="p">(</span><span class="o">&amp;</span><span class="k">self</span><span class="p">)</span> <span class="k">-&gt;</span> <span class="nb">bool</span> <span class="p">{</span>
+        <span class="k">self</span><span class="py">.values</span><span class="nf">.iter</span><span class="p">()</span><span class="nf">.all</span><span class="p">(|</span><span class="n">v</span><span class="p">|</span> <span class="n">v</span><span class="nf">.is_some</span><span class="p">())</span>
+    <span class="p">}</span>
+
+    <span class="k">fn</span> <span class="nf">get</span><span class="p">(</span><span class="o">&amp;</span><span class="k">mut</span> <span class="k">self</span><span class="p">)</span> <span class="k">-&gt;</span> <span class="nb">usize</span> <span class="p">{</span>
+        <span class="k">self</span><span class="py">.values</span><span class="nf">.iter</span><span class="p">()</span><span class="nf">.flatten</span><span class="p">()</span><span class="nf">.product</span><span class="p">()</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="k">pub</span> <span class="k">fn</span> <span class="nf">star_2</span><span class="p">(</span>
+    <span class="n">PuzzleData</span> <span class="p">{</span>
+        <span class="n">bc</span><span class="p">,</span>
+        <span class="n">rx</span><span class="p">,</span>
+        <span class="n">targets</span><span class="p">,</span>
+        <span class="n">types</span><span class="p">,</span>
+    <span class="p">}:</span> <span class="o">&amp;</span><span class="n">PuzzleData</span><span class="p">,</span>
+<span class="p">)</span> <span class="k">-&gt;</span> <span class="nb">usize</span> <span class="p">{</span>
+    <span class="k">let</span> <span class="k">mut</span> <span class="n">memories</span> <span class="o">=</span> <span class="nf">init</span><span class="p">(</span><span class="o">&amp;</span><span class="n">targets</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">types</span><span class="p">);</span>
+
+    <span class="k">let</span> <span class="k">mut</span> <span class="n">sources</span> <span class="o">=</span> <span class="nn">Sources</span><span class="p">::</span><span class="nf">create</span><span class="p">(</span><span class="o">&amp;</span><span class="n">targets</span><span class="p">,</span> <span class="n">rx</span><span class="nf">.unwrap</span><span class="p">());</span>
+    <span class="k">while</span> <span class="o">!</span><span class="n">sources</span><span class="nf">.done</span><span class="p">()</span> <span class="p">{</span>
+        <span class="n">sources</span><span class="nf">.button</span><span class="p">();</span>
+        <span class="nf">press_button</span><span class="p">(</span><span class="o">&amp;</span><span class="k">mut</span> <span class="n">memories</span><span class="p">,</span> <span class="o">*</span><span class="n">bc</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">targets</span><span class="p">,</span> <span class="n">sources</span><span class="nf">.callback</span><span class="p">());</span>
+    <span class="p">}</span>
+    <span class="n">sources</span><span class="nf">.get</span><span class="p">()</span>
+<span class="p">}</span>
+</pre></td></tr></tbody></table></code></pre>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_tests_20">Tests</h3>
+<div class="paragraph">
+<p>Today was more a day for exploratory testing (aka run, print debug statements, run again, try this and that, find patterns, &#8230;&#8203;). The <code>dump_memory</code> function is a left-over from this.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight"><code data-lang="rust"><table class="linenotable"><tbody><tr><td class="linenos gl"><pre class="lineno"> 1
+ 2
+ 3
+ 4
+ 5
+ 6
+ 7
+ 8
+ 9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+26
+27
+28
+29
+30
+31
+32
+33
+34
+35
+36
+37
+38
+39
+40
+41
+42
+43
+44
+45
+46
+47
+48
+49
+50
+51
+52
+53
+54
+55
+56
+57
+58
+59
+60
+61
+62
+63
+64
+65
+66
+67
+68
+69
+70
+71
+72
+73
+74
+75
+76
+77
+78
+79
+80
+</pre></td><td class="code"><pre><span class="nd">#[cfg(test)]</span>
+<span class="k">mod</span> <span class="n">tests</span> <span class="p">{</span>
+    <span class="k">use</span> <span class="k">super</span><span class="p">::</span><span class="o">*</span><span class="p">;</span>
+
+    <span class="k">const</span> <span class="n">CONTENT_1</span><span class="p">:</span> <span class="o">&amp;</span><span class="nb">str</span> <span class="o">=</span> <span class="s">r#"broadcaster -&gt; a, b, c
+%a -&gt; b
+%b -&gt; c
+%c -&gt; inv
+&amp;inv -&gt; a
+"#</span><span class="p">;</span>
+
+    <span class="k">const</span> <span class="n">CONTENT_2</span><span class="p">:</span> <span class="o">&amp;</span><span class="nb">str</span> <span class="o">=</span> <span class="s">r#"broadcaster -&gt; a
+%a -&gt; inv, con
+&amp;inv -&gt; b
+%b -&gt; con
+&amp;con -&gt; output
+"#</span><span class="p">;</span>
+
+    <span class="nd">#[test]</span>
+    <span class="k">pub</span> <span class="k">fn</span> <span class="nf">test_from</span><span class="p">()</span> <span class="p">{</span>
+        <span class="k">let</span> <span class="n">data</span> <span class="o">=</span> <span class="nn">PuzzleData</span><span class="p">::</span><span class="nf">from</span><span class="p">(</span><span class="n">CONTENT_1</span><span class="p">);</span>
+        <span class="c1">// "broadcaster", "a", "b", "c", "inv"</span>
+        <span class="k">let</span> <span class="n">exp</span> <span class="o">=</span> <span class="n">PuzzleData</span> <span class="p">{</span>
+            <span class="n">bc</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+            <span class="n">rx</span><span class="p">:</span> <span class="nb">None</span><span class="p">,</span>
+            <span class="n">targets</span><span class="p">:</span> <span class="nd">vec!</span><span class="p">[</span><span class="nd">vec!</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">],</span> <span class="nd">vec!</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="nd">vec!</span><span class="p">[</span><span class="mi">3</span><span class="p">],</span> <span class="nd">vec!</span><span class="p">[</span><span class="mi">4</span><span class="p">],</span> <span class="nd">vec!</span><span class="p">[</span><span class="mi">1</span><span class="p">]],</span>
+            <span class="n">types</span><span class="p">:</span> <span class="nd">vec!</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="sc">b'%'</span><span class="p">,</span> <span class="sc">b'%'</span><span class="p">,</span> <span class="sc">b'%'</span><span class="p">,</span> <span class="sc">b'&amp;'</span><span class="p">],</span>
+        <span class="p">};</span>
+        <span class="nd">println!</span><span class="p">(</span><span class="s">"{data:?}"</span><span class="p">);</span>
+        <span class="nd">assert_eq!</span><span class="p">(</span><span class="n">exp</span><span class="p">,</span> <span class="n">data</span><span class="p">);</span>
+
+        <span class="k">let</span> <span class="n">data</span> <span class="o">=</span> <span class="nn">PuzzleData</span><span class="p">::</span><span class="nf">from</span><span class="p">(</span><span class="n">CONTENT_2</span><span class="p">);</span>
+        <span class="c1">// "broadcaster", "a", "inv", "con", "b", "output"</span>
+        <span class="k">let</span> <span class="n">exp</span> <span class="o">=</span> <span class="n">PuzzleData</span> <span class="p">{</span>
+            <span class="n">bc</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+            <span class="n">rx</span><span class="p">:</span> <span class="nb">None</span><span class="p">,</span>
+            <span class="n">targets</span><span class="p">:</span> <span class="nd">vec!</span><span class="p">[</span><span class="nd">vec!</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="nd">vec!</span><span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">],</span> <span class="nd">vec!</span><span class="p">[</span><span class="mi">4</span><span class="p">],</span> <span class="nd">vec!</span><span class="p">[</span><span class="mi">5</span><span class="p">],</span> <span class="nd">vec!</span><span class="p">[</span><span class="mi">3</span><span class="p">],</span> <span class="nd">vec!</span><span class="p">[]],</span>
+            <span class="n">types</span><span class="p">:</span> <span class="nd">vec!</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="sc">b'%'</span><span class="p">,</span> <span class="sc">b'&amp;'</span><span class="p">,</span> <span class="sc">b'&amp;'</span><span class="p">,</span> <span class="sc">b'%'</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span>
+        <span class="p">};</span>
+        <span class="nd">println!</span><span class="p">(</span><span class="s">"{data:?}"</span><span class="p">);</span>
+        <span class="nd">assert_eq!</span><span class="p">(</span><span class="n">exp</span><span class="p">,</span> <span class="n">data</span><span class="p">);</span>
+    <span class="p">}</span>
+
+    <span class="nd">#[test]</span>
+    <span class="k">pub</span> <span class="k">fn</span> <span class="nf">test_star_1</span><span class="p">()</span> <span class="p">{</span>
+        <span class="nd">assert_eq!</span><span class="p">(</span><span class="mi">32_000_000</span><span class="p">,</span> <span class="nf">star_1</span><span class="p">(</span><span class="o">&amp;</span><span class="n">CONTENT_1</span><span class="nf">.into</span><span class="p">()));</span>
+        <span class="nd">assert_eq!</span><span class="p">(</span><span class="mi">11_687_500</span><span class="p">,</span> <span class="nf">star_1</span><span class="p">(</span><span class="o">&amp;</span><span class="n">CONTENT_2</span><span class="nf">.into</span><span class="p">()));</span>
+    <span class="p">}</span>
+
+    <span class="nd">#[test]</span>
+    <span class="k">pub</span> <span class="k">fn</span> <span class="nf">test_press_button_with_send_counter</span><span class="p">()</span> <span class="p">{</span>
+        <span class="k">let</span> <span class="n">PuzzleData</span> <span class="p">{</span>
+            <span class="n">bc</span><span class="p">,</span>
+            <span class="n">rx</span><span class="p">:</span> <span class="n">_</span><span class="p">,</span>
+            <span class="n">targets</span><span class="p">,</span>
+            <span class="n">types</span><span class="p">,</span>
+        <span class="p">}</span> <span class="o">=</span> <span class="n">CONTENT_2</span><span class="nf">.into</span><span class="p">();</span>
+        <span class="k">let</span> <span class="k">mut</span> <span class="n">mem</span> <span class="o">=</span> <span class="nf">init</span><span class="p">(</span><span class="o">&amp;</span><span class="n">targets</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">types</span><span class="p">);</span>
+
+        <span class="k">let</span> <span class="k">mut</span> <span class="n">counter</span> <span class="o">=</span> <span class="nn">SendCounter</span><span class="p">::</span><span class="nf">default</span><span class="p">();</span>
+
+        <span class="nf">press_button</span><span class="p">(</span><span class="o">&amp;</span><span class="k">mut</span> <span class="n">mem</span><span class="p">,</span> <span class="n">bc</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">targets</span><span class="p">,</span> <span class="n">counter</span><span class="nf">.callback</span><span class="p">());</span>
+        <span class="nd">assert_eq!</span><span class="p">(</span><span class="nf">SendCounter</span><span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span> <span class="n">counter</span><span class="p">);</span>
+
+        <span class="nf">press_button</span><span class="p">(</span><span class="o">&amp;</span><span class="k">mut</span> <span class="n">mem</span><span class="p">,</span> <span class="n">bc</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">targets</span><span class="p">,</span> <span class="n">counter</span><span class="nf">.callback</span><span class="p">());</span>
+        <span class="nd">assert_eq!</span><span class="p">(</span><span class="nf">SendCounter</span><span class="p">(</span><span class="mi">4</span> <span class="o">+</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span> <span class="o">+</span> <span class="mi">3</span><span class="p">),</span> <span class="n">counter</span><span class="p">);</span>
+    <span class="p">}</span>
+
+    <span class="nd">#[test]</span>
+    <span class="k">pub</span> <span class="k">fn</span> <span class="nf">test_dump_memory</span><span class="p">()</span> <span class="p">{</span>
+        <span class="k">let</span> <span class="n">PuzzleData</span> <span class="p">{</span>
+            <span class="n">bc</span><span class="p">:</span> <span class="n">_</span><span class="p">,</span>
+            <span class="n">rx</span><span class="p">:</span> <span class="n">_</span><span class="p">,</span>
+            <span class="n">targets</span><span class="p">,</span>
+            <span class="n">types</span><span class="p">,</span>
+        <span class="p">}</span> <span class="o">=</span> <span class="n">CONTENT_1</span><span class="nf">.into</span><span class="p">();</span>
+        <span class="k">let</span> <span class="n">mem</span> <span class="o">=</span> <span class="nf">init</span><span class="p">(</span><span class="o">&amp;</span><span class="n">targets</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">types</span><span class="p">);</span>
+        <span class="nd">assert_eq!</span><span class="p">((</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0xf</span><span class="p">),</span> <span class="nf">dump_memory</span><span class="p">(</span><span class="o">&amp;</span><span class="n">mem</span><span class="p">));</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</pre></td></tr></tbody></table></code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p><a href="#top">Top</a></p>
+</div>
+</div>
+</div>
+</div>
 </div>
 <div id="footer">
     <div id="footer-text">
-        Generated from <a href="https://github.com/mr-kaffee/aoc-2023/">github.com/mr-kaffee/aoc-2023/</a> on 2023-12-19 21:48:06 UTC
+        Generated from <a href="https://github.com/mr-kaffee/aoc-2023/">github.com/mr-kaffee/aoc-2023/</a> on 2023-12-20 12:46:58 UTC
         with <a href="https://asciidoctor.org">asciidoctor</a>.
     </div>
 </div>
