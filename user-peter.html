@@ -211,6 +211,13 @@
 </ul>
 </li>
 <li><a href="#sol-rust-21">Rust | Day 21: Step Counter</a></li>
+<li><a href="#sol-rust-22">Rust | Day 22: Sand Slabs</a>
+<ul class="sectlevel2">
+<li><a href="#_input_17">Input</a></li>
+<li><a href="#_star_1_2_2">Star 1 &amp; 2</a></li>
+<li><a href="#_tests_21">Tests</a></li>
+</ul>
+</li>
 </ul>
 </div>
 </div>
@@ -8586,10 +8593,577 @@ hdj{m&gt;838:A,pv}
 </div>
 </div>
 </div>
+<div class="sect1">
+<h2 id="sol-rust-22">Rust | Day 22: Sand Slabs</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p><a href="https://rust-lang.org">Rust</a> solution to <a href="https://adventofcode.com/2023/day/22">AoC|2023|22</a>.</p>
+</div>
+<div class="paragraph">
+<p>Feels a bit like Tetris in 3D. I felt reminded of <a href="https://adventofcode.com/2022/day/17">Aoc|2022|17</a>, but in the end it was very different.</p>
+</div>
+<div class="sect2">
+<h3 id="_input_17">Input</h3>
+<div class="paragraph">
+<p>I decided to create some <code>struct</code> types today. The input is parsed into a <code>Vec</code> of <code>Brick</code> elements. Each <code>Brick</code> is a pair of <code>Point</code> elements.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight"><code data-lang="rust"><table class="linenotable"><tbody><tr><td class="linenos gl"><pre class="lineno"> 1
+ 2
+ 3
+ 4
+ 5
+ 6
+ 7
+ 8
+ 9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+26
+27
+28
+29
+30
+31
+32
+33
+34
+35
+</pre></td><td class="code"><pre><span class="k">pub</span> <span class="k">mod</span> <span class="n">input</span> <span class="p">{</span>
+    <span class="k">use</span> <span class="k">crate</span><span class="p">::{</span><span class="n">Brick</span><span class="p">,</span> <span class="n">Point</span><span class="p">};</span>
+
+    <span class="nd">#[derive(Debug)]</span>
+    <span class="k">pub</span> <span class="k">struct</span> <span class="nf">PuzzleData</span><span class="p">(</span><span class="k">pub</span> <span class="nb">Vec</span><span class="o">&lt;</span><span class="n">Brick</span><span class="o">&gt;</span><span class="p">);</span>
+
+    <span class="k">impl</span> <span class="nb">From</span><span class="o">&lt;&amp;</span><span class="nb">str</span><span class="o">&gt;</span> <span class="k">for</span> <span class="n">Point</span> <span class="p">{</span>
+        <span class="k">fn</span> <span class="nf">from</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="o">&amp;</span><span class="nb">str</span><span class="p">)</span> <span class="k">-&gt;</span> <span class="k">Self</span> <span class="p">{</span>
+            <span class="k">let</span> <span class="k">mut</span> <span class="n">values</span> <span class="o">=</span> <span class="n">value</span><span class="nf">.split</span><span class="p">(</span><span class="sc">','</span><span class="p">)</span><span class="nf">.map</span><span class="p">(|</span><span class="n">v</span><span class="p">|</span> <span class="n">v</span><span class="nf">.parse</span><span class="p">()</span><span class="nf">.unwrap</span><span class="p">());</span>
+            <span class="k">Self</span> <span class="p">{</span>
+                <span class="n">x</span><span class="p">:</span> <span class="n">values</span><span class="nf">.next</span><span class="p">()</span><span class="nf">.unwrap</span><span class="p">(),</span>
+                <span class="n">y</span><span class="p">:</span> <span class="n">values</span><span class="nf">.next</span><span class="p">()</span><span class="nf">.unwrap</span><span class="p">(),</span>
+                <span class="n">z</span><span class="p">:</span> <span class="n">values</span><span class="nf">.next</span><span class="p">()</span><span class="nf">.unwrap</span><span class="p">(),</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+
+    <span class="k">impl</span> <span class="nb">From</span><span class="o">&lt;&amp;</span><span class="nb">str</span><span class="o">&gt;</span> <span class="k">for</span> <span class="n">Brick</span> <span class="p">{</span>
+        <span class="k">fn</span> <span class="nf">from</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="o">&amp;</span><span class="nb">str</span><span class="p">)</span> <span class="k">-&gt;</span> <span class="k">Self</span> <span class="p">{</span>
+            <span class="n">value</span>
+                <span class="nf">.split_once</span><span class="p">(</span><span class="sc">'~'</span><span class="p">)</span>
+                <span class="nf">.map</span><span class="p">(|(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">)|</span> <span class="k">Self</span><span class="p">(</span><span class="n">a</span><span class="nf">.into</span><span class="p">(),</span> <span class="n">b</span><span class="nf">.into</span><span class="p">()))</span>
+                <span class="nf">.unwrap</span><span class="p">()</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+
+    <span class="k">impl</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span> <span class="nb">From</span><span class="o">&lt;&amp;</span><span class="n">T</span><span class="o">&gt;</span> <span class="k">for</span> <span class="n">PuzzleData</span>
+    <span class="k">where</span>
+        <span class="n">T</span><span class="p">:</span> <span class="nb">AsRef</span><span class="o">&lt;</span><span class="nb">str</span><span class="o">&gt;</span> <span class="o">+</span> <span class="o">?</span><span class="nb">Sized</span><span class="p">,</span>
+    <span class="p">{</span>
+        <span class="k">fn</span> <span class="nf">from</span><span class="p">(</span><span class="n">s</span><span class="p">:</span> <span class="o">&amp;</span><span class="n">T</span><span class="p">)</span> <span class="k">-&gt;</span> <span class="k">Self</span> <span class="p">{</span>
+            <span class="k">Self</span><span class="p">(</span><span class="n">s</span><span class="nf">.as_ref</span><span class="p">()</span><span class="nf">.lines</span><span class="p">()</span><span class="nf">.map</span><span class="p">(</span><span class="nn">Brick</span><span class="p">::</span><span class="n">from</span><span class="p">)</span><span class="nf">.collect</span><span class="p">())</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</pre></td></tr></tbody></table></code></pre>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_star_1_2_2">Star 1 &amp; 2</h3>
+<div class="paragraph">
+<p>Since settling the <code>SandStack</code> consumes an important part of the runtime (probably with a bit of room for optimization), I wanted to do it only once and implemented both solutions in one function.</p>
+</div>
+<div class="paragraph">
+<p>Here is my lengthy solution. The key parts are</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Build the sand stack and figure out which bricks are on top of each other; main parts implemented in <code>SandStack::from</code>, <code>Brick::compare</code>. The compare function will also return the upper <code>z</code>-coordinate of the lower brick.</p>
+</li>
+<li>
+<p>Settle the stack, so that everything is touching either a brick below or solid ground: <code>SandStack::settle</code> uses recursive <code>SandStack::settle_rec</code></p>
+</li>
+<li>
+<p>Solution to part 1 in <code>SandStack::count_disintegrateable</code></p>
+</li>
+<li>
+<p>Solution to part 2 in <code>SandStack::sum_count_falling</code> - a kind of 'lowest-first-traversal'. Could maybe be optimized with some caching.</p>
+</li>
+</ul>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight"><code data-lang="rust"><table class="linenotable"><tbody><tr><td class="linenos gl"><pre class="lineno">  1
+  2
+  3
+  4
+  5
+  6
+  7
+  8
+  9
+ 10
+ 11
+ 12
+ 13
+ 14
+ 15
+ 16
+ 17
+ 18
+ 19
+ 20
+ 21
+ 22
+ 23
+ 24
+ 25
+ 26
+ 27
+ 28
+ 29
+ 30
+ 31
+ 32
+ 33
+ 34
+ 35
+ 36
+ 37
+ 38
+ 39
+ 40
+ 41
+ 42
+ 43
+ 44
+ 45
+ 46
+ 47
+ 48
+ 49
+ 50
+ 51
+ 52
+ 53
+ 54
+ 55
+ 56
+ 57
+ 58
+ 59
+ 60
+ 61
+ 62
+ 63
+ 64
+ 65
+ 66
+ 67
+ 68
+ 69
+ 70
+ 71
+ 72
+ 73
+ 74
+ 75
+ 76
+ 77
+ 78
+ 79
+ 80
+ 81
+ 82
+ 83
+ 84
+ 85
+ 86
+ 87
+ 88
+ 89
+ 90
+ 91
+ 92
+ 93
+ 94
+ 95
+ 96
+ 97
+ 98
+ 99
+100
+101
+102
+103
+104
+105
+106
+107
+108
+109
+110
+111
+112
+113
+114
+115
+116
+117
+118
+119
+120
+121
+122
+123
+124
+125
+126
+127
+128
+129
+130
+131
+132
+133
+134
+135
+136
+137
+138
+139
+140
+141
+142
+143
+144
+145
+146
+147
+148
+149
+150
+151
+152
+153
+154
+155
+156
+157
+158
+159
+160
+161
+162
+163
+164
+165
+166
+167
+168
+169
+170
+171
+172
+173
+174
+175
+176
+177
+178
+179
+180
+</pre></td><td class="code"><pre><span class="k">pub</span> <span class="k">type</span> <span class="n">Coord</span> <span class="o">=</span> <span class="nb">usize</span><span class="p">;</span>
+
+<span class="nd">#[derive(Debug,</span> <span class="nd">PartialEq,</span> <span class="nd">Eq,</span> <span class="nd">PartialOrd,</span> <span class="nd">Ord,</span> <span class="nd">Clone,</span> <span class="nd">Copy)]</span>
+<span class="k">pub</span> <span class="k">struct</span> <span class="n">Point</span> <span class="p">{</span>
+    <span class="k">pub</span> <span class="n">x</span><span class="p">:</span> <span class="n">Coord</span><span class="p">,</span>
+    <span class="k">pub</span> <span class="n">y</span><span class="p">:</span> <span class="n">Coord</span><span class="p">,</span>
+    <span class="k">pub</span> <span class="n">z</span><span class="p">:</span> <span class="n">Coord</span><span class="p">,</span>
+<span class="p">}</span>
+
+<span class="nd">#[derive(Debug,</span> <span class="nd">PartialEq,</span> <span class="nd">Eq,</span> <span class="nd">PartialOrd,</span> <span class="nd">Ord,</span> <span class="nd">Clone,</span> <span class="nd">Copy)]</span>
+<span class="k">pub</span> <span class="k">struct</span> <span class="nf">Brick</span><span class="p">(</span><span class="k">pub</span> <span class="n">Point</span><span class="p">,</span> <span class="k">pub</span> <span class="n">Point</span><span class="p">);</span>
+
+<span class="k">pub</span> <span class="k">struct</span> <span class="n">SandStack</span> <span class="p">{</span>
+    <span class="n">bricks</span><span class="p">:</span> <span class="nb">Vec</span><span class="o">&lt;</span><span class="n">Brick</span><span class="o">&gt;</span><span class="p">,</span>
+    <span class="n">belows</span><span class="p">:</span> <span class="nb">Vec</span><span class="o">&lt;</span><span class="nb">Vec</span><span class="o">&lt;</span><span class="p">(</span><span class="nb">usize</span><span class="p">,</span> <span class="n">Coord</span><span class="p">)</span><span class="o">&gt;&gt;</span><span class="p">,</span>
+<span class="p">}</span>
+
+<span class="k">trait</span> <span class="n">Intersect</span> <span class="p">{</span>
+    <span class="k">fn</span> <span class="nf">intersect</span><span class="p">(</span><span class="o">&amp;</span><span class="k">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="o">&amp;</span><span class="k">Self</span><span class="p">)</span> <span class="k">-&gt;</span> <span class="k">Self</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="k">impl</span> <span class="n">Intersect</span> <span class="k">for</span> <span class="n">RangeInclusive</span><span class="o">&lt;</span><span class="n">Coord</span><span class="o">&gt;</span> <span class="p">{</span>
+    <span class="k">fn</span> <span class="nf">intersect</span><span class="p">(</span><span class="o">&amp;</span><span class="k">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="o">&amp;</span><span class="k">Self</span><span class="p">)</span> <span class="k">-&gt;</span> <span class="k">Self</span> <span class="p">{</span>
+        <span class="o">*</span><span class="k">self</span><span class="nf">.start</span><span class="p">()</span><span class="nf">.max</span><span class="p">(</span><span class="n">other</span><span class="nf">.start</span><span class="p">())</span><span class="o">..=*</span><span class="k">self</span><span class="nf">.end</span><span class="p">()</span><span class="nf">.min</span><span class="p">(</span><span class="n">other</span><span class="nf">.end</span><span class="p">())</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="k">impl</span> <span class="nb">From</span><span class="o">&lt;</span><span class="p">(</span><span class="n">Coord</span><span class="p">,</span> <span class="n">Coord</span><span class="p">,</span> <span class="n">Coord</span><span class="p">)</span><span class="o">&gt;</span> <span class="k">for</span> <span class="n">Point</span> <span class="p">{</span>
+    <span class="k">fn</span> <span class="nf">from</span><span class="p">((</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">z</span><span class="p">):</span> <span class="p">(</span><span class="n">Coord</span><span class="p">,</span> <span class="n">Coord</span><span class="p">,</span> <span class="n">Coord</span><span class="p">))</span> <span class="k">-&gt;</span> <span class="k">Self</span> <span class="p">{</span>
+        <span class="k">Self</span> <span class="p">{</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">z</span> <span class="p">}</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="k">impl</span> <span class="n">Brick</span> <span class="p">{</span>
+    <span class="k">pub</span> <span class="k">fn</span> <span class="nf">compare</span><span class="p">(</span><span class="o">&amp;</span><span class="k">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="o">&amp;</span><span class="k">Self</span><span class="p">)</span> <span class="k">-&gt;</span> <span class="nb">Option</span><span class="o">&lt;</span><span class="p">(</span><span class="n">Ordering</span><span class="p">,</span> <span class="n">Coord</span><span class="p">)</span><span class="o">&gt;</span> <span class="p">{</span>
+        <span class="k">if</span> <span class="o">!</span><span class="k">self</span><span class="nf">.x_range</span><span class="p">()</span><span class="nf">.intersect</span><span class="p">(</span><span class="o">&amp;</span><span class="n">other</span><span class="nf">.x_range</span><span class="p">())</span><span class="nf">.is_empty</span><span class="p">()</span>
+            <span class="o">&amp;&amp;</span> <span class="o">!</span><span class="k">self</span><span class="nf">.y_range</span><span class="p">()</span><span class="nf">.intersect</span><span class="p">(</span><span class="o">&amp;</span><span class="n">other</span><span class="nf">.y_range</span><span class="p">())</span><span class="nf">.is_empty</span><span class="p">()</span>
+        <span class="p">{</span>
+            <span class="nf">Some</span><span class="p">((</span>
+                <span class="k">self</span><span class="nf">.top_z</span><span class="p">()</span><span class="nf">.cmp</span><span class="p">(</span><span class="o">&amp;</span><span class="n">other</span><span class="nf">.top_z</span><span class="p">()),</span>
+                <span class="k">self</span><span class="nf">.top_z</span><span class="p">()</span><span class="nf">.min</span><span class="p">(</span><span class="n">other</span><span class="nf">.top_z</span><span class="p">()),</span>
+            <span class="p">))</span>
+        <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+            <span class="nb">None</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+
+    <span class="k">pub</span> <span class="k">fn</span> <span class="nf">x_range</span><span class="p">(</span><span class="o">&amp;</span><span class="k">self</span><span class="p">)</span> <span class="k">-&gt;</span> <span class="n">RangeInclusive</span><span class="o">&lt;</span><span class="n">Coord</span><span class="o">&gt;</span> <span class="p">{</span>
+        <span class="k">self</span><span class="na">.0</span><span class="py">.x</span><span class="nf">.min</span><span class="p">(</span><span class="k">self</span><span class="na">.1</span><span class="py">.x</span><span class="p">)</span><span class="o">..=</span><span class="k">self</span><span class="na">.0</span><span class="py">.x</span><span class="nf">.max</span><span class="p">(</span><span class="k">self</span><span class="na">.1</span><span class="py">.x</span><span class="p">)</span>
+    <span class="p">}</span>
+
+    <span class="k">pub</span> <span class="k">fn</span> <span class="nf">y_range</span><span class="p">(</span><span class="o">&amp;</span><span class="k">self</span><span class="p">)</span> <span class="k">-&gt;</span> <span class="n">RangeInclusive</span><span class="o">&lt;</span><span class="n">Coord</span><span class="o">&gt;</span> <span class="p">{</span>
+        <span class="k">self</span><span class="na">.0</span><span class="py">.y</span><span class="nf">.min</span><span class="p">(</span><span class="k">self</span><span class="na">.1</span><span class="py">.y</span><span class="p">)</span><span class="o">..=</span><span class="k">self</span><span class="na">.0</span><span class="py">.y</span><span class="nf">.max</span><span class="p">(</span><span class="k">self</span><span class="na">.1</span><span class="py">.y</span><span class="p">)</span>
+    <span class="p">}</span>
+
+    <span class="k">pub</span> <span class="k">fn</span> <span class="nf">top_z</span><span class="p">(</span><span class="o">&amp;</span><span class="k">self</span><span class="p">)</span> <span class="k">-&gt;</span> <span class="n">Coord</span> <span class="p">{</span>
+        <span class="k">self</span><span class="na">.0</span><span class="py">.z</span><span class="nf">.max</span><span class="p">(</span><span class="k">self</span><span class="na">.1</span><span class="py">.z</span><span class="p">)</span>
+    <span class="p">}</span>
+
+    <span class="k">pub</span> <span class="k">fn</span> <span class="nf">bottom_z</span><span class="p">(</span><span class="o">&amp;</span><span class="k">self</span><span class="p">)</span> <span class="k">-&gt;</span> <span class="n">Coord</span> <span class="p">{</span>
+        <span class="k">self</span><span class="na">.0</span><span class="py">.z</span><span class="nf">.min</span><span class="p">(</span><span class="k">self</span><span class="na">.1</span><span class="py">.z</span><span class="p">)</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="k">impl</span> <span class="nb">From</span><span class="o">&lt;&amp;</span><span class="n">PuzzleData</span><span class="o">&gt;</span> <span class="k">for</span> <span class="n">SandStack</span> <span class="p">{</span>
+    <span class="k">fn</span> <span class="nf">from</span><span class="p">(</span><span class="nf">PuzzleData</span><span class="p">(</span><span class="n">bricks</span><span class="p">):</span> <span class="o">&amp;</span><span class="n">PuzzleData</span><span class="p">)</span> <span class="k">-&gt;</span> <span class="k">Self</span> <span class="p">{</span>
+        <span class="k">let</span> <span class="k">mut</span> <span class="n">belows</span> <span class="o">=</span> <span class="nd">vec!</span><span class="p">[</span><span class="nn">Vec</span><span class="p">::</span><span class="nf">new</span><span class="p">();</span> <span class="n">bricks</span><span class="nf">.len</span><span class="p">()];</span>
+        <span class="k">for</span> <span class="p">(</span><span class="n">k1</span><span class="p">,</span> <span class="n">b1</span><span class="p">)</span> <span class="k">in</span> <span class="n">bricks</span><span class="nf">.iter</span><span class="p">()</span><span class="nf">.enumerate</span><span class="p">()</span> <span class="p">{</span>
+            <span class="k">for</span> <span class="p">(</span><span class="n">k2</span><span class="p">,</span> <span class="n">b2</span><span class="p">)</span> <span class="k">in</span> <span class="n">bricks</span><span class="nf">.iter</span><span class="p">()</span><span class="nf">.enumerate</span><span class="p">()</span><span class="nf">.skip</span><span class="p">(</span><span class="n">k1</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="p">{</span>
+                <span class="k">match</span> <span class="n">b1</span><span class="nf">.compare</span><span class="p">(</span><span class="n">b2</span><span class="p">)</span> <span class="p">{</span>
+                    <span class="nf">Some</span><span class="p">((</span><span class="nn">Ordering</span><span class="p">::</span><span class="n">Greater</span><span class="p">,</span> <span class="n">b</span><span class="p">))</span> <span class="k">=&gt;</span> <span class="n">belows</span><span class="p">[</span><span class="n">k1</span><span class="p">]</span><span class="nf">.push</span><span class="p">((</span><span class="n">k2</span><span class="p">,</span> <span class="n">b</span><span class="p">)),</span>
+                    <span class="nf">Some</span><span class="p">((</span><span class="n">_</span><span class="p">,</span> <span class="n">b</span><span class="p">))</span> <span class="k">=&gt;</span> <span class="n">belows</span><span class="p">[</span><span class="n">k2</span><span class="p">]</span><span class="nf">.push</span><span class="p">((</span><span class="n">k1</span><span class="p">,</span> <span class="n">b</span><span class="p">)),</span>
+                    <span class="nb">None</span> <span class="k">=&gt;</span> <span class="p">(),</span>
+                <span class="p">}</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+        <span class="k">let</span> <span class="n">bricks</span> <span class="o">=</span> <span class="n">bricks</span><span class="nf">.to_owned</span><span class="p">();</span>
+        <span class="k">Self</span> <span class="p">{</span> <span class="n">bricks</span><span class="p">,</span> <span class="n">belows</span> <span class="p">}</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="k">impl</span> <span class="n">SandStack</span> <span class="p">{</span>
+    <span class="k">fn</span> <span class="nf">settle_rec</span><span class="p">(</span><span class="o">&amp;</span><span class="k">mut</span> <span class="k">self</span><span class="p">,</span> <span class="n">settled</span><span class="p">:</span> <span class="o">&amp;</span><span class="k">mut</span> <span class="p">[</span><span class="nb">bool</span><span class="p">],</span> <span class="n">offsets</span><span class="p">:</span> <span class="o">&amp;</span><span class="k">mut</span> <span class="p">[</span><span class="nb">usize</span><span class="p">],</span> <span class="n">k</span><span class="p">:</span> <span class="nb">usize</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">if</span> <span class="n">settled</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="p">||</span> <span class="k">self</span><span class="py">.bricks</span><span class="p">[</span><span class="n">k</span><span class="p">]</span><span class="nf">.bottom_z</span><span class="p">()</span> <span class="o">==</span> <span class="mi">1</span> <span class="p">{</span>
+            <span class="k">return</span><span class="p">;</span>
+        <span class="p">}</span>
+
+        <span class="k">let</span> <span class="n">z</span> <span class="o">=</span> <span class="p">(</span><span class="mi">0</span><span class="o">..</span><span class="k">self</span><span class="py">.belows</span><span class="p">[</span><span class="n">k</span><span class="p">]</span><span class="nf">.len</span><span class="p">())</span>
+            <span class="nf">.map</span><span class="p">(|</span><span class="n">p</span><span class="p">|</span> <span class="p">{</span>
+                <span class="k">let</span> <span class="p">(</span><span class="n">k2</span><span class="p">,</span> <span class="n">_</span><span class="p">)</span> <span class="o">=</span> <span class="k">self</span><span class="py">.belows</span><span class="p">[</span><span class="n">k</span><span class="p">][</span><span class="n">p</span><span class="p">];</span>
+                <span class="k">self</span><span class="nf">.settle_rec</span><span class="p">(</span><span class="n">settled</span><span class="p">,</span> <span class="n">offsets</span><span class="p">,</span> <span class="n">k2</span><span class="p">);</span>
+                <span class="k">let</span> <span class="p">(</span><span class="n">_</span><span class="p">,</span> <span class="k">ref</span> <span class="k">mut</span> <span class="n">z</span><span class="p">)</span> <span class="o">=</span> <span class="o">&amp;</span><span class="k">mut</span> <span class="k">self</span><span class="py">.belows</span><span class="p">[</span><span class="n">k</span><span class="p">][</span><span class="n">p</span><span class="p">];</span>
+                <span class="o">*</span><span class="n">z</span> <span class="o">-=</span> <span class="n">offsets</span><span class="p">[</span><span class="n">k2</span><span class="p">];</span>
+                <span class="o">*</span><span class="n">z</span>
+            <span class="p">})</span>
+            <span class="nf">.max</span><span class="p">()</span>
+            <span class="nf">.unwrap_or</span><span class="p">(</span><span class="mi">0</span><span class="p">);</span>
+
+        <span class="k">let</span> <span class="n">me</span> <span class="o">=</span> <span class="o">&amp;</span><span class="k">mut</span> <span class="k">self</span><span class="py">.bricks</span><span class="p">[</span><span class="n">k</span><span class="p">];</span>
+        <span class="nd">assert!</span><span class="p">(</span><span class="n">me</span><span class="nf">.bottom_z</span><span class="p">()</span> <span class="o">&gt;</span> <span class="n">z</span><span class="p">);</span>
+
+        <span class="n">offsets</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">me</span><span class="nf">.bottom_z</span><span class="p">()</span> <span class="o">-</span> <span class="n">z</span> <span class="o">-</span> <span class="mi">1</span><span class="p">;</span>
+        <span class="n">me</span><span class="na">.0</span><span class="py">.z</span> <span class="o">-=</span> <span class="n">offsets</span><span class="p">[</span><span class="n">k</span><span class="p">];</span>
+        <span class="n">me</span><span class="na">.1</span><span class="py">.z</span> <span class="o">-=</span> <span class="n">offsets</span><span class="p">[</span><span class="n">k</span><span class="p">];</span>
+
+        <span class="n">settled</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="k">true</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="k">pub</span> <span class="k">fn</span> <span class="nf">settle</span><span class="p">(</span><span class="o">&amp;</span><span class="k">mut</span> <span class="k">self</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">let</span> <span class="k">mut</span> <span class="n">settled</span> <span class="o">=</span> <span class="nd">vec!</span><span class="p">[</span><span class="kc">false</span><span class="p">;</span> <span class="k">self</span><span class="py">.bricks</span><span class="nf">.len</span><span class="p">()];</span>
+        <span class="k">let</span> <span class="k">mut</span> <span class="n">offsets</span> <span class="o">=</span> <span class="nd">vec!</span><span class="p">[</span><span class="mi">0</span><span class="p">;</span> <span class="k">self</span><span class="py">.bricks</span><span class="nf">.len</span><span class="p">()];</span>
+        <span class="k">for</span> <span class="n">k</span> <span class="k">in</span> <span class="mi">0</span><span class="o">..</span><span class="k">self</span><span class="py">.bricks</span><span class="nf">.len</span><span class="p">()</span> <span class="p">{</span>
+            <span class="k">self</span><span class="nf">.settle_rec</span><span class="p">(</span><span class="o">&amp;</span><span class="k">mut</span> <span class="n">settled</span><span class="p">,</span> <span class="o">&amp;</span><span class="k">mut</span> <span class="n">offsets</span><span class="p">,</span> <span class="n">k</span><span class="p">);</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+
+    <span class="k">pub</span> <span class="k">fn</span> <span class="nf">count_disintegrateable</span><span class="p">(</span><span class="o">&amp;</span><span class="k">self</span><span class="p">)</span> <span class="k">-&gt;</span> <span class="nb">usize</span> <span class="p">{</span>
+        <span class="k">let</span> <span class="k">mut</span> <span class="n">unique_supporters</span> <span class="o">=</span> <span class="nd">vec!</span><span class="p">[</span><span class="kc">false</span><span class="p">;</span> <span class="k">self</span><span class="py">.bricks</span><span class="nf">.len</span><span class="p">()];</span>
+        <span class="k">for</span> <span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">me</span><span class="p">)</span> <span class="k">in</span> <span class="k">self</span><span class="py">.bricks</span><span class="nf">.iter</span><span class="p">()</span><span class="nf">.enumerate</span><span class="p">()</span> <span class="p">{</span>
+            <span class="k">let</span> <span class="n">supporters</span> <span class="o">=</span> <span class="k">self</span><span class="py">.belows</span><span class="p">[</span><span class="n">k</span><span class="p">]</span>
+                <span class="nf">.iter</span><span class="p">()</span>
+                <span class="nf">.filter</span><span class="p">(|(</span><span class="n">_</span><span class="p">,</span> <span class="n">z</span><span class="p">)|</span> <span class="n">z</span> <span class="o">+</span> <span class="mi">1</span> <span class="o">==</span> <span class="n">me</span><span class="nf">.bottom_z</span><span class="p">())</span>
+                <span class="nf">.map</span><span class="p">(|(</span><span class="n">p</span><span class="p">,</span> <span class="n">_</span><span class="p">)|</span> <span class="o">*</span><span class="n">p</span><span class="p">)</span>
+                <span class="nf">.take</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+                <span class="py">.collect</span><span class="p">::</span><span class="o">&lt;</span><span class="nb">Vec</span><span class="o">&lt;</span><span class="n">_</span><span class="o">&gt;&gt;</span><span class="p">();</span>
+            <span class="k">if</span> <span class="n">supporters</span><span class="nf">.len</span><span class="p">()</span> <span class="o">==</span> <span class="mi">1</span> <span class="p">{</span>
+                <span class="n">unique_supporters</span><span class="p">[</span><span class="n">supporters</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span> <span class="o">=</span> <span class="k">true</span><span class="p">;</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+        <span class="k">self</span><span class="py">.bricks</span><span class="nf">.len</span><span class="p">()</span> <span class="o">-</span> <span class="n">unique_supporters</span><span class="nf">.into_iter</span><span class="p">()</span><span class="nf">.filter</span><span class="p">(|</span><span class="o">&amp;</span><span class="n">s</span><span class="p">|</span> <span class="n">s</span><span class="p">)</span><span class="nf">.count</span><span class="p">()</span>
+    <span class="p">}</span>
+
+    <span class="k">pub</span> <span class="k">fn</span> <span class="nf">sum_count_falling</span><span class="p">(</span><span class="o">&amp;</span><span class="k">self</span><span class="p">)</span> <span class="k">-&gt;</span> <span class="nb">usize</span> <span class="p">{</span>
+        <span class="c1">// figure out what is supported above and what is supporting below</span>
+        <span class="k">let</span> <span class="k">mut</span> <span class="n">supported</span> <span class="o">=</span> <span class="nd">vec!</span><span class="p">[</span><span class="nn">Vec</span><span class="p">::</span><span class="nf">new</span><span class="p">();</span> <span class="k">self</span><span class="py">.bricks</span><span class="nf">.len</span><span class="p">()];</span>
+        <span class="k">let</span> <span class="k">mut</span> <span class="n">supporting</span> <span class="o">=</span> <span class="nd">vec!</span><span class="p">[</span><span class="nn">Vec</span><span class="p">::</span><span class="nf">new</span><span class="p">();</span> <span class="k">self</span><span class="py">.bricks</span><span class="nf">.len</span><span class="p">()];</span>
+        <span class="k">for</span> <span class="p">(</span><span class="n">k_above</span><span class="p">,</span> <span class="p">(</span><span class="n">z_above</span><span class="p">,</span> <span class="n">belows</span><span class="p">))</span> <span class="k">in</span> <span class="p">(</span><span class="k">self</span><span class="py">.bricks</span><span class="nf">.iter</span><span class="p">()</span><span class="nf">.map</span><span class="p">(</span><span class="nn">Brick</span><span class="p">::</span><span class="n">bottom_z</span><span class="p">))</span>
+            <span class="nf">.zip</span><span class="p">(</span><span class="k">self</span><span class="py">.belows</span><span class="nf">.iter</span><span class="p">())</span>
+            <span class="nf">.enumerate</span><span class="p">()</span>
+        <span class="p">{</span>
+            <span class="k">for</span> <span class="o">&amp;</span><span class="p">(</span><span class="n">k_below</span><span class="p">,</span> <span class="n">_</span><span class="p">)</span> <span class="k">in</span> <span class="n">belows</span><span class="nf">.iter</span><span class="p">()</span><span class="nf">.filter</span><span class="p">(|(</span><span class="n">_</span><span class="p">,</span> <span class="n">z_below</span><span class="p">)|</span> <span class="n">z_below</span> <span class="o">+</span> <span class="mi">1</span> <span class="o">==</span> <span class="n">z_above</span><span class="p">)</span> <span class="p">{</span>
+                <span class="n">supported</span><span class="p">[</span><span class="n">k_below</span><span class="p">]</span><span class="nf">.push</span><span class="p">(</span><span class="n">k_above</span><span class="p">);</span>
+                <span class="n">supporting</span><span class="p">[</span><span class="n">k_above</span><span class="p">]</span><span class="nf">.push</span><span class="p">(</span><span class="n">k_below</span><span class="p">);</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+
+        <span class="c1">// use binary heap (max heap) and sort by max z (inverted) to make</span>
+        <span class="c1">// sure we process bricks layer by layer</span>
+        <span class="k">let</span> <span class="k">mut</span> <span class="n">queue</span> <span class="o">=</span> <span class="nn">BinaryHeap</span><span class="p">::</span><span class="nf">new</span><span class="p">();</span>
+        <span class="k">let</span> <span class="k">mut</span> <span class="n">falling</span> <span class="o">=</span> <span class="nn">HashSet</span><span class="p">::</span><span class="nf">new</span><span class="p">();</span>
+        <span class="k">let</span> <span class="k">mut</span> <span class="n">sum_count</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+        <span class="k">for</span> <span class="n">k_root</span> <span class="k">in</span> <span class="mi">0</span><span class="o">..</span><span class="k">self</span><span class="py">.bricks</span><span class="nf">.len</span><span class="p">()</span> <span class="p">{</span>
+            <span class="n">falling</span><span class="nf">.insert</span><span class="p">(</span><span class="n">k_root</span><span class="p">);</span>
+            <span class="n">queue</span><span class="nf">.push</span><span class="p">((</span><span class="o">!</span><span class="k">self</span><span class="py">.bricks</span><span class="p">[</span><span class="n">k_root</span><span class="p">]</span><span class="nf">.top_z</span><span class="p">(),</span> <span class="n">k_root</span><span class="p">));</span>
+            <span class="k">while</span> <span class="k">let</span> <span class="nf">Some</span><span class="p">((</span><span class="n">_</span><span class="p">,</span> <span class="n">k_below</span><span class="p">))</span> <span class="o">=</span> <span class="n">queue</span><span class="nf">.pop</span><span class="p">()</span> <span class="p">{</span>
+                <span class="k">for</span> <span class="o">&amp;</span><span class="n">k_above</span> <span class="k">in</span> <span class="n">supported</span><span class="p">[</span><span class="n">k_below</span><span class="p">]</span><span class="nf">.iter</span><span class="p">()</span> <span class="p">{</span>
+                    <span class="k">if</span> <span class="n">supporting</span><span class="p">[</span><span class="n">k_above</span><span class="p">]</span><span class="nf">.iter</span><span class="p">()</span><span class="nf">.all</span><span class="p">(|</span><span class="n">k</span><span class="p">|</span> <span class="n">falling</span><span class="nf">.contains</span><span class="p">(</span><span class="n">k</span><span class="p">))</span>
+                        <span class="o">&amp;&amp;</span> <span class="n">falling</span><span class="nf">.insert</span><span class="p">(</span><span class="n">k_above</span><span class="p">)</span>
+                    <span class="p">{</span>
+                        <span class="n">queue</span><span class="nf">.push</span><span class="p">((</span><span class="o">!</span><span class="k">self</span><span class="py">.bricks</span><span class="p">[</span><span class="n">k_above</span><span class="p">]</span><span class="nf">.top_z</span><span class="p">(),</span> <span class="n">k_above</span><span class="p">));</span>
+                    <span class="p">}</span>
+                <span class="p">}</span>
+            <span class="p">}</span>
+            <span class="n">sum_count</span> <span class="o">+=</span> <span class="n">falling</span><span class="nf">.len</span><span class="p">()</span> <span class="o">-</span> <span class="mi">1</span><span class="p">;</span> <span class="c1">// do not count self</span>
+            <span class="n">falling</span><span class="nf">.clear</span><span class="p">();</span>
+        <span class="p">}</span>
+
+        <span class="n">sum_count</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="k">pub</span> <span class="k">fn</span> <span class="nf">star_1_and_2</span><span class="p">(</span><span class="n">data</span><span class="p">:</span> <span class="o">&amp;</span><span class="n">PuzzleData</span><span class="p">)</span> <span class="k">-&gt;</span> <span class="p">(</span><span class="nb">usize</span><span class="p">,</span> <span class="nb">usize</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">let</span> <span class="k">mut</span> <span class="n">universe</span> <span class="o">=</span> <span class="nn">SandStack</span><span class="p">::</span><span class="nf">from</span><span class="p">(</span><span class="n">data</span><span class="p">);</span>
+    <span class="n">universe</span><span class="nf">.settle</span><span class="p">();</span>
+    <span class="p">(</span>
+        <span class="n">universe</span><span class="nf">.count_disintegrateable</span><span class="p">(),</span>
+        <span class="n">universe</span><span class="nf">.sum_count_falling</span><span class="p">(),</span>
+    <span class="p">)</span>
+        <span class="nf">.into</span><span class="p">()</span>
+<span class="p">}</span>
+</pre></td></tr></tbody></table></code></pre>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_tests_21">Tests</h3>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight"><code data-lang="rust"><table class="linenotable"><tbody><tr><td class="linenos gl"><pre class="lineno"> 1
+ 2
+ 3
+ 4
+ 5
+ 6
+ 7
+ 8
+ 9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+26
+27
+28
+29
+30
+31
+32
+33
+34
+35
+36
+37
+</pre></td><td class="code"><pre><span class="nd">#[cfg(test)]</span>
+<span class="k">mod</span> <span class="n">tests</span> <span class="p">{</span>
+    <span class="k">use</span> <span class="k">super</span><span class="p">::</span><span class="o">*</span><span class="p">;</span>
+
+    <span class="k">const</span> <span class="n">CONTENT</span><span class="p">:</span> <span class="o">&amp;</span><span class="nb">str</span> <span class="o">=</span> <span class="s">r#"1,0,1~1,2,1
+0,0,2~2,0,2
+0,2,3~2,2,3
+0,0,4~0,2,4
+2,0,5~2,2,5
+0,1,6~2,1,6
+1,1,8~1,1,9
+"#</span><span class="p">;</span>
+
+    <span class="nd">#[test]</span>
+    <span class="k">pub</span> <span class="k">fn</span> <span class="nf">test_from</span><span class="p">()</span> <span class="p">{</span>
+        <span class="k">let</span> <span class="n">data</span> <span class="o">=</span> <span class="nn">PuzzleData</span><span class="p">::</span><span class="nf">from</span><span class="p">(</span><span class="n">CONTENT</span><span class="p">);</span>
+
+        <span class="k">let</span> <span class="n">exp</span> <span class="o">=</span> <span class="nd">vec!</span><span class="p">[</span>
+            <span class="nf">Brick</span><span class="p">((</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span><span class="nf">.into</span><span class="p">(),</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span><span class="nf">.into</span><span class="p">()),</span>
+            <span class="nf">Brick</span><span class="p">((</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span><span class="nf">.into</span><span class="p">(),</span> <span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span><span class="nf">.into</span><span class="p">()),</span>
+            <span class="nf">Brick</span><span class="p">((</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span><span class="nf">.into</span><span class="p">(),</span> <span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span><span class="nf">.into</span><span class="p">()),</span>
+            <span class="nf">Brick</span><span class="p">((</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">4</span><span class="p">)</span><span class="nf">.into</span><span class="p">(),</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">4</span><span class="p">)</span><span class="nf">.into</span><span class="p">()),</span>
+            <span class="nf">Brick</span><span class="p">((</span><span class="mi">2</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">5</span><span class="p">)</span><span class="nf">.into</span><span class="p">(),</span> <span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">5</span><span class="p">)</span><span class="nf">.into</span><span class="p">()),</span>
+            <span class="nf">Brick</span><span class="p">((</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">6</span><span class="p">)</span><span class="nf">.into</span><span class="p">(),</span> <span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">6</span><span class="p">)</span><span class="nf">.into</span><span class="p">()),</span>
+            <span class="nf">Brick</span><span class="p">((</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">8</span><span class="p">)</span><span class="nf">.into</span><span class="p">(),</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">9</span><span class="p">)</span><span class="nf">.into</span><span class="p">()),</span>
+        <span class="p">];</span>
+
+        <span class="nd">assert_eq!</span><span class="p">(</span><span class="n">exp</span><span class="p">,</span> <span class="n">data</span><span class="na">.0</span><span class="p">);</span>
+
+        <span class="nd">println!</span><span class="p">(</span><span class="s">"{data:?}"</span><span class="p">);</span>
+    <span class="p">}</span>
+
+    <span class="nd">#[test]</span>
+    <span class="k">pub</span> <span class="k">fn</span> <span class="nf">test_star_1_and_2</span><span class="p">()</span> <span class="p">{</span>
+        <span class="nd">assert_eq!</span><span class="p">((</span><span class="mi">5</span><span class="p">,</span> <span class="mi">7</span><span class="p">),</span> <span class="nf">star_1_and_2</span><span class="p">(</span><span class="o">&amp;</span><span class="n">CONTENT</span><span class="nf">.into</span><span class="p">())</span><span class="nf">.into</span><span class="p">());</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</pre></td></tr></tbody></table></code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p><a href="#top">Top</a></p>
+</div>
+</div>
+</div>
+</div>
 </div>
 <div id="footer">
     <div id="footer-text">
-        Generated from <a href="https://github.com/mr-kaffee/aoc-2023/">github.com/mr-kaffee/aoc-2023/</a> on 2023-12-22 02:05:37 UTC
+        Generated from <a href="https://github.com/mr-kaffee/aoc-2023/">github.com/mr-kaffee/aoc-2023/</a> on 2023-12-22 13:29:08 UTC
         with <a href="https://asciidoctor.org">asciidoctor</a>.
     </div>
 </div>
