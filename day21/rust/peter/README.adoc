@@ -1,0 +1,16 @@
+== Rust | Day 21: Step Counter
+
+https://rust-lang.org[Rust] solution to https://adventofcode.com/2023/day/21[AoC|2023|21].
+
+The solution got somehow complicated today.
+
+The solution uses the fact that there are no rocks on the perimeter of a garden tile. This results in the 'diagonal tiles' to repeat themselves, all tiles above and to the right of the center tile have identical costs modulo an offset. The same is true for the north-west, south-west and south-east tiles.
+
+The tiles in a straight line from the center tile also happen to repeat (after a few initial tiles). This allows to replace most of the counting by direct calculations.
+
+Here is the not so nice looking solution:
+
+[source,rust,numbered]
+----
+include::src/lib.rs[tags=solution]
+----
