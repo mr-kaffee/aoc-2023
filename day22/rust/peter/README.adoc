@@ -1,0 +1,37 @@
+== Rust | Day 22: Sand Slabs
+
+https://rust-lang.org[Rust] solution to https://adventofcode.com/2023/day/22[AoC|2023|22].
+
+Feels a bit like Tetris in 3D. I felt reminded of https://adventofcode.com/2022/day/17[Aoc|2022|17], but in the end it was very different.
+
+=== Input
+
+I decided to create some `struct` types today. The input is parsed into a `Vec` of `Brick` elements. Each `Brick` is a pair of `Point` elements.
+
+[source,rust,numbered]
+----
+include::src/lib.rs[tags=input]
+----
+
+=== Star 1 & 2
+
+Since settling the `SandStack` consumes an important part of the runtime (probably with a bit of room for optimization), I wanted to do it only once and implemented both solutions in one function.
+
+Here is my lengthy solution. The key parts are
+
+- Build the sand stack and figure out which bricks are on top of each other; main parts implemented in `SandStack::from`, `Brick::compare`. The compare function will also return the upper `z`-coordinate of the lower brick.
+- Settle the stack, so that everything is touching either a brick below or solid ground: `SandStack::settle` uses recursive `SandStack::settle_rec`
+- Solution to part 1 in `SandStack::count_disintegrateable`
+- Solution to part 2 in `SandStack::sum_count_falling` - a kind of 'lowest-first-traversal'. Could maybe be optimized with some caching. 
+
+[source,rust,numbered]
+----
+include::src/lib.rs[tags=solution]
+----
+
+=== Tests
+
+[source,rust,numbered]
+----
+include::src/lib.rs[tags=tests]
+----
