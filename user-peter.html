@@ -222,7 +222,6 @@
 <ul class="sectlevel2">
 <li><a href="#_input_18">Input</a></li>
 <li><a href="#_star_1_22">Star 1</a></li>
-<li><a href="#_star_2_22">Star 2</a></li>
 <li><a href="#_tests_22">Tests</a></li>
 </ul>
 </li>
@@ -9233,6 +9232,25 @@ hdj{m&gt;838:A,pv}
 <div class="paragraph">
 <p>These are few enough for the problem to be solvable and to store the information which nodes have been seen in the bits of a <code>u64</code>.</p>
 </div>
+<div class="paragraph">
+<p>The second part is the same as the first part. Just remove special treatment of slopes. This increases the number of edges in the graph and hence it runs a little longer.</p>
+</div>
+<div class="paragraph">
+<p>Optimizations since initial version:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Modify graph: from the unique node from which the target is reachable, the only relevant adjacent is the target (idea from <a href="https://www.reddit.com/user/MattieShoes/">MattieShoes</a>): from ~330ms to ~170ms</p>
+</li>
+<li>
+<p>Prune nodes from where the target is not reachable using a graph traversal based on bit manipulations with a <code>u64</code> as 'queue' (I especially like how adjacents are filtered and 'pushed to the queue' at once using bitwise operators): from ~170ms to ~150ms</p>
+</li>
+<li>
+<p>Prune nodes from where I have been before with the same set of reachable nodes but a longer distance walked (idea from <a href="https://www.reddit.com/user/boombulerDev/">boombulerDev</a>): from ~150ms to ~40ms</p>
+</li>
+</ul>
+</div>
 <div class="listingblock">
 <div class="content">
 <pre class="rouge highlight"><code data-lang="rust"><table class="linenotable"><tbody><tr><td class="linenos gl"><pre class="lineno">  1
@@ -9352,51 +9370,65 @@ hdj{m&gt;838:A,pv}
 115
 116
 117
+118
+119
+120
+121
+122
+123
+124
+125
+126
+127
+128
+129
+130
+131
+132
+133
+134
+135
+136
+137
+138
+139
+140
+141
+142
+143
+144
+145
+146
+147
+148
+149
+150
+151
 </pre></td><td class="code"><pre><span class="k">impl</span> <span class="n">PuzzleData</span><span class="o">&lt;</span><span class="nv">'_</span><span class="o">&gt;</span> <span class="p">{</span>
-    <span class="k">pub</span> <span class="k">fn</span> <span class="nf">start</span><span class="p">(</span><span class="o">&amp;</span><span class="k">self</span><span class="p">)</span> <span class="k">-&gt;</span> <span class="p">(</span><span class="nb">usize</span><span class="p">,</span> <span class="nb">usize</span><span class="p">)</span> <span class="p">{</span>
-        <span class="p">(</span>
-            <span class="k">self</span><span class="py">.data</span>
-                <span class="nf">.iter</span><span class="p">()</span>
-                <span class="nf">.take</span><span class="p">(</span><span class="k">self</span><span class="py">.w</span><span class="p">)</span>
-                <span class="nf">.position</span><span class="p">(|</span><span class="o">&amp;</span><span class="n">b</span><span class="p">|</span> <span class="n">b</span> <span class="o">==</span> <span class="sc">b'.'</span><span class="p">)</span>
-                <span class="nf">.unwrap</span><span class="p">(),</span>
-            <span class="mi">0</span><span class="p">,</span>
-        <span class="p">)</span>
-    <span class="p">}</span>
-
-    <span class="k">pub</span> <span class="k">fn</span> <span class="nf">target</span><span class="p">(</span><span class="o">&amp;</span><span class="k">self</span><span class="p">)</span> <span class="k">-&gt;</span> <span class="p">(</span><span class="nb">usize</span><span class="p">,</span> <span class="nb">usize</span><span class="p">)</span> <span class="p">{</span>
-        <span class="p">(</span>
-            <span class="k">self</span><span class="py">.data</span>
-                <span class="nf">.iter</span><span class="p">()</span>
-                <span class="nf">.skip</span><span class="p">((</span><span class="k">self</span><span class="py">.h</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="k">self</span><span class="py">.w</span> <span class="o">+</span> <span class="mi">1</span><span class="p">))</span>
-                <span class="nf">.position</span><span class="p">(|</span><span class="o">&amp;</span><span class="n">b</span><span class="p">|</span> <span class="n">b</span> <span class="o">==</span> <span class="sc">b'.'</span><span class="p">)</span>
-                <span class="nf">.unwrap</span><span class="p">(),</span>
-            <span class="k">self</span><span class="py">.h</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span>
-        <span class="p">)</span>
-    <span class="p">}</span>
+    <span class="k">const</span> <span class="n">D</span><span class="p">:</span> <span class="p">[(</span><span class="nb">isize</span><span class="p">,</span> <span class="nb">isize</span><span class="p">,</span> <span class="nb">u8</span><span class="p">);</span> <span class="mi">4</span><span class="p">]</span> <span class="o">=</span> <span class="p">[(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="sc">b'&gt;'</span><span class="p">),</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="sc">b'^'</span><span class="p">),</span> <span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="sc">b'&lt;'</span><span class="p">),</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="sc">b'v'</span><span class="p">)];</span>
 
     <span class="k">fn</span> <span class="nf">is_branch_point</span><span class="p">(</span><span class="o">&amp;</span><span class="k">self</span><span class="p">,</span> <span class="p">(</span><span class="n">col</span><span class="p">,</span> <span class="n">row</span><span class="p">):</span> <span class="p">(</span><span class="nb">usize</span><span class="p">,</span> <span class="nb">usize</span><span class="p">))</span> <span class="k">-&gt;</span> <span class="nb">bool</span> <span class="p">{</span>
-        <span class="k">self</span><span class="py">.data</span><span class="p">[</span><span class="n">col</span> <span class="o">+</span> <span class="n">row</span> <span class="o">*</span> <span class="p">(</span><span class="k">self</span><span class="py">.w</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)]</span> <span class="o">!=</span> <span class="sc">b'#'</span>
-            <span class="o">&amp;&amp;</span> <span class="p">[(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">),</span> <span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)]</span>
-                <span class="nf">.into_iter</span><span class="p">()</span>
-                <span class="nf">.map</span><span class="p">(|(</span><span class="n">dc</span><span class="p">,</span> <span class="n">dr</span><span class="p">)|</span> <span class="p">(</span><span class="n">col</span><span class="nf">.wrapping_add_signed</span><span class="p">(</span><span class="n">dc</span><span class="p">),</span> <span class="n">row</span><span class="nf">.wrapping_add_signed</span><span class="p">(</span><span class="n">dr</span><span class="p">)))</span>
-                <span class="nf">.filter</span><span class="p">(|</span><span class="o">&amp;</span><span class="p">(</span><span class="n">col</span><span class="p">,</span> <span class="n">row</span><span class="p">)|</span> <span class="p">{</span>
-                    <span class="n">col</span> <span class="o">&lt;</span> <span class="k">self</span><span class="py">.w</span> <span class="o">&amp;&amp;</span> <span class="n">row</span> <span class="o">&lt;</span> <span class="k">self</span><span class="py">.h</span> <span class="o">&amp;&amp;</span> <span class="k">self</span><span class="py">.data</span><span class="p">[</span><span class="n">col</span> <span class="o">+</span> <span class="n">row</span> <span class="o">*</span> <span class="p">(</span><span class="k">self</span><span class="py">.w</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)]</span> <span class="o">!=</span> <span class="sc">b'#'</span>
-                <span class="p">})</span>
-                <span class="nf">.count</span><span class="p">()</span>
-                <span class="o">&gt;</span> <span class="mi">2</span>
+        <span class="k">Self</span><span class="p">::</span><span class="n">D</span>
+            <span class="nf">.iter</span><span class="p">()</span>
+            <span class="nf">.map</span><span class="p">(|(</span><span class="n">dc</span><span class="p">,</span> <span class="n">dr</span><span class="p">,</span> <span class="n">_</span><span class="p">)|</span> <span class="p">(</span><span class="n">col</span><span class="nf">.wrapping_add_signed</span><span class="p">(</span><span class="o">*</span><span class="n">dc</span><span class="p">),</span> <span class="n">row</span><span class="nf">.wrapping_add_signed</span><span class="p">(</span><span class="o">*</span><span class="n">dr</span><span class="p">)))</span>
+            <span class="nf">.filter</span><span class="p">(|</span><span class="o">&amp;</span><span class="p">(</span><span class="n">col</span><span class="p">,</span> <span class="n">row</span><span class="p">)|</span> <span class="p">{</span>
+                <span class="n">col</span> <span class="o">&lt;</span> <span class="k">self</span><span class="py">.w</span> <span class="o">&amp;&amp;</span> <span class="n">row</span> <span class="o">&lt;</span> <span class="k">self</span><span class="py">.h</span> <span class="o">&amp;&amp;</span> <span class="k">self</span><span class="py">.data</span><span class="p">[</span><span class="n">col</span> <span class="o">+</span> <span class="n">row</span> <span class="o">*</span> <span class="p">(</span><span class="k">self</span><span class="py">.w</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)]</span> <span class="o">!=</span> <span class="sc">b'#'</span>
+            <span class="p">})</span>
+            <span class="nf">.count</span><span class="p">()</span>
+            <span class="o">&gt;</span> <span class="mi">2</span>
     <span class="p">}</span>
 
     <span class="k">pub</span> <span class="k">fn</span> <span class="nf">branch_points</span><span class="p">(</span><span class="o">&amp;</span><span class="k">self</span><span class="p">)</span> <span class="k">-&gt;</span> <span class="nb">Vec</span><span class="o">&lt;</span><span class="p">(</span><span class="nb">usize</span><span class="p">,</span> <span class="nb">usize</span><span class="p">)</span><span class="o">&gt;</span> <span class="p">{</span>
         <span class="p">(</span><span class="mi">0</span><span class="o">..</span><span class="k">self</span><span class="py">.w</span> <span class="o">*</span> <span class="k">self</span><span class="py">.h</span><span class="p">)</span>
             <span class="nf">.map</span><span class="p">(|</span><span class="n">pos</span><span class="p">|</span> <span class="p">(</span><span class="n">pos</span> <span class="o">%</span> <span class="k">self</span><span class="py">.w</span><span class="p">,</span> <span class="n">pos</span> <span class="o">/</span> <span class="k">self</span><span class="py">.w</span><span class="p">))</span>
-            <span class="nf">.filter</span><span class="p">(|</span><span class="o">&amp;</span><span class="n">coord</span><span class="p">|</span> <span class="k">self</span><span class="nf">.is_branch_point</span><span class="p">(</span><span class="n">coord</span><span class="p">))</span>
+            <span class="nf">.filter</span><span class="p">(|</span><span class="o">&amp;</span><span class="p">(</span><span class="n">col</span><span class="p">,</span> <span class="n">row</span><span class="p">)|</span> <span class="p">{</span>
+                <span class="k">self</span><span class="py">.data</span><span class="p">[</span><span class="n">col</span> <span class="o">+</span> <span class="n">row</span> <span class="o">*</span> <span class="p">(</span><span class="k">self</span><span class="py">.w</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)]</span> <span class="o">!=</span> <span class="sc">b'#'</span>
+                    <span class="o">&amp;&amp;</span> <span class="p">(</span><span class="n">row</span> <span class="o">==</span> <span class="mi">0</span> <span class="p">||</span> <span class="n">row</span> <span class="o">==</span> <span class="k">self</span><span class="py">.h</span> <span class="o">-</span> <span class="mi">1</span> <span class="p">||</span> <span class="k">self</span><span class="nf">.is_branch_point</span><span class="p">((</span><span class="n">col</span><span class="p">,</span> <span class="n">row</span><span class="p">)))</span>
+            <span class="p">})</span>
             <span class="py">.collect</span><span class="p">::</span><span class="o">&lt;</span><span class="nb">Vec</span><span class="o">&lt;</span><span class="n">_</span><span class="o">&gt;&gt;</span><span class="p">()</span>
     <span class="p">}</span>
 
-    <span class="k">const</span> <span class="n">D</span><span class="p">:</span> <span class="p">[(</span><span class="nb">isize</span><span class="p">,</span> <span class="nb">isize</span><span class="p">,</span> <span class="nb">u8</span><span class="p">);</span> <span class="mi">4</span><span class="p">]</span> <span class="o">=</span> <span class="p">[(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="sc">b'&gt;'</span><span class="p">),</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="sc">b'^'</span><span class="p">),</span> <span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="sc">b'&lt;'</span><span class="p">),</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="sc">b'v'</span><span class="p">)];</span>
-
-    <span class="k">pub</span> <span class="k">fn</span> <span class="nf">adj_iter</span><span class="p">(</span>
+    <span class="k">fn</span> <span class="nf">adj_iter</span><span class="p">(</span>
         <span class="o">&amp;</span><span class="k">self</span><span class="p">,</span>
         <span class="p">(</span><span class="n">col</span><span class="p">,</span> <span class="n">row</span><span class="p">):</span> <span class="p">(</span><span class="nb">usize</span><span class="p">,</span> <span class="nb">usize</span><span class="p">),</span>
         <span class="n">ignore_slopes</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
@@ -9414,42 +9446,75 @@ hdj{m&gt;838:A,pv}
             <span class="p">})</span>
             <span class="nf">.map</span><span class="p">(|(</span><span class="n">col</span><span class="p">,</span> <span class="n">row</span><span class="p">,</span> <span class="n">_</span><span class="p">)|</span> <span class="p">(</span><span class="n">col</span><span class="p">,</span> <span class="n">row</span><span class="p">))</span>
     <span class="p">}</span>
+
+    <span class="cd">/// nodes are branch points and start (first) / target (last)</span>
+    <span class="k">pub</span> <span class="k">fn</span> <span class="nf">make_graph</span><span class="p">(</span>
+        <span class="o">&amp;</span><span class="k">self</span><span class="p">,</span>
+        <span class="n">ignore_slopes</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
+    <span class="p">)</span> <span class="k">-&gt;</span> <span class="p">(</span><span class="nb">Vec</span><span class="o">&lt;</span><span class="p">(</span><span class="nb">usize</span><span class="p">,</span> <span class="nb">usize</span><span class="p">)</span><span class="o">&gt;</span><span class="p">,</span> <span class="nb">Vec</span><span class="o">&lt;</span><span class="nb">Vec</span><span class="o">&lt;</span><span class="p">(</span><span class="nb">usize</span><span class="p">,</span> <span class="nb">usize</span><span class="p">)</span><span class="o">&gt;&gt;</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">let</span> <span class="n">nodes</span> <span class="o">=</span> <span class="k">self</span><span class="nf">.branch_points</span><span class="p">();</span>
+
+        <span class="c1">// calculate length of (unique) paths between all nodes</span>
+        <span class="k">let</span> <span class="k">mut</span> <span class="n">adjacents</span> <span class="o">=</span> <span class="nd">vec!</span><span class="p">[</span><span class="nn">Vec</span><span class="p">::</span><span class="nf">new</span><span class="p">();</span> <span class="n">nodes</span><span class="nf">.len</span><span class="p">()];</span>
+        <span class="k">for</span> <span class="p">(</span><span class="n">k0</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">start</span><span class="p">)</span> <span class="k">in</span> <span class="n">nodes</span><span class="nf">.iter</span><span class="p">()</span><span class="nf">.enumerate</span><span class="p">()</span> <span class="p">{</span>
+            <span class="k">let</span> <span class="k">mut</span> <span class="n">queue</span> <span class="o">=</span> <span class="nn">Vec</span><span class="p">::</span><span class="nf">from</span><span class="p">([(</span><span class="mi">0</span><span class="p">,</span> <span class="n">start</span><span class="p">,</span> <span class="nb">None</span><span class="p">)]);</span>
+            <span class="k">while</span> <span class="k">let</span> <span class="nf">Some</span><span class="p">((</span><span class="n">steps</span><span class="p">,</span> <span class="n">cur</span><span class="p">,</span> <span class="n">prev</span><span class="p">))</span> <span class="o">=</span> <span class="n">queue</span><span class="nf">.pop</span><span class="p">()</span> <span class="p">{</span>
+                <span class="k">if</span> <span class="k">let</span> <span class="nf">Some</span><span class="p">(</span><span class="n">k1</span><span class="p">)</span> <span class="o">=</span> <span class="p">(</span><span class="n">cur</span> <span class="o">!=</span> <span class="n">start</span><span class="p">)</span>
+                    <span class="nf">.then_some</span><span class="p">(())</span>
+                    <span class="nf">.and_then</span><span class="p">(|</span><span class="n">_</span><span class="p">|</span> <span class="n">nodes</span><span class="nf">.iter</span><span class="p">()</span><span class="nf">.position</span><span class="p">(|</span><span class="o">&amp;</span><span class="n">coord</span><span class="p">|</span> <span class="n">coord</span> <span class="o">==</span> <span class="n">cur</span><span class="p">))</span>
+                <span class="p">{</span>
+                    <span class="n">adjacents</span><span class="p">[</span><span class="n">k0</span><span class="p">]</span><span class="nf">.push</span><span class="p">((</span><span class="n">k1</span><span class="p">,</span> <span class="n">steps</span><span class="p">));</span>
+                    <span class="k">continue</span><span class="p">;</span>
+                <span class="p">}</span>
+
+                <span class="n">queue</span><span class="nf">.extend</span><span class="p">(</span>
+                    <span class="k">self</span><span class="nf">.adj_iter</span><span class="p">(</span><span class="n">cur</span><span class="p">,</span> <span class="n">ignore_slopes</span><span class="p">)</span>
+                        <span class="nf">.filter</span><span class="p">(|</span><span class="o">&amp;</span><span class="n">adj</span><span class="p">|</span> <span class="nf">Some</span><span class="p">(</span><span class="n">adj</span><span class="p">)</span> <span class="o">!=</span> <span class="n">prev</span><span class="p">)</span>
+                        <span class="nf">.map</span><span class="p">(|</span><span class="n">adj</span><span class="p">|</span> <span class="p">(</span><span class="n">steps</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">adj</span><span class="p">,</span> <span class="nf">Some</span><span class="p">(</span><span class="n">cur</span><span class="p">))),</span>
+                <span class="p">);</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+        <span class="p">(</span><span class="n">nodes</span><span class="p">,</span> <span class="n">adjacents</span><span class="p">)</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="k">pub</span> <span class="k">fn</span> <span class="nf">reachable</span><span class="p">(</span><span class="n">adj_masks</span><span class="p">:</span> <span class="o">&amp;</span><span class="p">[</span><span class="nb">u64</span><span class="p">],</span> <span class="n">idx</span><span class="p">:</span> <span class="nb">usize</span><span class="p">,</span> <span class="n">seen</span><span class="p">:</span> <span class="nb">u64</span><span class="p">)</span> <span class="k">-&gt;</span> <span class="nb">u64</span> <span class="p">{</span>
+    <span class="k">let</span> <span class="k">mut</span> <span class="n">queue</span> <span class="o">=</span> <span class="mi">1u64</span> <span class="o">&lt;&lt;</span> <span class="n">idx</span><span class="p">;</span>
+    <span class="k">let</span> <span class="k">mut</span> <span class="n">reached</span> <span class="o">=</span> <span class="n">seen</span> <span class="p">|</span> <span class="n">queue</span><span class="p">;</span>
+    <span class="k">while</span> <span class="n">queue</span> <span class="o">!=</span> <span class="mi">0</span> <span class="p">{</span>
+        <span class="k">let</span> <span class="n">cur</span> <span class="o">=</span> <span class="n">queue</span><span class="nf">.trailing_zeros</span><span class="p">();</span>
+        <span class="n">queue</span> <span class="o">&amp;=</span> <span class="o">!</span><span class="p">(</span><span class="mi">1</span> <span class="o">&lt;&lt;</span> <span class="n">cur</span><span class="p">);</span>
+
+        <span class="k">let</span> <span class="n">mask</span> <span class="o">=</span> <span class="n">adj_masks</span><span class="p">[</span><span class="n">cur</span> <span class="k">as</span> <span class="nb">usize</span><span class="p">];</span>
+        <span class="n">queue</span> <span class="p">|</span><span class="o">=</span> <span class="n">mask</span> <span class="o">&amp;</span> <span class="o">!</span><span class="n">reached</span><span class="p">;</span>
+        <span class="n">reached</span> <span class="p">|</span><span class="o">=</span> <span class="n">mask</span><span class="p">;</span>
+    <span class="p">}</span>
+    <span class="n">reached</span> <span class="o">&amp;</span> <span class="o">!</span><span class="n">seen</span>
 <span class="p">}</span>
 
 <span class="k">pub</span> <span class="k">fn</span> <span class="nf">star</span><span class="p">(</span><span class="n">grid</span><span class="p">:</span> <span class="o">&amp;</span><span class="n">PuzzleData</span><span class="p">,</span> <span class="n">ignore_slopes</span><span class="p">:</span> <span class="nb">bool</span><span class="p">)</span> <span class="k">-&gt;</span> <span class="nb">usize</span> <span class="p">{</span>
-    <span class="c1">// nodes are branch points and start / target</span>
-    <span class="k">let</span> <span class="k">mut</span> <span class="n">nodes</span> <span class="o">=</span> <span class="n">grid</span><span class="nf">.branch_points</span><span class="p">();</span>
-    <span class="n">nodes</span><span class="nf">.push</span><span class="p">(</span><span class="n">grid</span><span class="nf">.start</span><span class="p">());</span>
-    <span class="n">nodes</span><span class="nf">.push</span><span class="p">(</span><span class="n">grid</span><span class="nf">.target</span><span class="p">());</span>
-
-    <span class="c1">// calculate length of (unique) paths between all nodes</span>
-    <span class="k">let</span> <span class="k">mut</span> <span class="n">adjacents</span> <span class="o">=</span> <span class="nd">vec!</span><span class="p">[</span><span class="nn">Vec</span><span class="p">::</span><span class="nf">new</span><span class="p">();</span> <span class="n">nodes</span><span class="nf">.len</span><span class="p">()];</span>
-    <span class="k">for</span> <span class="p">(</span><span class="n">k0</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">start</span><span class="p">)</span> <span class="k">in</span> <span class="n">nodes</span><span class="nf">.iter</span><span class="p">()</span><span class="nf">.enumerate</span><span class="p">()</span> <span class="p">{</span>
-        <span class="k">let</span> <span class="k">mut</span> <span class="n">queue</span> <span class="o">=</span> <span class="nn">Vec</span><span class="p">::</span><span class="nf">from</span><span class="p">([(</span><span class="mi">0</span><span class="p">,</span> <span class="n">start</span><span class="p">,</span> <span class="nb">None</span><span class="p">)]);</span>
-        <span class="k">while</span> <span class="k">let</span> <span class="nf">Some</span><span class="p">((</span><span class="n">steps</span><span class="p">,</span> <span class="n">cur</span><span class="p">,</span> <span class="n">prev</span><span class="p">))</span> <span class="o">=</span> <span class="n">queue</span><span class="nf">.pop</span><span class="p">()</span> <span class="p">{</span>
-            <span class="k">if</span> <span class="k">let</span> <span class="nf">Some</span><span class="p">(</span><span class="n">k1</span><span class="p">)</span> <span class="o">=</span> <span class="p">(</span><span class="n">cur</span> <span class="o">!=</span> <span class="n">start</span><span class="p">)</span>
-                <span class="nf">.then_some</span><span class="p">(())</span>
-                <span class="nf">.and_then</span><span class="p">(|</span><span class="n">_</span><span class="p">|</span> <span class="n">nodes</span><span class="nf">.iter</span><span class="p">()</span><span class="nf">.position</span><span class="p">(|</span><span class="o">&amp;</span><span class="n">coord</span><span class="p">|</span> <span class="n">coord</span> <span class="o">==</span> <span class="n">cur</span><span class="p">))</span>
-            <span class="p">{</span>
-                <span class="n">adjacents</span><span class="p">[</span><span class="n">k0</span><span class="p">]</span><span class="nf">.push</span><span class="p">((</span><span class="n">k1</span><span class="p">,</span> <span class="n">steps</span><span class="p">));</span>
-                <span class="k">continue</span><span class="p">;</span>
-            <span class="p">}</span>
-
-            <span class="n">queue</span><span class="nf">.extend</span><span class="p">(</span>
-                <span class="n">grid</span><span class="nf">.adj_iter</span><span class="p">(</span><span class="n">cur</span><span class="p">,</span> <span class="n">ignore_slopes</span><span class="p">)</span>
-                    <span class="nf">.filter</span><span class="p">(|</span><span class="o">&amp;</span><span class="n">adj</span><span class="p">|</span> <span class="nf">Some</span><span class="p">(</span><span class="n">adj</span><span class="p">)</span> <span class="o">!=</span> <span class="n">prev</span><span class="p">)</span>
-                    <span class="nf">.map</span><span class="p">(|</span><span class="n">adj</span><span class="p">|</span> <span class="p">(</span><span class="n">steps</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">adj</span><span class="p">,</span> <span class="nf">Some</span><span class="p">(</span><span class="n">cur</span><span class="p">))),</span>
-            <span class="p">);</span>
-        <span class="p">}</span>
-    <span class="p">}</span>
+    <span class="k">let</span> <span class="p">(</span><span class="n">nodes</span><span class="p">,</span> <span class="k">mut</span> <span class="n">adjacents</span><span class="p">)</span> <span class="o">=</span> <span class="n">grid</span><span class="nf">.make_graph</span><span class="p">(</span><span class="n">ignore_slopes</span><span class="p">);</span>
 
     <span class="c1">// seen information is stored in bits of u64</span>
     <span class="nd">assert!</span><span class="p">(</span><span class="n">nodes</span><span class="nf">.len</span><span class="p">()</span> <span class="o">&lt;=</span> <span class="mi">64</span><span class="p">);</span>
 
-    <span class="c1">// find maximum</span>
-    <span class="k">let</span> <span class="n">start</span> <span class="o">=</span> <span class="n">nodes</span><span class="nf">.len</span><span class="p">()</span> <span class="o">-</span> <span class="mi">2</span><span class="p">;</span>
     <span class="k">let</span> <span class="n">target</span> <span class="o">=</span> <span class="n">nodes</span><span class="nf">.len</span><span class="p">()</span> <span class="o">-</span> <span class="mi">1</span><span class="p">;</span>
-    <span class="k">let</span> <span class="k">mut</span> <span class="n">queue</span> <span class="o">=</span> <span class="nn">Vec</span><span class="p">::</span><span class="nf">from</span><span class="p">([(</span><span class="mi">0</span><span class="p">,</span> <span class="n">start</span><span class="p">,</span> <span class="mi">1u64</span> <span class="o">&lt;&lt;</span> <span class="n">start</span><span class="p">)]);</span>
+    <span class="k">if</span> <span class="n">ignore_slopes</span> <span class="p">{</span>
+        <span class="c1">// Idea taken from https://www.reddit.com/user/MattieShoes/</span>
+        <span class="c1">// At the last crossing before the target, we must go for the target</span>
+        <span class="k">let</span> <span class="p">(</span><span class="n">last_before_target</span><span class="p">,</span> <span class="n">cost</span><span class="p">)</span> <span class="o">=</span> <span class="n">adjacents</span><span class="p">[</span><span class="n">target</span><span class="p">][</span><span class="mi">0</span><span class="p">];</span>
+        <span class="n">adjacents</span><span class="p">[</span><span class="n">last_before_target</span><span class="p">]</span> <span class="o">=</span> <span class="nd">vec!</span><span class="p">[(</span><span class="n">target</span><span class="p">,</span> <span class="n">cost</span><span class="p">)];</span>
+    <span class="p">}</span>
+
+    <span class="k">let</span> <span class="n">adj_masks</span><span class="p">:</span> <span class="nb">Vec</span><span class="o">&lt;</span><span class="nb">u64</span><span class="o">&gt;</span> <span class="o">=</span> <span class="n">adjacents</span>
+        <span class="nf">.iter</span><span class="p">()</span>
+        <span class="nf">.map</span><span class="p">(|</span><span class="n">adjacents</span><span class="p">|</span> <span class="n">adjacents</span><span class="nf">.iter</span><span class="p">()</span><span class="nf">.fold</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="p">|</span><span class="n">mask</span><span class="p">,</span> <span class="p">(</span><span class="n">adj</span><span class="p">,</span> <span class="n">_</span><span class="p">)|</span> <span class="n">mask</span> <span class="p">|</span> <span class="p">(</span><span class="mi">1</span> <span class="o">&lt;&lt;</span> <span class="n">adj</span><span class="p">)))</span>
+        <span class="nf">.collect</span><span class="p">();</span>
+
+    <span class="k">let</span> <span class="k">mut</span> <span class="n">bests</span> <span class="o">=</span> <span class="nn">HashMap</span><span class="p">::</span><span class="nf">new</span><span class="p">();</span>
+
+    <span class="c1">// find maximum</span>
+    <span class="k">let</span> <span class="k">mut</span> <span class="n">queue</span> <span class="o">=</span> <span class="nn">Vec</span><span class="p">::</span><span class="nf">from</span><span class="p">([(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1u64</span><span class="p">)]);</span>
     <span class="k">let</span> <span class="k">mut</span> <span class="n">max</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
     <span class="k">while</span> <span class="k">let</span> <span class="nf">Some</span><span class="p">((</span><span class="n">cost</span><span class="p">,</span> <span class="n">idx</span><span class="p">,</span> <span class="n">seen</span><span class="p">))</span> <span class="o">=</span> <span class="n">queue</span><span class="nf">.pop</span><span class="p">()</span> <span class="p">{</span>
         <span class="k">if</span> <span class="n">idx</span> <span class="o">==</span> <span class="n">target</span> <span class="o">&amp;&amp;</span> <span class="n">cost</span> <span class="o">&gt;</span> <span class="n">max</span> <span class="p">{</span>
@@ -9457,11 +9522,28 @@ hdj{m&gt;838:A,pv}
             <span class="k">continue</span><span class="p">;</span>
         <span class="p">}</span>
 
-        <span class="k">for</span> <span class="o">&amp;</span><span class="p">(</span><span class="n">adj</span><span class="p">,</span> <span class="n">weight</span><span class="p">)</span> <span class="k">in</span> <span class="o">&amp;</span><span class="n">adjacents</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span> <span class="p">{</span>
-            <span class="k">if</span> <span class="n">seen</span> <span class="o">&amp;</span> <span class="p">(</span><span class="mi">1</span> <span class="o">&lt;&lt;</span> <span class="n">adj</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span> <span class="p">{</span>
-                <span class="n">queue</span><span class="nf">.push</span><span class="p">((</span><span class="n">cost</span> <span class="o">+</span> <span class="n">weight</span><span class="p">,</span> <span class="n">adj</span><span class="p">,</span> <span class="n">seen</span> <span class="p">|</span> <span class="mi">1</span> <span class="o">&lt;&lt;</span> <span class="n">adj</span><span class="p">));</span>
-            <span class="p">}</span>
+        <span class="c1">// Efficient BFS to get reachable nodes</span>
+        <span class="k">let</span> <span class="n">reachable</span> <span class="o">=</span> <span class="nf">reachable</span><span class="p">(</span><span class="o">&amp;</span><span class="n">adj_masks</span><span class="p">,</span> <span class="n">idx</span><span class="p">,</span> <span class="n">seen</span><span class="p">);</span>
+        <span class="k">if</span> <span class="n">reachable</span> <span class="o">&amp;</span> <span class="p">(</span><span class="mi">1</span> <span class="o">&lt;&lt;</span> <span class="n">target</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span> <span class="p">{</span>
+            <span class="c1">// Target is not reachable</span>
+            <span class="k">continue</span><span class="p">;</span>
         <span class="p">}</span>
+
+        <span class="c1">// Idea taken from https://www.reddit.com/user/boombulerDev/</span>
+        <span class="c1">// If I have been here with the same set of reachable nodes, only expand node</span>
+        <span class="c1">// if it has a higher cost</span>
+        <span class="k">match</span> <span class="n">bests</span><span class="nf">.entry</span><span class="p">((</span><span class="n">idx</span><span class="p">,</span> <span class="n">reachable</span><span class="p">))</span> <span class="p">{</span>
+            <span class="nn">Entry</span><span class="p">::</span><span class="nf">Occupied</span><span class="p">(</span><span class="n">o</span><span class="p">)</span> <span class="k">if</span> <span class="n">cost</span> <span class="o">&lt;=</span> <span class="o">*</span><span class="n">o</span><span class="nf">.get</span><span class="p">()</span> <span class="k">=&gt;</span> <span class="k">continue</span><span class="p">,</span>
+            <span class="nn">Entry</span><span class="p">::</span><span class="nf">Occupied</span><span class="p">(</span><span class="k">mut</span> <span class="n">o</span><span class="p">)</span> <span class="k">=&gt;</span> <span class="o">*</span><span class="n">o</span><span class="nf">.get_mut</span><span class="p">()</span> <span class="o">=</span> <span class="n">cost</span><span class="p">,</span>
+            <span class="nn">Entry</span><span class="p">::</span><span class="nf">Vacant</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="k">=&gt;</span> <span class="n">_</span> <span class="o">=</span> <span class="n">v</span><span class="nf">.insert</span><span class="p">(</span><span class="n">cost</span><span class="p">),</span>
+        <span class="p">}</span>
+
+        <span class="n">queue</span><span class="nf">.extend</span><span class="p">(</span>
+            <span class="n">adjacents</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span>
+                <span class="nf">.iter</span><span class="p">()</span>
+                <span class="nf">.filter</span><span class="p">(|(</span><span class="n">adj</span><span class="p">,</span> <span class="n">_</span><span class="p">)|</span> <span class="n">seen</span> <span class="o">&amp;</span> <span class="p">(</span><span class="mi">1</span> <span class="o">&lt;&lt;</span> <span class="n">adj</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span>
+                <span class="nf">.map</span><span class="p">(|</span><span class="o">&amp;</span><span class="p">(</span><span class="n">adj</span><span class="p">,</span> <span class="n">weight</span><span class="p">)|</span> <span class="p">(</span><span class="n">cost</span> <span class="o">+</span> <span class="n">weight</span><span class="p">,</span> <span class="n">adj</span><span class="p">,</span> <span class="n">seen</span> <span class="p">|</span> <span class="mi">1</span> <span class="o">&lt;&lt;</span> <span class="n">adj</span><span class="p">)),</span>
+        <span class="p">);</span>
     <span class="p">}</span>
     <span class="n">max</span>
 <span class="p">}</span>
@@ -9469,24 +9551,8 @@ hdj{m&gt;838:A,pv}
 <span class="k">pub</span> <span class="k">fn</span> <span class="nf">star_1</span><span class="p">(</span><span class="n">grid</span><span class="p">:</span> <span class="o">&amp;</span><span class="n">PuzzleData</span><span class="p">)</span> <span class="k">-&gt;</span> <span class="nb">usize</span> <span class="p">{</span>
     <span class="nf">star</span><span class="p">(</span><span class="n">grid</span><span class="p">,</span> <span class="k">false</span><span class="p">)</span>
 <span class="p">}</span>
-</pre></td></tr></tbody></table></code></pre>
-</div>
-</div>
-</div>
-<div class="sect2">
-<h3 id="_star_2_22">Star 2</h3>
-<div class="paragraph">
-<p>Same as first part. Just remove special treatment of slopes. This increases the number of edges in my graph and hence it runs a little longer.</p>
-</div>
-<div class="paragraph">
-<p>Ideas for optimization: find ways to prune states early or take a dynamic programming approach. First attempts on both have not been successful.</p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre class="rouge highlight"><code data-lang="rust"><table class="linenotable"><tbody><tr><td class="linenos gl"><pre class="lineno">1
-2
-3
-</pre></td><td class="code"><pre><span class="k">pub</span> <span class="k">fn</span> <span class="nf">star_2</span><span class="p">(</span><span class="n">grid</span><span class="p">:</span> <span class="o">&amp;</span><span class="n">PuzzleData</span><span class="p">)</span> <span class="k">-&gt;</span> <span class="nb">usize</span> <span class="p">{</span>
+
+<span class="k">pub</span> <span class="k">fn</span> <span class="nf">star_2</span><span class="p">(</span><span class="n">grid</span><span class="p">:</span> <span class="o">&amp;</span><span class="n">PuzzleData</span><span class="p">)</span> <span class="k">-&gt;</span> <span class="nb">usize</span> <span class="p">{</span>
     <span class="nf">star</span><span class="p">(</span><span class="n">grid</span><span class="p">,</span> <span class="k">true</span><span class="p">)</span>
 <span class="p">}</span>
 </pre></td></tr></tbody></table></code></pre>
@@ -9613,7 +9679,7 @@ hdj{m&gt;838:A,pv}
 </div>
 <div id="footer">
     <div id="footer-text">
-        Generated from <a href="https://github.com/mr-kaffee/aoc-2023/">github.com/mr-kaffee/aoc-2023/</a> on 2023-12-23 07:35:30 UTC
+        Generated from <a href="https://github.com/mr-kaffee/aoc-2023/">github.com/mr-kaffee/aoc-2023/</a> on 2023-12-23 19:48:56 UTC
         with <a href="https://asciidoctor.org">asciidoctor</a>.
     </div>
 </div>
