@@ -6,4 +6,20 @@ license = "MIT"
 version = "0.1.0"
 edition = "2021"
 
+[dev-dependencies]
+
+criterion = { version = "0.3", features = ["html_reports"] }
+
 [dependencies]
+
+[[bench]]
+name = "day23"
+harness = false
+
+[lib]
+bench = false
+
+[[bin]]
+name = "mr-kaffee-2023-23"
+path = "src/main.rs"
+bench = false

@@ -17,20 +17,17 @@ The only interesting points in the grid are the start, the target and any coordi
 
 These are few enough for the problem to be solvable and to store the information which nodes have been seen in the bits of a `u64`.
 
-[source,rust,numbered]
-----
-include::src/lib.rs[tags=star_1]
-----
+The second part is the same as the first part. Just remove special treatment of slopes. This increases the number of edges in the graph and hence it runs a little longer. 
 
-=== Star 2
+Optimizations since initial version:
 
-Same as first part. Just remove special treatment of slopes. This increases the number of edges in my graph and hence it runs a little longer. 
-
-Ideas for optimization: find ways to prune states early or take a dynamic programming approach. First attempts on both have not been successful.
+- Modify graph: from the unique node from which the target is reachable, the only relevant adjacent is the target (idea from https://www.reddit.com/user/MattieShoes/[MattieShoes]): from ~330ms to ~170ms
+- Prune nodes from where the target is not reachable using a graph traversal based on bit manipulations with a `u64` as 'queue' (I especially like how adjacents are filtered and 'pushed to the queue' at once using bitwise operators): from ~170ms to ~150ms
+- Prune nodes from where I have been before with the same set of reachable nodes but a longer distance walked (idea from https://www.reddit.com/user/boombulerDev/[boombulerDev]): from ~150ms to ~40ms
 
 [source,rust,numbered]
 ----
-include::src/lib.rs[tags=star_2]
+include::src/lib.rs[tags=solution]
 ----
 
 === Tests

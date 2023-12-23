@@ -1,5 +1,6 @@
 use input::*;
 use std::fs::read_to_string;
+use std::collections::{hash_map::Entry, HashMap};
 
 // tag::prelude[]
 pub const IDENTIFIER: &str = "2023/23";
@@ -34,52 +35,32 @@ pub mod input {
 }
 // end::input[]
 
-// tag::star_1[]
+// tag::solution[]
 impl PuzzleData<'_> {
-    pub fn start(&self) -> (usize, usize) {
-        (
-            self.data
-                .iter()
-                .take(self.w)
-                .position(|&b| b == b'.')
-                .unwrap(),
-            0,
-        )
-    }
-
-    pub fn target(&self) -> (usize, usize) {
-        (
-            self.data
-                .iter()
-                .skip((self.h - 1) * (self.w + 1))
-                .position(|&b| b == b'.')
-                .unwrap(),
-            self.h - 1,
-        )
-    }
+    const D: [(isize, isize, u8); 4] = [(1, 0, b'>'), (0, -1, b'^'), (-1, 0, b'<'), (0, 1, b'v')];
 
     fn is_branch_point(&self, (col, row): (usize, usize)) -> bool {
-        self.data[col + row * (self.w + 1)] != b'#'
-            && [(1, 0), (0, -1), (-1, 0), (0, 1)]
-                .into_iter()
-                .map(|(dc, dr)| (col.wrapping_add_signed(dc), row.wrapping_add_signed(dr)))
-                .filter(|&(col, row)| {
-                    col < self.w && row < self.h && self.data[col + row * (self.w + 1)] != b'#'
-                })
-                .count()
-                > 2
+        Self::D
+            .iter()
+            .map(|(dc, dr, _)| (col.wrapping_add_signed(*dc), row.wrapping_add_signed(*dr)))
+            .filter(|&(col, row)| {
+                col < self.w && row < self.h && self.data[col + row * (self.w + 1)] != b'#'
+            })
+            .count()
+            > 2
     }
 
     pub fn branch_points(&self) -> Vec<(usize, usize)> {
         (0..self.w * self.h)
             .map(|pos| (pos % self.w, pos / self.w))
-            .filter(|&coord| self.is_branch_point(coord))
+            .filter(|&(col, row)| {
+                self.data[col + row * (self.w + 1)] != b'#'
+                    && (row == 0 || row == self.h - 1 || self.is_branch_point((col, row)))
+            })
             .collect::<Vec<_>>()
     }
 
-    const D: [(isize, isize, u8); 4] = [(1, 0, b'>'), (0, -1, b'^'), (-1, 0, b'<'), (0, 1, b'v')];
-
-    pub fn adj_iter(
+    fn adj_iter(
         &self,
         (col, row): (usize, usize),
         ignore_slopes: bool,
@@ -97,42 +78,75 @@ impl PuzzleData<'_> {
             })
             .map(|(col, row, _)| (col, row))
     }
+
+    /// nodes are branch points and start (first) / target (last)
+    pub fn make_graph(
+        &self,
+        ignore_slopes: bool,
+    ) -> (Vec<(usize, usize)>, Vec<Vec<(usize, usize)>>) {
+        let nodes = self.branch_points();
+
+        // calculate length of (unique) paths between all nodes
+        let mut adjacents = vec![Vec::new(); nodes.len()];
+        for (k0, &start) in nodes.iter().enumerate() {
+            let mut queue = Vec::from([(0, start, None)]);
+            while let Some((steps, cur, prev)) = queue.pop() {
+                if let Some(k1) = (cur != start)
+                    .then_some(())
+                    .and_then(|_| nodes.iter().position(|&coord| coord == cur))
+                {
+                    adjacents[k0].push((k1, steps));
+                    continue;
+                }
+
+                queue.extend(
+                    self.adj_iter(cur, ignore_slopes)
+                        .filter(|&adj| Some(adj) != prev)
+                        .map(|adj| (steps + 1, adj, Some(cur))),
+                );
+            }
+        }
+        (nodes, adjacents)
+    }
+}
+
+pub fn reachable(adj_masks: &[u64], idx: usize, seen: u64) -> u64 {
+    let mut queue = 1u64 << idx;
+    let mut reached = seen | queue;
+    while queue != 0 {
+        let cur = queue.trailing_zeros();
+        queue &= !(1 << cur);
+
+        let mask = adj_masks[cur as usize];
+        queue |= mask & !reached;
+        reached |= mask;
+    }
+    reached & !seen
 }
 
 pub fn star(grid: &PuzzleData, ignore_slopes: bool) -> usize {
-    // nodes are branch points and start / target
-    let mut nodes = grid.branch_points();
-    nodes.push(grid.start());
-    nodes.push(grid.target());
-
-    // calculate length of (unique) paths between all nodes
-    let mut adjacents = vec![Vec::new(); nodes.len()];
-    for (k0, &start) in nodes.iter().enumerate() {
-        let mut queue = Vec::from([(0, start, None)]);
-        while let Some((steps, cur, prev)) = queue.pop() {
-            if let Some(k1) = (cur != start)
-                .then_some(())
-                .and_then(|_| nodes.iter().position(|&coord| coord == cur))
-            {
-                adjacents[k0].push((k1, steps));
-                continue;
-            }
-
-            queue.extend(
-                grid.adj_iter(cur, ignore_slopes)
-                    .filter(|&adj| Some(adj) != prev)
-                    .map(|adj| (steps + 1, adj, Some(cur))),
-            );
-        }
-    }
+    let (nodes, mut adjacents) = grid.make_graph(ignore_slopes);
 
     // seen information is stored in bits of u64
     assert!(nodes.len() <= 64);
 
-    // find maximum
-    let start = nodes.len() - 2;
     let target = nodes.len() - 1;
-    let mut queue = Vec::from([(0, start, 1u64 << start)]);
+    if ignore_slopes {
+        // Idea taken from https://www.reddit.com/user/MattieShoes/
+        // At the last crossing before the target, we must go for the target
+        let (last_before_target, cost) = adjacents[target][0];
+        adjacents[last_before_target] = vec![(target, cost)];
+    }
+
+    let adj_masks: Vec<u64> = adjacents
+        .iter()
+        .map(|adjacents| adjacents.iter().fold(0, |mask, (adj, _)| mask | (1 << adj)))
+        .collect();
+
+    let mut bests = HashMap::new();
+
+    // find maximum
+    let mut queue = Vec::from([(0, 0, 1u64)]);
     let mut max = 0;
     while let Some((cost, idx, seen)) = queue.pop() {
         if idx == target && cost > max {
@@ -140,11 +154,28 @@ pub fn star(grid: &PuzzleData, ignore_slopes: bool) -> usize {
             continue;
         }
 
-        for &(adj, weight) in &adjacents[idx] {
-            if seen & (1 << adj) == 0 {
-                queue.push((cost + weight, adj, seen | 1 << adj));
-            }
+        // Efficient BFS to get reachable nodes
+        let reachable = reachable(&adj_masks, idx, seen);
+        if reachable & (1 << target) == 0 {
+            // Target is not reachable
+            continue;
         }
+
+        // Idea taken from https://www.reddit.com/user/boombulerDev/
+        // If I have been here with the same set of reachable nodes, only expand node
+        // if it has a higher cost
+        match bests.entry((idx, reachable)) {
+            Entry::Occupied(o) if cost <= *o.get() => continue,
+            Entry::Occupied(mut o) => *o.get_mut() = cost,
+            Entry::Vacant(v) => _ = v.insert(cost),
+        }
+
+        queue.extend(
+            adjacents[idx]
+                .iter()
+                .filter(|(adj, _)| seen & (1 << adj) == 0)
+                .map(|&(adj, weight)| (cost + weight, adj, seen | 1 << adj)),
+        );
     }
     max
 }
@@ -152,13 +183,11 @@ pub fn star(grid: &PuzzleData, ignore_slopes: bool) -> usize {
 pub fn star_1(grid: &PuzzleData) -> usize {
     star(grid, false)
 }
-// end::star_1[]
 
-// tag::star_2[]
 pub fn star_2(grid: &PuzzleData) -> usize {
     star(grid, true)
 }
-// end::star_2[]
+// end::solution[]
 
 // tag::tests[]
 #[cfg(test)]
