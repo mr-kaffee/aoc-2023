@@ -1,0 +1,41 @@
+== Rust | Day 23: A Long Walk
+
+https://rust-lang.org[Rust] solution to https://adventofcode.com/2023/day/23[AoC|2023|23].
+
+=== Input
+
+[source,rust,numbered]
+----
+include::src/lib.rs[tags=input]
+----
+
+=== Star 1
+
+Shortest path - easy. But how do I get the longest path? Well, just try all of them...
+
+The only interesting points in the grid are the start, the target and any coordinates, where there is actually a choice to make. So I build a grid that contains exactly those nodes with the unique distances to the neighbors as weights.
+
+These are few enough for the problem to be solvable and to store the information which nodes have been seen in the bits of a `u64`.
+
+[source,rust,numbered]
+----
+include::src/lib.rs[tags=star_1]
+----
+
+=== Star 2
+
+Same as first part. Just remove special treatment of slopes. This increases the number of edges in my graph and hence it runs a little longer. 
+
+Ideas for optimization: find ways to prune states early or take a dynamic programming approach. First attempts on both have not been successful.
+
+[source,rust,numbered]
+----
+include::src/lib.rs[tags=star_2]
+----
+
+=== Tests
+
+[source,rust,numbered]
+----
+include::src/lib.rs[tags=tests]
+----
