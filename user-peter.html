@@ -218,6 +218,14 @@
 <li><a href="#_tests_21">Tests</a></li>
 </ul>
 </li>
+<li><a href="#sol-rust-23">Rust | Day 23: A Long Walk</a>
+<ul class="sectlevel2">
+<li><a href="#_input_18">Input</a></li>
+<li><a href="#_star_1_22">Star 1</a></li>
+<li><a href="#_star_2_22">Star 2</a></li>
+<li><a href="#_tests_22">Tests</a></li>
+</ul>
+</li>
 </ul>
 </div>
 </div>
@@ -9160,10 +9168,452 @@ hdj{m&gt;838:A,pv}
 </div>
 </div>
 </div>
+<div class="sect1">
+<h2 id="sol-rust-23">Rust | Day 23: A Long Walk</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p><a href="https://rust-lang.org">Rust</a> solution to <a href="https://adventofcode.com/2023/day/23">AoC|2023|23</a>.</p>
+</div>
+<div class="sect2">
+<h3 id="_input_18">Input</h3>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight"><code data-lang="rust"><table class="linenotable"><tbody><tr><td class="linenos gl"><pre class="lineno"> 1
+ 2
+ 3
+ 4
+ 5
+ 6
+ 7
+ 8
+ 9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+</pre></td><td class="code"><pre><span class="k">pub</span> <span class="k">mod</span> <span class="n">input</span> <span class="p">{</span>
+    <span class="nd">#[derive(Debug)]</span>
+    <span class="k">pub</span> <span class="k">struct</span> <span class="n">PuzzleData</span><span class="o">&lt;</span><span class="nv">'a</span><span class="o">&gt;</span> <span class="p">{</span>
+        <span class="k">pub</span> <span class="n">data</span><span class="p">:</span> <span class="o">&amp;</span><span class="nv">'a</span> <span class="p">[</span><span class="nb">u8</span><span class="p">],</span>
+        <span class="k">pub</span> <span class="n">w</span><span class="p">:</span> <span class="nb">usize</span><span class="p">,</span>
+        <span class="k">pub</span> <span class="n">h</span><span class="p">:</span> <span class="nb">usize</span><span class="p">,</span>
+    <span class="p">}</span>
+
+    <span class="k">impl</span><span class="o">&lt;</span><span class="nv">'a</span><span class="p">,</span> <span class="n">T</span><span class="o">&gt;</span> <span class="nb">From</span><span class="o">&lt;&amp;</span><span class="nv">'a</span> <span class="n">T</span><span class="o">&gt;</span> <span class="k">for</span> <span class="n">PuzzleData</span><span class="o">&lt;</span><span class="nv">'a</span><span class="o">&gt;</span>
+    <span class="k">where</span>
+        <span class="n">T</span><span class="p">:</span> <span class="nb">AsRef</span><span class="o">&lt;</span><span class="p">[</span><span class="nb">u8</span><span class="p">]</span><span class="o">&gt;</span> <span class="o">+</span> <span class="nv">'a</span> <span class="o">+</span> <span class="o">?</span><span class="nb">Sized</span><span class="p">,</span>
+    <span class="p">{</span>
+        <span class="k">fn</span> <span class="nf">from</span><span class="p">(</span><span class="n">s</span><span class="p">:</span> <span class="o">&amp;</span><span class="nv">'a</span> <span class="n">T</span><span class="p">)</span> <span class="k">-&gt;</span> <span class="k">Self</span> <span class="p">{</span>
+            <span class="k">let</span> <span class="n">data</span> <span class="o">=</span> <span class="n">s</span><span class="nf">.as_ref</span><span class="p">();</span>
+            <span class="k">let</span> <span class="n">w</span> <span class="o">=</span> <span class="n">data</span><span class="nf">.iter</span><span class="p">()</span><span class="nf">.position</span><span class="p">(|</span><span class="o">&amp;</span><span class="n">b</span><span class="p">|</span> <span class="n">b</span> <span class="o">==</span> <span class="sc">b'\n'</span><span class="p">)</span><span class="nf">.unwrap_or</span><span class="p">(</span><span class="n">data</span><span class="nf">.len</span><span class="p">());</span>
+            <span class="k">let</span> <span class="n">h</span> <span class="o">=</span> <span class="p">(</span><span class="n">data</span><span class="nf">.len</span><span class="p">()</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">w</span> <span class="o">+</span> <span class="mi">1</span><span class="p">);</span>
+            <span class="k">Self</span> <span class="p">{</span> <span class="n">data</span><span class="p">,</span> <span class="n">w</span><span class="p">,</span> <span class="n">h</span> <span class="p">}</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</pre></td></tr></tbody></table></code></pre>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_star_1_22">Star 1</h3>
+<div class="paragraph">
+<p>Shortest path - easy. But how do I get the longest path? Well, just try all of them&#8230;&#8203;</p>
+</div>
+<div class="paragraph">
+<p>The only interesting points in the grid are the start, the target and any coordinates, where there is actually a choice to make. So I build a grid that contains exactly those nodes with the unique distances to the neighbors as weights.</p>
+</div>
+<div class="paragraph">
+<p>These are few enough for the problem to be solvable and to store the information which nodes have been seen in the bits of a <code>u64</code>.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight"><code data-lang="rust"><table class="linenotable"><tbody><tr><td class="linenos gl"><pre class="lineno">  1
+  2
+  3
+  4
+  5
+  6
+  7
+  8
+  9
+ 10
+ 11
+ 12
+ 13
+ 14
+ 15
+ 16
+ 17
+ 18
+ 19
+ 20
+ 21
+ 22
+ 23
+ 24
+ 25
+ 26
+ 27
+ 28
+ 29
+ 30
+ 31
+ 32
+ 33
+ 34
+ 35
+ 36
+ 37
+ 38
+ 39
+ 40
+ 41
+ 42
+ 43
+ 44
+ 45
+ 46
+ 47
+ 48
+ 49
+ 50
+ 51
+ 52
+ 53
+ 54
+ 55
+ 56
+ 57
+ 58
+ 59
+ 60
+ 61
+ 62
+ 63
+ 64
+ 65
+ 66
+ 67
+ 68
+ 69
+ 70
+ 71
+ 72
+ 73
+ 74
+ 75
+ 76
+ 77
+ 78
+ 79
+ 80
+ 81
+ 82
+ 83
+ 84
+ 85
+ 86
+ 87
+ 88
+ 89
+ 90
+ 91
+ 92
+ 93
+ 94
+ 95
+ 96
+ 97
+ 98
+ 99
+100
+101
+102
+103
+104
+105
+106
+107
+108
+109
+110
+111
+112
+113
+114
+115
+116
+117
+</pre></td><td class="code"><pre><span class="k">impl</span> <span class="n">PuzzleData</span><span class="o">&lt;</span><span class="nv">'_</span><span class="o">&gt;</span> <span class="p">{</span>
+    <span class="k">pub</span> <span class="k">fn</span> <span class="nf">start</span><span class="p">(</span><span class="o">&amp;</span><span class="k">self</span><span class="p">)</span> <span class="k">-&gt;</span> <span class="p">(</span><span class="nb">usize</span><span class="p">,</span> <span class="nb">usize</span><span class="p">)</span> <span class="p">{</span>
+        <span class="p">(</span>
+            <span class="k">self</span><span class="py">.data</span>
+                <span class="nf">.iter</span><span class="p">()</span>
+                <span class="nf">.take</span><span class="p">(</span><span class="k">self</span><span class="py">.w</span><span class="p">)</span>
+                <span class="nf">.position</span><span class="p">(|</span><span class="o">&amp;</span><span class="n">b</span><span class="p">|</span> <span class="n">b</span> <span class="o">==</span> <span class="sc">b'.'</span><span class="p">)</span>
+                <span class="nf">.unwrap</span><span class="p">(),</span>
+            <span class="mi">0</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">}</span>
+
+    <span class="k">pub</span> <span class="k">fn</span> <span class="nf">target</span><span class="p">(</span><span class="o">&amp;</span><span class="k">self</span><span class="p">)</span> <span class="k">-&gt;</span> <span class="p">(</span><span class="nb">usize</span><span class="p">,</span> <span class="nb">usize</span><span class="p">)</span> <span class="p">{</span>
+        <span class="p">(</span>
+            <span class="k">self</span><span class="py">.data</span>
+                <span class="nf">.iter</span><span class="p">()</span>
+                <span class="nf">.skip</span><span class="p">((</span><span class="k">self</span><span class="py">.h</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="k">self</span><span class="py">.w</span> <span class="o">+</span> <span class="mi">1</span><span class="p">))</span>
+                <span class="nf">.position</span><span class="p">(|</span><span class="o">&amp;</span><span class="n">b</span><span class="p">|</span> <span class="n">b</span> <span class="o">==</span> <span class="sc">b'.'</span><span class="p">)</span>
+                <span class="nf">.unwrap</span><span class="p">(),</span>
+            <span class="k">self</span><span class="py">.h</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">}</span>
+
+    <span class="k">fn</span> <span class="nf">is_branch_point</span><span class="p">(</span><span class="o">&amp;</span><span class="k">self</span><span class="p">,</span> <span class="p">(</span><span class="n">col</span><span class="p">,</span> <span class="n">row</span><span class="p">):</span> <span class="p">(</span><span class="nb">usize</span><span class="p">,</span> <span class="nb">usize</span><span class="p">))</span> <span class="k">-&gt;</span> <span class="nb">bool</span> <span class="p">{</span>
+        <span class="k">self</span><span class="py">.data</span><span class="p">[</span><span class="n">col</span> <span class="o">+</span> <span class="n">row</span> <span class="o">*</span> <span class="p">(</span><span class="k">self</span><span class="py">.w</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)]</span> <span class="o">!=</span> <span class="sc">b'#'</span>
+            <span class="o">&amp;&amp;</span> <span class="p">[(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">),</span> <span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)]</span>
+                <span class="nf">.into_iter</span><span class="p">()</span>
+                <span class="nf">.map</span><span class="p">(|(</span><span class="n">dc</span><span class="p">,</span> <span class="n">dr</span><span class="p">)|</span> <span class="p">(</span><span class="n">col</span><span class="nf">.wrapping_add_signed</span><span class="p">(</span><span class="n">dc</span><span class="p">),</span> <span class="n">row</span><span class="nf">.wrapping_add_signed</span><span class="p">(</span><span class="n">dr</span><span class="p">)))</span>
+                <span class="nf">.filter</span><span class="p">(|</span><span class="o">&amp;</span><span class="p">(</span><span class="n">col</span><span class="p">,</span> <span class="n">row</span><span class="p">)|</span> <span class="p">{</span>
+                    <span class="n">col</span> <span class="o">&lt;</span> <span class="k">self</span><span class="py">.w</span> <span class="o">&amp;&amp;</span> <span class="n">row</span> <span class="o">&lt;</span> <span class="k">self</span><span class="py">.h</span> <span class="o">&amp;&amp;</span> <span class="k">self</span><span class="py">.data</span><span class="p">[</span><span class="n">col</span> <span class="o">+</span> <span class="n">row</span> <span class="o">*</span> <span class="p">(</span><span class="k">self</span><span class="py">.w</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)]</span> <span class="o">!=</span> <span class="sc">b'#'</span>
+                <span class="p">})</span>
+                <span class="nf">.count</span><span class="p">()</span>
+                <span class="o">&gt;</span> <span class="mi">2</span>
+    <span class="p">}</span>
+
+    <span class="k">pub</span> <span class="k">fn</span> <span class="nf">branch_points</span><span class="p">(</span><span class="o">&amp;</span><span class="k">self</span><span class="p">)</span> <span class="k">-&gt;</span> <span class="nb">Vec</span><span class="o">&lt;</span><span class="p">(</span><span class="nb">usize</span><span class="p">,</span> <span class="nb">usize</span><span class="p">)</span><span class="o">&gt;</span> <span class="p">{</span>
+        <span class="p">(</span><span class="mi">0</span><span class="o">..</span><span class="k">self</span><span class="py">.w</span> <span class="o">*</span> <span class="k">self</span><span class="py">.h</span><span class="p">)</span>
+            <span class="nf">.map</span><span class="p">(|</span><span class="n">pos</span><span class="p">|</span> <span class="p">(</span><span class="n">pos</span> <span class="o">%</span> <span class="k">self</span><span class="py">.w</span><span class="p">,</span> <span class="n">pos</span> <span class="o">/</span> <span class="k">self</span><span class="py">.w</span><span class="p">))</span>
+            <span class="nf">.filter</span><span class="p">(|</span><span class="o">&amp;</span><span class="n">coord</span><span class="p">|</span> <span class="k">self</span><span class="nf">.is_branch_point</span><span class="p">(</span><span class="n">coord</span><span class="p">))</span>
+            <span class="py">.collect</span><span class="p">::</span><span class="o">&lt;</span><span class="nb">Vec</span><span class="o">&lt;</span><span class="n">_</span><span class="o">&gt;&gt;</span><span class="p">()</span>
+    <span class="p">}</span>
+
+    <span class="k">const</span> <span class="n">D</span><span class="p">:</span> <span class="p">[(</span><span class="nb">isize</span><span class="p">,</span> <span class="nb">isize</span><span class="p">,</span> <span class="nb">u8</span><span class="p">);</span> <span class="mi">4</span><span class="p">]</span> <span class="o">=</span> <span class="p">[(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="sc">b'&gt;'</span><span class="p">),</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="sc">b'^'</span><span class="p">),</span> <span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="sc">b'&lt;'</span><span class="p">),</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="sc">b'v'</span><span class="p">)];</span>
+
+    <span class="k">pub</span> <span class="k">fn</span> <span class="nf">adj_iter</span><span class="p">(</span>
+        <span class="o">&amp;</span><span class="k">self</span><span class="p">,</span>
+        <span class="p">(</span><span class="n">col</span><span class="p">,</span> <span class="n">row</span><span class="p">):</span> <span class="p">(</span><span class="nb">usize</span><span class="p">,</span> <span class="nb">usize</span><span class="p">),</span>
+        <span class="n">ignore_slopes</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
+    <span class="p">)</span> <span class="k">-&gt;</span> <span class="k">impl</span> <span class="nb">Iterator</span><span class="o">&lt;</span><span class="n">Item</span> <span class="o">=</span> <span class="p">(</span><span class="nb">usize</span><span class="p">,</span> <span class="nb">usize</span><span class="p">)</span><span class="o">&gt;</span> <span class="o">+</span> <span class="nv">'_</span> <span class="p">{</span>
+        <span class="k">Self</span><span class="p">::</span><span class="n">D</span>
+            <span class="nf">.iter</span><span class="p">()</span>
+            <span class="nf">.map</span><span class="p">(</span><span class="k">move</span> <span class="p">|</span><span class="o">&amp;</span><span class="p">(</span><span class="n">dc</span><span class="p">,</span> <span class="n">dr</span><span class="p">,</span> <span class="n">ok</span><span class="p">)|</span> <span class="p">{</span>
+                <span class="p">(</span><span class="n">col</span><span class="nf">.wrapping_add_signed</span><span class="p">(</span><span class="n">dc</span><span class="p">),</span> <span class="n">row</span><span class="nf">.wrapping_add_signed</span><span class="p">(</span><span class="n">dr</span><span class="p">),</span> <span class="n">ok</span><span class="p">)</span>
+            <span class="p">})</span>
+            <span class="nf">.filter</span><span class="p">(</span><span class="k">move</span> <span class="p">|</span><span class="o">&amp;</span><span class="p">(</span><span class="n">col</span><span class="p">,</span> <span class="n">row</span><span class="p">,</span> <span class="n">ok</span><span class="p">)|</span> <span class="p">{</span>
+                <span class="n">col</span> <span class="o">&lt;</span> <span class="k">self</span><span class="py">.w</span>
+                    <span class="o">&amp;&amp;</span> <span class="n">row</span> <span class="o">&lt;</span> <span class="k">self</span><span class="py">.h</span>
+                    <span class="o">&amp;&amp;</span> <span class="p">(</span><span class="n">ignore_slopes</span> <span class="o">&amp;&amp;</span> <span class="k">self</span><span class="py">.data</span><span class="p">[</span><span class="n">col</span> <span class="o">+</span> <span class="n">row</span> <span class="o">*</span> <span class="p">(</span><span class="k">self</span><span class="py">.w</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)]</span> <span class="o">!=</span> <span class="sc">b'#'</span>
+                        <span class="p">||</span> <span class="p">[</span><span class="sc">b'.'</span><span class="p">,</span> <span class="n">ok</span><span class="p">]</span><span class="nf">.contains</span><span class="p">(</span><span class="o">&amp;</span><span class="k">self</span><span class="py">.data</span><span class="p">[</span><span class="n">col</span> <span class="o">+</span> <span class="n">row</span> <span class="o">*</span> <span class="p">(</span><span class="k">self</span><span class="py">.w</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)]))</span>
+            <span class="p">})</span>
+            <span class="nf">.map</span><span class="p">(|(</span><span class="n">col</span><span class="p">,</span> <span class="n">row</span><span class="p">,</span> <span class="n">_</span><span class="p">)|</span> <span class="p">(</span><span class="n">col</span><span class="p">,</span> <span class="n">row</span><span class="p">))</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="k">pub</span> <span class="k">fn</span> <span class="nf">star</span><span class="p">(</span><span class="n">grid</span><span class="p">:</span> <span class="o">&amp;</span><span class="n">PuzzleData</span><span class="p">,</span> <span class="n">ignore_slopes</span><span class="p">:</span> <span class="nb">bool</span><span class="p">)</span> <span class="k">-&gt;</span> <span class="nb">usize</span> <span class="p">{</span>
+    <span class="c1">// nodes are branch points and start / target</span>
+    <span class="k">let</span> <span class="k">mut</span> <span class="n">nodes</span> <span class="o">=</span> <span class="n">grid</span><span class="nf">.branch_points</span><span class="p">();</span>
+    <span class="n">nodes</span><span class="nf">.push</span><span class="p">(</span><span class="n">grid</span><span class="nf">.start</span><span class="p">());</span>
+    <span class="n">nodes</span><span class="nf">.push</span><span class="p">(</span><span class="n">grid</span><span class="nf">.target</span><span class="p">());</span>
+
+    <span class="c1">// calculate length of (unique) paths between all nodes</span>
+    <span class="k">let</span> <span class="k">mut</span> <span class="n">adjacents</span> <span class="o">=</span> <span class="nd">vec!</span><span class="p">[</span><span class="nn">Vec</span><span class="p">::</span><span class="nf">new</span><span class="p">();</span> <span class="n">nodes</span><span class="nf">.len</span><span class="p">()];</span>
+    <span class="k">for</span> <span class="p">(</span><span class="n">k0</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">start</span><span class="p">)</span> <span class="k">in</span> <span class="n">nodes</span><span class="nf">.iter</span><span class="p">()</span><span class="nf">.enumerate</span><span class="p">()</span> <span class="p">{</span>
+        <span class="k">let</span> <span class="k">mut</span> <span class="n">queue</span> <span class="o">=</span> <span class="nn">Vec</span><span class="p">::</span><span class="nf">from</span><span class="p">([(</span><span class="mi">0</span><span class="p">,</span> <span class="n">start</span><span class="p">,</span> <span class="nb">None</span><span class="p">)]);</span>
+        <span class="k">while</span> <span class="k">let</span> <span class="nf">Some</span><span class="p">((</span><span class="n">steps</span><span class="p">,</span> <span class="n">cur</span><span class="p">,</span> <span class="n">prev</span><span class="p">))</span> <span class="o">=</span> <span class="n">queue</span><span class="nf">.pop</span><span class="p">()</span> <span class="p">{</span>
+            <span class="k">if</span> <span class="k">let</span> <span class="nf">Some</span><span class="p">(</span><span class="n">k1</span><span class="p">)</span> <span class="o">=</span> <span class="p">(</span><span class="n">cur</span> <span class="o">!=</span> <span class="n">start</span><span class="p">)</span>
+                <span class="nf">.then_some</span><span class="p">(())</span>
+                <span class="nf">.and_then</span><span class="p">(|</span><span class="n">_</span><span class="p">|</span> <span class="n">nodes</span><span class="nf">.iter</span><span class="p">()</span><span class="nf">.position</span><span class="p">(|</span><span class="o">&amp;</span><span class="n">coord</span><span class="p">|</span> <span class="n">coord</span> <span class="o">==</span> <span class="n">cur</span><span class="p">))</span>
+            <span class="p">{</span>
+                <span class="n">adjacents</span><span class="p">[</span><span class="n">k0</span><span class="p">]</span><span class="nf">.push</span><span class="p">((</span><span class="n">k1</span><span class="p">,</span> <span class="n">steps</span><span class="p">));</span>
+                <span class="k">continue</span><span class="p">;</span>
+            <span class="p">}</span>
+
+            <span class="n">queue</span><span class="nf">.extend</span><span class="p">(</span>
+                <span class="n">grid</span><span class="nf">.adj_iter</span><span class="p">(</span><span class="n">cur</span><span class="p">,</span> <span class="n">ignore_slopes</span><span class="p">)</span>
+                    <span class="nf">.filter</span><span class="p">(|</span><span class="o">&amp;</span><span class="n">adj</span><span class="p">|</span> <span class="nf">Some</span><span class="p">(</span><span class="n">adj</span><span class="p">)</span> <span class="o">!=</span> <span class="n">prev</span><span class="p">)</span>
+                    <span class="nf">.map</span><span class="p">(|</span><span class="n">adj</span><span class="p">|</span> <span class="p">(</span><span class="n">steps</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">adj</span><span class="p">,</span> <span class="nf">Some</span><span class="p">(</span><span class="n">cur</span><span class="p">))),</span>
+            <span class="p">);</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+
+    <span class="c1">// seen information is stored in bits of u64</span>
+    <span class="nd">assert!</span><span class="p">(</span><span class="n">nodes</span><span class="nf">.len</span><span class="p">()</span> <span class="o">&lt;=</span> <span class="mi">64</span><span class="p">);</span>
+
+    <span class="c1">// find maximum</span>
+    <span class="k">let</span> <span class="n">start</span> <span class="o">=</span> <span class="n">nodes</span><span class="nf">.len</span><span class="p">()</span> <span class="o">-</span> <span class="mi">2</span><span class="p">;</span>
+    <span class="k">let</span> <span class="n">target</span> <span class="o">=</span> <span class="n">nodes</span><span class="nf">.len</span><span class="p">()</span> <span class="o">-</span> <span class="mi">1</span><span class="p">;</span>
+    <span class="k">let</span> <span class="k">mut</span> <span class="n">queue</span> <span class="o">=</span> <span class="nn">Vec</span><span class="p">::</span><span class="nf">from</span><span class="p">([(</span><span class="mi">0</span><span class="p">,</span> <span class="n">start</span><span class="p">,</span> <span class="mi">1u64</span> <span class="o">&lt;&lt;</span> <span class="n">start</span><span class="p">)]);</span>
+    <span class="k">let</span> <span class="k">mut</span> <span class="n">max</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+    <span class="k">while</span> <span class="k">let</span> <span class="nf">Some</span><span class="p">((</span><span class="n">cost</span><span class="p">,</span> <span class="n">idx</span><span class="p">,</span> <span class="n">seen</span><span class="p">))</span> <span class="o">=</span> <span class="n">queue</span><span class="nf">.pop</span><span class="p">()</span> <span class="p">{</span>
+        <span class="k">if</span> <span class="n">idx</span> <span class="o">==</span> <span class="n">target</span> <span class="o">&amp;&amp;</span> <span class="n">cost</span> <span class="o">&gt;</span> <span class="n">max</span> <span class="p">{</span>
+            <span class="n">max</span> <span class="o">=</span> <span class="n">cost</span><span class="p">;</span>
+            <span class="k">continue</span><span class="p">;</span>
+        <span class="p">}</span>
+
+        <span class="k">for</span> <span class="o">&amp;</span><span class="p">(</span><span class="n">adj</span><span class="p">,</span> <span class="n">weight</span><span class="p">)</span> <span class="k">in</span> <span class="o">&amp;</span><span class="n">adjacents</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span> <span class="p">{</span>
+            <span class="k">if</span> <span class="n">seen</span> <span class="o">&amp;</span> <span class="p">(</span><span class="mi">1</span> <span class="o">&lt;&lt;</span> <span class="n">adj</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span> <span class="p">{</span>
+                <span class="n">queue</span><span class="nf">.push</span><span class="p">((</span><span class="n">cost</span> <span class="o">+</span> <span class="n">weight</span><span class="p">,</span> <span class="n">adj</span><span class="p">,</span> <span class="n">seen</span> <span class="p">|</span> <span class="mi">1</span> <span class="o">&lt;&lt;</span> <span class="n">adj</span><span class="p">));</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+    <span class="n">max</span>
+<span class="p">}</span>
+
+<span class="k">pub</span> <span class="k">fn</span> <span class="nf">star_1</span><span class="p">(</span><span class="n">grid</span><span class="p">:</span> <span class="o">&amp;</span><span class="n">PuzzleData</span><span class="p">)</span> <span class="k">-&gt;</span> <span class="nb">usize</span> <span class="p">{</span>
+    <span class="nf">star</span><span class="p">(</span><span class="n">grid</span><span class="p">,</span> <span class="k">false</span><span class="p">)</span>
+<span class="p">}</span>
+</pre></td></tr></tbody></table></code></pre>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_star_2_22">Star 2</h3>
+<div class="paragraph">
+<p>Same as first part. Just remove special treatment of slopes. This increases the number of edges in my graph and hence it runs a little longer.</p>
+</div>
+<div class="paragraph">
+<p>Ideas for optimization: find ways to prune states early or take a dynamic programming approach. First attempts on both have not been successful.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight"><code data-lang="rust"><table class="linenotable"><tbody><tr><td class="linenos gl"><pre class="lineno">1
+2
+3
+</pre></td><td class="code"><pre><span class="k">pub</span> <span class="k">fn</span> <span class="nf">star_2</span><span class="p">(</span><span class="n">grid</span><span class="p">:</span> <span class="o">&amp;</span><span class="n">PuzzleData</span><span class="p">)</span> <span class="k">-&gt;</span> <span class="nb">usize</span> <span class="p">{</span>
+    <span class="nf">star</span><span class="p">(</span><span class="n">grid</span><span class="p">,</span> <span class="k">true</span><span class="p">)</span>
+<span class="p">}</span>
+</pre></td></tr></tbody></table></code></pre>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_tests_22">Tests</h3>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight"><code data-lang="rust"><table class="linenotable"><tbody><tr><td class="linenos gl"><pre class="lineno"> 1
+ 2
+ 3
+ 4
+ 5
+ 6
+ 7
+ 8
+ 9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+26
+27
+28
+29
+30
+31
+32
+33
+34
+35
+36
+37
+38
+39
+40
+41
+42
+43
+44
+45
+46
+47
+48
+49
+50
+51
+52
+</pre></td><td class="code"><pre><span class="nd">#[cfg(test)]</span>
+<span class="k">mod</span> <span class="n">tests</span> <span class="p">{</span>
+    <span class="k">use</span> <span class="k">super</span><span class="p">::</span><span class="o">*</span><span class="p">;</span>
+
+    <span class="k">const</span> <span class="n">CONTENT</span><span class="p">:</span> <span class="o">&amp;</span><span class="nb">str</span> <span class="o">=</span> <span class="s">r#"#.#####################
+#.......#########...###
+#######.#########.#.###
+###.....#.&gt;.&gt;.###.#.###
+###v#####.#v#.###.#.###
+###.&gt;...#.#.#.....#...#
+###v###.#.#.#########.#
+###...#.#.#.......#...#
+#####.#.#.#######.#.###
+#.....#.#.#.......#...#
+#.#####.#.#.#########v#
+#.#...#...#...###...&gt;.#
+#.#.#v#######v###.###v#
+#...#.&gt;.#...&gt;.&gt;.#.###.#
+#####v#.#.###v#.#.###.#
+#.....#...#...#.#.#...#
+#.#########.###.#.#.###
+#...###...#...#...#.###
+###.###.#.###v#####v###
+#...#...#.#.&gt;.&gt;.#.&gt;.###
+#.###.###.#.###.#.#v###
+#.....###...###...#...#
+#####################.#
+"#</span><span class="p">;</span>
+
+    <span class="nd">#[test]</span>
+    <span class="k">pub</span> <span class="k">fn</span> <span class="nf">test_from</span><span class="p">()</span> <span class="p">{</span>
+        <span class="k">let</span> <span class="n">data</span> <span class="o">=</span> <span class="nn">PuzzleData</span><span class="p">::</span><span class="nf">from</span><span class="p">(</span><span class="n">CONTENT</span><span class="p">);</span>
+        <span class="nd">println!</span><span class="p">(</span><span class="s">"{data:?}"</span><span class="p">);</span>
+    <span class="p">}</span>
+
+    <span class="nd">#[test]</span>
+    <span class="k">pub</span> <span class="k">fn</span> <span class="nf">test_is_interesting</span><span class="p">()</span> <span class="p">{</span>
+        <span class="k">let</span> <span class="n">data</span> <span class="o">=</span> <span class="nn">PuzzleData</span><span class="p">::</span><span class="nf">from</span><span class="p">(</span><span class="n">CONTENT</span><span class="p">);</span>
+        <span class="nd">assert_eq!</span><span class="p">(</span><span class="kc">true</span><span class="p">,</span> <span class="n">data</span><span class="nf">.is_branch_point</span><span class="p">((</span><span class="mi">11</span><span class="p">,</span> <span class="mi">3</span><span class="p">)));</span>
+        <span class="nd">assert_eq!</span><span class="p">(</span><span class="kc">false</span><span class="p">,</span> <span class="n">data</span><span class="nf">.is_branch_point</span><span class="p">((</span><span class="mi">4</span><span class="p">,</span> <span class="mi">1</span><span class="p">)));</span>
+    <span class="p">}</span>
+
+    <span class="nd">#[test]</span>
+    <span class="k">pub</span> <span class="k">fn</span> <span class="nf">test_star_1</span><span class="p">()</span> <span class="p">{</span>
+        <span class="nd">assert_eq!</span><span class="p">(</span><span class="mi">94</span><span class="p">,</span> <span class="nf">star_1</span><span class="p">(</span><span class="o">&amp;</span><span class="n">CONTENT</span><span class="nf">.into</span><span class="p">()));</span>
+    <span class="p">}</span>
+
+    <span class="nd">#[test]</span>
+    <span class="k">pub</span> <span class="k">fn</span> <span class="nf">test_star_2</span><span class="p">()</span> <span class="p">{</span>
+        <span class="nd">assert_eq!</span><span class="p">(</span><span class="mi">154</span><span class="p">,</span> <span class="nf">star_2</span><span class="p">(</span><span class="o">&amp;</span><span class="n">CONTENT</span><span class="nf">.into</span><span class="p">()));</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</pre></td></tr></tbody></table></code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p><a href="#top">Top</a></p>
+</div>
+</div>
+</div>
+</div>
 </div>
 <div id="footer">
     <div id="footer-text">
-        Generated from <a href="https://github.com/mr-kaffee/aoc-2023/">github.com/mr-kaffee/aoc-2023/</a> on 2023-12-22 13:29:08 UTC
+        Generated from <a href="https://github.com/mr-kaffee/aoc-2023/">github.com/mr-kaffee/aoc-2023/</a> on 2023-12-23 07:35:30 UTC
         with <a href="https://asciidoctor.org">asciidoctor</a>.
     </div>
 </div>
