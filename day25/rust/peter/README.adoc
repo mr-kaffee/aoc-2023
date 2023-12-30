@@ -1,0 +1,36 @@
+== Rust | Day 25: Snowverload
+
+https://rust-lang.org[Rust] solution to https://adventofcode.com/2023/day/25[AoC|2023|25].
+
+=== Input
+
+Process the input into a `Vec` of `Vec` of adjacents (identified by index).
+
+[source,rust,numbered]
+----
+include::src/lib.rs[tags=input]
+----
+
+=== Star 1
+
+My first attempt was to implement the https://en.wikipedia.org/wiki/Stoer%E2%80%93Wagner_algorithm[Stoer-Wagner algorithm] to find a minimum cut of the graph. It worked but only spew out a solution after 10 minutes! But the solution was quite generic. It did not need any knowledge on how many edges need to be removed, it just found the smallest number of edges so that their removal splits the graph in two parts.
+
+My new solution uses the knowledge about the minimum number of edges to be removed.
+
+We start by choosing an arbitrary start node (node at index `0`).
+
+Then we search a target node for which we can find exactly three disjoint paths from the start node. This target node and the start node will end up in distinct parts of the graph once split in two. 
+
+Each of the three disjoint paths between start and target will contain exactly one of the links whose removal will disconnect the graph. So we iterate over all combinations and find the one whose removal which makes the target unreachable from the start.
+
+[source,rust,numbered]
+----
+include::src/lib.rs[tags=star_1]
+----
+
+=== Tests
+
+[source,rust,numbered]
+----
+include::src/lib.rs[tags=tests]
+----
