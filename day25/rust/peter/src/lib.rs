@@ -11,6 +11,8 @@ pub fn read_input() -> String {
 }
 // end::prelude[]
 
+pub mod min_cut;
+
 // tag::input[]
 mod input {
     use std::collections::HashMap;
@@ -25,7 +27,7 @@ mod input {
                 let mut parts = line
                     .split::<&[char]>(&[' ', ':'])
                     .map(str::trim)
-                    .filter(|v| v.len() > 0)
+                    .filter(|v| !v.is_empty())
                     .map(|key| {
                         let idx = indices.len();
                         *indices.entry(key).or_insert(idx)
