@@ -67,30 +67,35 @@ where
     L: Copy + Eq + Hash,
 {
     fn min_cut_phase(&self) -> (W, usize, usize) {
-        let mut founds = Vec::from([0]);
-        let mut cut_weight = W::default();
-        let mut candidates = (1..self.len()).collect::<Vec<_>>();
-        for _ in 0..self.len() - 1 {
-            let (max_next_idx, max_weight) = candidates
-                .iter()
-                .map(|&next| {
-                    founds.iter().fold(W::default(), |weight_sum, &current| {
-                        weight_sum + self.weight(next, current)
-                    })
-                })
-                .enumerate()
-                .max_by(|(_, lhs), (_, rhs)| lhs.cmp(rhs))
-                .unwrap();
+        // nodes[0..found] are in A, nodes[found..] are not yet in A
+        let mut nodes = (0..self.len())
+            .map(|idx| (idx, self.weight(0, idx)))
+            .collect::<Vec<_>>();
+        let (mut next_k_rel, _) = nodes[1..]
+            .iter()
+            .enumerate()
+            .max_by_key(|(_, (_, w))| w)
+            .unwrap();
+        for found in 1..self.len() {
+            nodes.swap(found, found + next_k_rel);
+            let (cur_idx, _) = nodes[found];
 
-            founds.push(candidates.swap_remove(max_next_idx));
-            cut_weight = max_weight;
+            // update weights and get next max
+            (next_k_rel, _) = nodes[found + 1..].iter_mut().enumerate().fold(
+                (0, None),
+                |(k_max, max_w), (k, (idx, w))| {
+                    *w += self.weight(cur_idx, *idx);
+                    match Some(w) {
+                        w if w > max_w => (k, w),
+                        _ => (k_max, max_w),
+                    }
+                },
+            );
         }
 
-        (
-            cut_weight,
-            founds[founds.len() - 2],
-            founds[founds.len() - 1],
-        )
+        let (t, w) = nodes.pop().unwrap();
+        let (s, _) = nodes.pop().unwrap();
+        (w, s, t)
     }
 
     fn min_cut(mut self) -> Option<(W, Vec<L>)> {
@@ -100,24 +105,19 @@ where
             .map(|&l| (l, vec![l]))
             .collect::<HashMap<_, _>>();
         let mut best = None;
-        let n = self.len();
-        for _ in 0..n - 1 {
-            let (weight, s, t) = self.min_cut_phase();
-            let t_labels = merged.remove(self.label(t)).unwrap();
+        for _ in 0..self.len() - 1 {
+            let (w, s_idx, t_idx) = self.min_cut_phase();
+            let t_labels = merged.remove(self.label(t_idx)).unwrap();
 
-            if best
-                .as_ref()
-                .map(|(min_weight, _)| &weight < min_weight)
-                .unwrap_or(true)
-            {
-                best = Some((weight, t_labels.clone()));
+            if best.as_ref().map(|(min_w, _)| &w < min_w).unwrap_or(true) {
+                best = Some((w, t_labels.clone()));
             }
 
             merged
-                .get_mut(self.label(s))
+                .get_mut(self.label(s_idx))
                 .unwrap()
                 .extend(t_labels.into_iter());
-            self.merge(s, t);
+            self.merge(s_idx, t_idx);
         }
 
         best
@@ -542,5 +542,32 @@ frs: qnr lhk lsr
         ]);
         do_test_min_cut(AdjacencyMatrix::from(adj_iter(CONTENT)), 3, &exp_pq);
         do_test_min_cut(AdjacencyList::from(adj_iter(CONTENT)), 3, &exp_pq);
+    }
+}
+
+#[cfg(test)]
+mod puzzle {
+    use super::tests::adj_iter;
+    use super::*;
+    use crate::read_input;
+    use std::time::Instant;
+
+    #[test]
+    pub fn test_puzzle() {
+        let start = Instant::now();
+        let data = read_input();
+        let g = adjacency_matrix::AdjacencyMatrix::from(adj_iter(&data));
+        let n = g.len();
+        let (w, p) = g.min_cut().unwrap();
+        assert_eq!(3, w);
+        let m1 = p.len();
+        let m2 = n - m1;
+        println!(
+            "Solution: {} * {} = {} in {:?}",
+            m1,
+            m2,
+            m1 * m2,
+            start.elapsed()
+        );
     }
 }
