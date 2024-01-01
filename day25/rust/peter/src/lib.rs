@@ -25,7 +25,7 @@ mod input {
                 let mut parts = line
                     .split::<&[char]>(&[' ', ':'])
                     .map(str::trim)
-                    .filter(|v| v.len() > 0)
+                    .filter(|v| !v.is_empty())
                     .map(|key| {
                         let idx = indices.len();
                         *indices.entry(key).or_insert(idx)
@@ -44,7 +44,30 @@ mod input {
 }
 // end::input[]
 
+#[cfg(feature = "min-cut")]
+pub mod min_cut;
+
+#[cfg(feature = "min-cut")]
+pub fn star_1(PuzzleData(adjacents): &PuzzleData) -> usize {
+    use min_cut::MinCut;
+
+    let n = adjacents.len();
+    let labels = (0..n as u16).collect();
+    let adjacents = adjacents
+        .iter()
+        .map(|adjacents| adjacents.iter().map(|&idx| (idx, 1u16)).collect())
+        .collect();
+
+    let g = min_cut::adjacency_list::AdjacencyList { adjacents, labels };
+    let (w, p) = g.min_cut_with_bound(|(w, _)| w <= &3).unwrap();
+    assert_eq!(3, w);
+
+    let l1 = p.len();
+    l1 * (n - l1)
+}
+
 // tag::star_1[]
+#[cfg(not(feature = "min-cut"))]
 mod direct_solution {
     use std::collections::{HashMap, HashSet, VecDeque};
 
@@ -110,6 +133,7 @@ mod direct_solution {
     }
 }
 
+#[cfg(not(feature = "min-cut"))]
 pub fn star_1(PuzzleData(adjacents): &PuzzleData) -> usize {
     // get a size of partitions connected by three paths
     let (p1, p2) = direct_solution::get_partitions_connected_by_three_paths(adjacents, 0);
