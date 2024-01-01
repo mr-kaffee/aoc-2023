@@ -10436,15 +10436,15 @@ hdj{m&gt;838:A,pv}
 
     <span class="k">pub</span> <span class="k">struct</span> <span class="nf">PuzzleData</span><span class="p">(</span><span class="k">pub</span> <span class="nb">Vec</span><span class="o">&lt;</span><span class="nb">Vec</span><span class="o">&lt;</span><span class="nb">usize</span><span class="o">&gt;&gt;</span><span class="p">);</span>
 
-    <span class="k">impl</span><span class="o">&lt;</span><span class="n">T</span><span class="p">:</span> <span class="nb">AsRef</span><span class="o">&lt;</span><span class="nb">str</span><span class="o">&gt;</span> <span class="o">+</span> <span class="o">?</span><span class="nb">Sized</span><span class="o">&gt;</span> <span class="nb">From</span><span class="o">&lt;&amp;</span><span class="n">T</span><span class="o">&gt;</span> <span class="k">for</span> <span class="n">PuzzleData</span> <span class="p">{</span>
-        <span class="k">fn</span> <span class="nf">from</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="o">&amp;</span><span class="n">T</span><span class="p">)</span> <span class="k">-&gt;</span> <span class="k">Self</span> <span class="p">{</span>
+    <span class="k">impl</span><span class="o">&lt;</span><span class="n">T</span><span class="p">:</span> <span class="nb">AsRef</span><span class="o">&lt;</span><span class="nb">str</span><span class="o">&gt;&gt;</span> <span class="nb">From</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span> <span class="k">for</span> <span class="n">PuzzleData</span> <span class="p">{</span>
+        <span class="k">fn</span> <span class="nf">from</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="n">T</span><span class="p">)</span> <span class="k">-&gt;</span> <span class="k">Self</span> <span class="p">{</span>
             <span class="k">let</span> <span class="k">mut</span> <span class="n">adjacents</span> <span class="o">=</span> <span class="nn">Vec</span><span class="p">::</span><span class="o">&lt;</span><span class="nb">Vec</span><span class="o">&lt;</span><span class="nb">usize</span><span class="o">&gt;&gt;</span><span class="p">::</span><span class="nf">new</span><span class="p">();</span>
             <span class="k">let</span> <span class="k">mut</span> <span class="n">indices</span> <span class="o">=</span> <span class="nn">HashMap</span><span class="p">::</span><span class="nf">new</span><span class="p">();</span>
             <span class="k">for</span> <span class="n">line</span> <span class="k">in</span> <span class="n">value</span><span class="nf">.as_ref</span><span class="p">()</span><span class="nf">.lines</span><span class="p">()</span> <span class="p">{</span>
                 <span class="k">let</span> <span class="k">mut</span> <span class="n">parts</span> <span class="o">=</span> <span class="n">line</span>
                     <span class="py">.split</span><span class="p">::</span><span class="o">&lt;&amp;</span><span class="p">[</span><span class="nb">char</span><span class="p">]</span><span class="o">&gt;</span><span class="p">(</span><span class="o">&amp;</span><span class="p">[</span><span class="sc">' '</span><span class="p">,</span> <span class="sc">':'</span><span class="p">])</span>
                     <span class="nf">.map</span><span class="p">(</span><span class="nn">str</span><span class="p">::</span><span class="n">trim</span><span class="p">)</span>
-                    <span class="nf">.filter</span><span class="p">(|</span><span class="n">v</span><span class="p">|</span> <span class="n">v</span><span class="nf">.len</span><span class="p">()</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span>
+                    <span class="nf">.filter</span><span class="p">(|</span><span class="n">v</span><span class="p">|</span> <span class="o">!</span><span class="n">v</span><span class="nf">.is_empty</span><span class="p">())</span>
                     <span class="nf">.map</span><span class="p">(|</span><span class="n">key</span><span class="p">|</span> <span class="p">{</span>
                         <span class="k">let</span> <span class="n">idx</span> <span class="o">=</span> <span class="n">indices</span><span class="nf">.len</span><span class="p">();</span>
                         <span class="o">*</span><span class="n">indices</span><span class="nf">.entry</span><span class="p">(</span><span class="n">key</span><span class="p">)</span><span class="nf">.or_insert</span><span class="p">(</span><span class="n">idx</span><span class="p">)</span>
@@ -10480,213 +10480,153 @@ hdj{m&gt;838:A,pv}
 <p>Then we search a target node for which we can find exactly three disjoint paths from the start node. This target node and the start node will end up in distinct parts of the graph once split in two.</p>
 </div>
 <div class="paragraph">
-<p>Each of the three disjoint paths between start and target will contain exactly one of the links whose removal will disconnect the graph. So we iterate over all combinations and find the one whose removal makes the target unreachable from the start.</p>
+<p>If those paths are removed from the graph, only the nodes in one partition remain reachable.</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="rouge highlight"><code data-lang="rust"><table class="linenotable"><tbody><tr><td class="linenos gl"><pre class="lineno">  1
-  2
-  3
-  4
-  5
-  6
-  7
-  8
-  9
- 10
- 11
- 12
- 13
- 14
- 15
- 16
- 17
- 18
- 19
- 20
- 21
- 22
- 23
- 24
- 25
- 26
- 27
- 28
- 29
- 30
- 31
- 32
- 33
- 34
- 35
- 36
- 37
- 38
- 39
- 40
- 41
- 42
- 43
- 44
- 45
- 46
- 47
- 48
- 49
- 50
- 51
- 52
- 53
- 54
- 55
- 56
- 57
- 58
- 59
- 60
- 61
- 62
- 63
- 64
- 65
- 66
- 67
- 68
- 69
- 70
- 71
- 72
- 73
- 74
- 75
- 76
- 77
- 78
- 79
- 80
- 81
- 82
- 83
- 84
- 85
- 86
- 87
- 88
- 89
- 90
- 91
- 92
- 93
- 94
- 95
- 96
- 97
- 98
- 99
-100
-101
-102
-</pre></td><td class="code"><pre><span class="k">pub</span> <span class="k">fn</span> <span class="nf">get_shortest_path</span><span class="p">(</span>
-    <span class="n">adjacents</span><span class="p">:</span> <span class="o">&amp;</span><span class="p">[</span><span class="nb">Vec</span><span class="o">&lt;</span><span class="nb">usize</span><span class="o">&gt;</span><span class="p">],</span>
-    <span class="n">forbidden</span><span class="p">:</span> <span class="o">&amp;</span><span class="p">[</span><span class="nb">Vec</span><span class="o">&lt;</span><span class="p">(</span><span class="nb">usize</span><span class="p">,</span> <span class="nb">usize</span><span class="p">)</span><span class="o">&gt;</span><span class="p">],</span>
-    <span class="n">start</span><span class="p">:</span> <span class="nb">usize</span><span class="p">,</span>
-    <span class="n">target</span><span class="p">:</span> <span class="nb">usize</span><span class="p">,</span>
-<span class="p">)</span> <span class="k">-&gt;</span> <span class="nb">Option</span><span class="o">&lt;</span><span class="n">HashMap</span><span class="o">&lt;</span><span class="nb">usize</span><span class="p">,</span> <span class="nb">usize</span><span class="o">&gt;&gt;</span> <span class="p">{</span>
-    <span class="k">let</span> <span class="k">mut</span> <span class="n">seen</span> <span class="o">=</span> <span class="nn">HashSet</span><span class="p">::</span><span class="nf">from</span><span class="p">([</span><span class="n">start</span><span class="p">]);</span>
-    <span class="k">let</span> <span class="k">mut</span> <span class="n">queue</span> <span class="o">=</span> <span class="nn">VecDeque</span><span class="p">::</span><span class="nf">from</span><span class="p">([</span><span class="n">start</span><span class="p">]);</span>
-    <span class="k">let</span> <span class="k">mut</span> <span class="n">parents</span> <span class="o">=</span> <span class="nn">HashMap</span><span class="p">::</span><span class="nf">new</span><span class="p">();</span>
-    <span class="k">while</span> <span class="k">let</span> <span class="nf">Some</span><span class="p">(</span><span class="n">idx</span><span class="p">)</span> <span class="o">=</span> <span class="n">queue</span><span class="nf">.pop_front</span><span class="p">()</span> <span class="p">{</span>
-        <span class="k">if</span> <span class="n">idx</span> <span class="o">==</span> <span class="n">target</span> <span class="p">{</span>
-            <span class="k">return</span> <span class="nf">Some</span><span class="p">(</span><span class="n">parents</span><span class="p">);</span>
-        <span class="p">}</span>
+<pre class="rouge highlight"><code data-lang="rust"><table class="linenotable"><tbody><tr><td class="linenos gl"><pre class="lineno"> 1
+ 2
+ 3
+ 4
+ 5
+ 6
+ 7
+ 8
+ 9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+26
+27
+28
+29
+30
+31
+32
+33
+34
+35
+36
+37
+38
+39
+40
+41
+42
+43
+44
+45
+46
+47
+48
+49
+50
+51
+52
+53
+54
+55
+56
+57
+58
+59
+60
+61
+62
+63
+64
+65
+66
+67
+68
+69
+70
+71
+72
+</pre></td><td class="code"><pre><span class="nd">#[cfg(not(feature</span> <span class="nd">=</span> <span class="s">"min-cut"</span><span class="nd">))]</span>
+<span class="k">mod</span> <span class="n">direct_solution</span> <span class="p">{</span>
+    <span class="k">use</span> <span class="nn">std</span><span class="p">::</span><span class="nn">collections</span><span class="p">::{</span><span class="n">HashMap</span><span class="p">,</span> <span class="n">HashSet</span><span class="p">,</span> <span class="n">VecDeque</span><span class="p">};</span>
 
-        <span class="k">for</span> <span class="o">&amp;</span><span class="n">adj</span> <span class="k">in</span> <span class="n">adjacents</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span><span class="nf">.iter</span><span class="p">()</span><span class="nf">.filter</span><span class="p">(|</span><span class="o">&amp;&amp;</span><span class="n">adj</span><span class="p">|</span> <span class="p">{</span>
-            <span class="o">!</span><span class="n">forbidden</span>
-                <span class="nf">.iter</span><span class="p">()</span>
-                <span class="nf">.any</span><span class="p">(|</span><span class="n">forbidden</span><span class="p">|</span> <span class="n">forbidden</span><span class="nf">.contains</span><span class="p">(</span><span class="o">&amp;</span><span class="p">(</span><span class="n">adj</span><span class="nf">.min</span><span class="p">(</span><span class="n">idx</span><span class="p">),</span> <span class="n">adj</span><span class="nf">.max</span><span class="p">(</span><span class="n">idx</span><span class="p">))))</span>
-        <span class="p">})</span> <span class="p">{</span>
-            <span class="k">if</span> <span class="n">seen</span><span class="nf">.insert</span><span class="p">(</span><span class="n">adj</span><span class="p">)</span> <span class="p">{</span>
-                <span class="n">queue</span><span class="nf">.push_back</span><span class="p">(</span><span class="n">adj</span><span class="p">);</span>
-                <span class="n">parents</span><span class="nf">.insert</span><span class="p">(</span><span class="n">adj</span><span class="p">,</span> <span class="n">idx</span><span class="p">);</span>
+    <span class="k">pub</span> <span class="k">fn</span> <span class="nf">get_shortest_path</span><span class="p">(</span>
+        <span class="n">adjacents</span><span class="p">:</span> <span class="o">&amp;</span><span class="p">[</span><span class="nb">Vec</span><span class="o">&lt;</span><span class="nb">usize</span><span class="o">&gt;</span><span class="p">],</span>
+        <span class="n">forbidden</span><span class="p">:</span> <span class="o">&amp;</span><span class="p">[</span><span class="nb">Vec</span><span class="o">&lt;</span><span class="p">(</span><span class="nb">usize</span><span class="p">,</span> <span class="nb">usize</span><span class="p">)</span><span class="o">&gt;</span><span class="p">],</span>
+        <span class="n">start</span><span class="p">:</span> <span class="nb">usize</span><span class="p">,</span>
+        <span class="n">target</span><span class="p">:</span> <span class="nb">usize</span><span class="p">,</span>
+    <span class="p">)</span> <span class="k">-&gt;</span> <span class="p">(</span><span class="nb">Option</span><span class="o">&lt;</span><span class="n">HashMap</span><span class="o">&lt;</span><span class="nb">usize</span><span class="p">,</span> <span class="nb">usize</span><span class="o">&gt;&gt;</span><span class="p">,</span> <span class="nb">usize</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">let</span> <span class="k">mut</span> <span class="n">seen</span> <span class="o">=</span> <span class="nn">HashSet</span><span class="p">::</span><span class="nf">from</span><span class="p">([</span><span class="n">start</span><span class="p">]);</span>
+        <span class="k">let</span> <span class="k">mut</span> <span class="n">queue</span> <span class="o">=</span> <span class="nn">VecDeque</span><span class="p">::</span><span class="nf">from</span><span class="p">([</span><span class="n">start</span><span class="p">]);</span>
+        <span class="k">let</span> <span class="k">mut</span> <span class="n">parents</span> <span class="o">=</span> <span class="nn">HashMap</span><span class="p">::</span><span class="nf">new</span><span class="p">();</span>
+        <span class="k">let</span> <span class="k">mut</span> <span class="n">reached</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+        <span class="k">while</span> <span class="k">let</span> <span class="nf">Some</span><span class="p">(</span><span class="n">idx</span><span class="p">)</span> <span class="o">=</span> <span class="n">queue</span><span class="nf">.pop_front</span><span class="p">()</span> <span class="p">{</span>
+            <span class="n">reached</span> <span class="o">+=</span> <span class="mi">1</span><span class="p">;</span>
+            <span class="k">if</span> <span class="n">idx</span> <span class="o">==</span> <span class="n">target</span> <span class="p">{</span>
+                <span class="k">return</span> <span class="p">(</span><span class="nf">Some</span><span class="p">(</span><span class="n">parents</span><span class="p">),</span> <span class="n">reached</span><span class="p">);</span>
             <span class="p">}</span>
-        <span class="p">}</span>
-    <span class="p">}</span>
 
-    <span class="nb">None</span>
-<span class="p">}</span>
-
-<span class="k">pub</span> <span class="k">fn</span> <span class="nf">get_target_with_three_paths</span><span class="p">(</span>
-    <span class="n">adjacents</span><span class="p">:</span> <span class="o">&amp;</span><span class="p">[</span><span class="nb">Vec</span><span class="o">&lt;</span><span class="nb">usize</span><span class="o">&gt;</span><span class="p">],</span>
-    <span class="n">start</span><span class="p">:</span> <span class="nb">usize</span><span class="p">,</span>
-<span class="p">)</span> <span class="k">-&gt;</span> <span class="p">(</span><span class="nb">usize</span><span class="p">,</span> <span class="p">[</span><span class="nb">Vec</span><span class="o">&lt;</span><span class="p">(</span><span class="nb">usize</span><span class="p">,</span> <span class="nb">usize</span><span class="p">)</span><span class="o">&gt;</span><span class="p">;</span> <span class="mi">3</span><span class="p">])</span> <span class="p">{</span>
-    <span class="k">let</span> <span class="k">mut</span> <span class="n">paths</span> <span class="o">=</span> <span class="p">[</span><span class="nn">Vec</span><span class="p">::</span><span class="nf">new</span><span class="p">(),</span> <span class="nn">Vec</span><span class="p">::</span><span class="nf">new</span><span class="p">(),</span> <span class="nn">Vec</span><span class="p">::</span><span class="nf">new</span><span class="p">()];</span>
-    <span class="k">for</span> <span class="n">target</span> <span class="k">in</span> <span class="mi">1</span><span class="o">..</span><span class="n">adjacents</span><span class="nf">.len</span><span class="p">()</span> <span class="o">-</span> <span class="mi">1</span> <span class="p">{</span>
-        <span class="c1">// find three disjoint paths</span>
-        <span class="k">for</span> <span class="n">k</span> <span class="k">in</span> <span class="mi">0</span><span class="o">..</span><span class="mi">3</span> <span class="p">{</span>
-            <span class="k">let</span> <span class="nf">Some</span><span class="p">(</span><span class="n">parents</span><span class="p">)</span> <span class="o">=</span> <span class="nf">get_shortest_path</span><span class="p">(</span><span class="n">adjacents</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">paths</span><span class="p">[</span><span class="mi">0</span><span class="o">..</span><span class="n">k</span><span class="p">],</span> <span class="n">start</span><span class="p">,</span> <span class="n">target</span><span class="p">)</span> <span class="k">else</span> <span class="p">{</span>
-                <span class="nd">panic!</span><span class="p">(</span><span class="s">"Less than three paths from {} to {}!"</span><span class="p">,</span> <span class="n">start</span><span class="p">,</span> <span class="n">target</span><span class="p">);</span>
-            <span class="p">};</span>
-            <span class="n">paths</span><span class="p">[</span><span class="n">k</span><span class="p">]</span><span class="nf">.clear</span><span class="p">();</span>
-            <span class="k">let</span> <span class="k">mut</span> <span class="n">cur</span> <span class="o">=</span> <span class="n">target</span><span class="p">;</span>
-            <span class="k">while</span> <span class="k">let</span> <span class="nf">Some</span><span class="p">(</span><span class="o">&amp;</span><span class="n">parent</span><span class="p">)</span> <span class="o">=</span> <span class="n">parents</span><span class="nf">.get</span><span class="p">(</span><span class="o">&amp;</span><span class="n">cur</span><span class="p">)</span> <span class="p">{</span>
-                <span class="k">let</span> <span class="n">link</span> <span class="o">=</span> <span class="p">(</span><span class="n">cur</span><span class="nf">.min</span><span class="p">(</span><span class="n">parent</span><span class="p">),</span> <span class="n">cur</span><span class="nf">.max</span><span class="p">(</span><span class="n">parent</span><span class="p">));</span>
-                <span class="n">paths</span><span class="p">[</span><span class="n">k</span><span class="p">]</span><span class="nf">.push</span><span class="p">(</span><span class="n">link</span><span class="p">);</span>
-                <span class="n">cur</span> <span class="o">=</span> <span class="n">parent</span><span class="p">;</span>
+            <span class="k">for</span> <span class="o">&amp;</span><span class="n">adj</span> <span class="k">in</span> <span class="n">adjacents</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span><span class="nf">.iter</span><span class="p">()</span><span class="nf">.filter</span><span class="p">(|</span><span class="o">&amp;&amp;</span><span class="n">adj</span><span class="p">|</span> <span class="p">{</span>
+                <span class="o">!</span><span class="n">forbidden</span>
+                    <span class="nf">.iter</span><span class="p">()</span>
+                    <span class="nf">.any</span><span class="p">(|</span><span class="n">forbidden</span><span class="p">|</span> <span class="n">forbidden</span><span class="nf">.contains</span><span class="p">(</span><span class="o">&amp;</span><span class="p">(</span><span class="n">adj</span><span class="nf">.min</span><span class="p">(</span><span class="n">idx</span><span class="p">),</span> <span class="n">adj</span><span class="nf">.max</span><span class="p">(</span><span class="n">idx</span><span class="p">))))</span>
+            <span class="p">})</span> <span class="p">{</span>
+                <span class="k">if</span> <span class="n">seen</span><span class="nf">.insert</span><span class="p">(</span><span class="n">adj</span><span class="p">)</span> <span class="p">{</span>
+                    <span class="n">queue</span><span class="nf">.push_back</span><span class="p">(</span><span class="n">adj</span><span class="p">);</span>
+                    <span class="n">parents</span><span class="nf">.insert</span><span class="p">(</span><span class="n">adj</span><span class="p">,</span> <span class="n">idx</span><span class="p">);</span>
+                <span class="p">}</span>
             <span class="p">}</span>
         <span class="p">}</span>
 
-        <span class="c1">// check that there is no fourth path</span>
-        <span class="k">if</span> <span class="nf">get_shortest_path</span><span class="p">(</span><span class="n">adjacents</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">paths</span><span class="p">,</span> <span class="n">start</span><span class="p">,</span> <span class="n">target</span><span class="p">)</span><span class="nf">.is_none</span><span class="p">()</span> <span class="p">{</span>
-            <span class="k">return</span> <span class="p">(</span><span class="n">target</span><span class="p">,</span> <span class="n">paths</span><span class="p">);</span>
-        <span class="p">}</span>
+        <span class="p">(</span><span class="nb">None</span><span class="p">,</span> <span class="n">reached</span><span class="p">)</span>
     <span class="p">}</span>
 
-    <span class="nd">panic!</span><span class="p">(</span><span class="s">"No solution"</span><span class="p">);</span>
-<span class="p">}</span>
+    <span class="k">pub</span> <span class="k">fn</span> <span class="nf">get_partitions_connected_by_three_paths</span><span class="p">(</span>
+        <span class="n">adjacents</span><span class="p">:</span> <span class="o">&amp;</span><span class="p">[</span><span class="nb">Vec</span><span class="o">&lt;</span><span class="nb">usize</span><span class="o">&gt;</span><span class="p">],</span>
+        <span class="n">start</span><span class="p">:</span> <span class="nb">usize</span><span class="p">,</span>
+    <span class="p">)</span> <span class="k">-&gt;</span> <span class="p">(</span><span class="nb">usize</span><span class="p">,</span> <span class="nb">usize</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">let</span> <span class="k">mut</span> <span class="n">paths</span> <span class="o">=</span> <span class="p">[</span><span class="nn">Vec</span><span class="p">::</span><span class="nf">new</span><span class="p">(),</span> <span class="nn">Vec</span><span class="p">::</span><span class="nf">new</span><span class="p">(),</span> <span class="nn">Vec</span><span class="p">::</span><span class="nf">new</span><span class="p">()];</span>
+        <span class="k">for</span> <span class="n">target</span> <span class="k">in</span> <span class="mi">1</span><span class="o">..</span><span class="n">adjacents</span><span class="nf">.len</span><span class="p">()</span> <span class="o">-</span> <span class="mi">1</span> <span class="p">{</span>
+            <span class="c1">// find three disjoint paths</span>
+            <span class="k">for</span> <span class="n">k</span> <span class="k">in</span> <span class="mi">0</span><span class="o">..</span><span class="mi">3</span> <span class="p">{</span>
+                <span class="k">let</span> <span class="p">(</span><span class="nf">Some</span><span class="p">(</span><span class="n">parents</span><span class="p">),</span> <span class="n">_</span><span class="p">)</span> <span class="o">=</span> <span class="nf">get_shortest_path</span><span class="p">(</span><span class="n">adjacents</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">paths</span><span class="p">[</span><span class="mi">0</span><span class="o">..</span><span class="n">k</span><span class="p">],</span> <span class="n">start</span><span class="p">,</span> <span class="n">target</span><span class="p">)</span>
+                <span class="k">else</span> <span class="p">{</span>
+                    <span class="nd">panic!</span><span class="p">(</span><span class="s">"Less than three paths from {} to {}!"</span><span class="p">,</span> <span class="n">start</span><span class="p">,</span> <span class="n">target</span><span class="p">);</span>
+                <span class="p">};</span>
+                <span class="n">paths</span><span class="p">[</span><span class="n">k</span><span class="p">]</span><span class="nf">.clear</span><span class="p">();</span>
+                <span class="k">let</span> <span class="k">mut</span> <span class="n">cur</span> <span class="o">=</span> <span class="n">target</span><span class="p">;</span>
+                <span class="k">while</span> <span class="k">let</span> <span class="nf">Some</span><span class="p">(</span><span class="o">&amp;</span><span class="n">parent</span><span class="p">)</span> <span class="o">=</span> <span class="n">parents</span><span class="nf">.get</span><span class="p">(</span><span class="o">&amp;</span><span class="n">cur</span><span class="p">)</span> <span class="p">{</span>
+                    <span class="k">let</span> <span class="n">link</span> <span class="o">=</span> <span class="p">(</span><span class="n">cur</span><span class="nf">.min</span><span class="p">(</span><span class="n">parent</span><span class="p">),</span> <span class="n">cur</span><span class="nf">.max</span><span class="p">(</span><span class="n">parent</span><span class="p">));</span>
+                    <span class="n">paths</span><span class="p">[</span><span class="n">k</span><span class="p">]</span><span class="nf">.push</span><span class="p">(</span><span class="n">link</span><span class="p">);</span>
+                    <span class="n">cur</span> <span class="o">=</span> <span class="n">parent</span><span class="p">;</span>
+                <span class="p">}</span>
+            <span class="p">}</span>
 
-<span class="k">pub</span> <span class="k">fn</span> <span class="nf">count_reachable_without_target</span><span class="p">(</span>
-    <span class="n">adjacents</span><span class="p">:</span> <span class="o">&amp;</span><span class="p">[</span><span class="nb">Vec</span><span class="o">&lt;</span><span class="nb">usize</span><span class="o">&gt;</span><span class="p">],</span>
-    <span class="n">forbidden</span><span class="p">:</span> <span class="o">&amp;</span><span class="p">[(</span><span class="nb">usize</span><span class="p">,</span> <span class="nb">usize</span><span class="p">)],</span>
-    <span class="n">start</span><span class="p">:</span> <span class="nb">usize</span><span class="p">,</span>
-    <span class="n">target</span><span class="p">:</span> <span class="nb">usize</span><span class="p">,</span>
-<span class="p">)</span> <span class="k">-&gt;</span> <span class="nb">Option</span><span class="o">&lt;</span><span class="nb">usize</span><span class="o">&gt;</span> <span class="p">{</span>
-    <span class="k">let</span> <span class="k">mut</span> <span class="n">queue</span> <span class="o">=</span> <span class="nn">Vec</span><span class="p">::</span><span class="nf">from</span><span class="p">([</span><span class="n">start</span><span class="p">]);</span>
-    <span class="k">let</span> <span class="k">mut</span> <span class="n">seen</span> <span class="o">=</span> <span class="nn">HashSet</span><span class="p">::</span><span class="nf">from</span><span class="p">([</span><span class="n">start</span><span class="p">]);</span>
-    <span class="k">let</span> <span class="k">mut</span> <span class="n">reached</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
-    <span class="k">while</span> <span class="k">let</span> <span class="nf">Some</span><span class="p">(</span><span class="n">idx</span><span class="p">)</span> <span class="o">=</span> <span class="n">queue</span><span class="nf">.pop</span><span class="p">()</span> <span class="p">{</span>
-        <span class="n">reached</span> <span class="o">+=</span> <span class="mi">1</span><span class="p">;</span>
-        <span class="k">if</span> <span class="n">idx</span> <span class="o">==</span> <span class="n">target</span> <span class="p">{</span>
-            <span class="k">return</span> <span class="nb">None</span><span class="p">;</span>
-        <span class="p">}</span>
-
-        <span class="k">for</span> <span class="o">&amp;</span><span class="n">adj</span> <span class="k">in</span> <span class="o">&amp;</span><span class="n">adjacents</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span> <span class="p">{</span>
-            <span class="k">if</span> <span class="o">!</span><span class="n">forbidden</span><span class="nf">.contains</span><span class="p">(</span><span class="o">&amp;</span><span class="p">(</span><span class="n">adj</span><span class="nf">.min</span><span class="p">(</span><span class="n">idx</span><span class="p">),</span> <span class="n">adj</span><span class="nf">.max</span><span class="p">(</span><span class="n">idx</span><span class="p">)))</span> <span class="o">&amp;&amp;</span> <span class="n">seen</span><span class="nf">.insert</span><span class="p">(</span><span class="n">adj</span><span class="p">)</span> <span class="p">{</span>
-                <span class="n">queue</span><span class="nf">.push</span><span class="p">(</span><span class="n">adj</span><span class="p">);</span>
+            <span class="c1">// return partition sizes, if there is no fourth path</span>
+            <span class="k">if</span> <span class="k">let</span> <span class="p">(</span><span class="nb">None</span><span class="p">,</span> <span class="n">reached</span><span class="p">)</span> <span class="o">=</span> <span class="nf">get_shortest_path</span><span class="p">(</span><span class="n">adjacents</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">paths</span><span class="p">,</span> <span class="n">start</span><span class="p">,</span> <span class="n">target</span><span class="p">)</span> <span class="p">{</span>
+                <span class="k">return</span> <span class="p">(</span><span class="n">reached</span><span class="p">,</span> <span class="n">adjacents</span><span class="nf">.len</span><span class="p">()</span> <span class="o">-</span> <span class="n">reached</span><span class="p">);</span>
             <span class="p">}</span>
         <span class="p">}</span>
+
+        <span class="nd">panic!</span><span class="p">(</span><span class="s">"No solution"</span><span class="p">);</span>
     <span class="p">}</span>
-    <span class="nf">Some</span><span class="p">(</span><span class="n">reached</span><span class="p">)</span>
 <span class="p">}</span>
 
+<span class="nd">#[cfg(not(feature</span> <span class="nd">=</span> <span class="s">"min-cut"</span><span class="nd">))]</span>
 <span class="k">pub</span> <span class="k">fn</span> <span class="nf">star_1</span><span class="p">(</span><span class="nf">PuzzleData</span><span class="p">(</span><span class="n">adjacents</span><span class="p">):</span> <span class="o">&amp;</span><span class="n">PuzzleData</span><span class="p">)</span> <span class="k">-&gt;</span> <span class="nb">usize</span> <span class="p">{</span>
-    <span class="c1">// get a target in other part of graph with three disjoint paths</span>
-    <span class="k">let</span> <span class="p">(</span><span class="n">target</span><span class="p">,</span> <span class="n">paths</span><span class="p">)</span> <span class="o">=</span> <span class="nf">get_target_with_three_paths</span><span class="p">(</span><span class="n">adjacents</span><span class="p">,</span> <span class="mi">0</span><span class="p">);</span>
-
-    <span class="c1">// find a triple of links, one from every path, so that removal of those</span>
-    <span class="c1">// links splits the graph in two</span>
-    <span class="k">let</span> <span class="n">reachable</span> <span class="o">=</span> <span class="p">(</span><span class="mi">0</span><span class="o">..</span><span class="n">paths</span><span class="nf">.iter</span><span class="p">()</span><span class="nf">.map</span><span class="p">(</span><span class="nn">Vec</span><span class="p">::</span><span class="n">len</span><span class="p">)</span><span class="nf">.product</span><span class="p">())</span>
-        <span class="nf">.map</span><span class="p">(|</span><span class="n">k</span><span class="p">|</span> <span class="p">{</span>
-            <span class="p">[</span>
-                <span class="n">paths</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="n">k</span> <span class="o">%</span> <span class="n">paths</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="nf">.len</span><span class="p">()],</span>
-                <span class="n">paths</span><span class="p">[</span><span class="mi">1</span><span class="p">][(</span><span class="n">k</span> <span class="o">/</span> <span class="n">paths</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="nf">.len</span><span class="p">())</span> <span class="o">%</span> <span class="n">paths</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="nf">.len</span><span class="p">()],</span>
-                <span class="n">paths</span><span class="p">[</span><span class="mi">2</span><span class="p">][</span><span class="n">k</span> <span class="o">/</span> <span class="p">(</span><span class="n">paths</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="nf">.len</span><span class="p">()</span> <span class="o">*</span> <span class="n">paths</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="nf">.len</span><span class="p">())],</span>
-            <span class="p">]</span>
-        <span class="p">})</span>
-        <span class="nf">.find_map</span><span class="p">(|</span><span class="n">forbidden</span><span class="p">|</span> <span class="nf">count_reachable_without_target</span><span class="p">(</span><span class="n">adjacents</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">forbidden</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">target</span><span class="p">))</span>
-        <span class="nf">.expect</span><span class="p">(</span><span class="s">"No solution!"</span><span class="p">);</span>
-
-    <span class="c1">// return product of sizes of two disconnected parts of graph</span>
-    <span class="n">reachable</span> <span class="o">*</span> <span class="p">(</span><span class="n">adjacents</span><span class="nf">.len</span><span class="p">()</span> <span class="o">-</span> <span class="n">reachable</span><span class="p">)</span>
+    <span class="c1">// get a size of partitions connected by three paths</span>
+    <span class="k">let</span> <span class="p">(</span><span class="n">p1</span><span class="p">,</span> <span class="n">p2</span><span class="p">)</span> <span class="o">=</span> <span class="nn">direct_solution</span><span class="p">::</span><span class="nf">get_partitions_connected_by_three_paths</span><span class="p">(</span><span class="n">adjacents</span><span class="p">,</span> <span class="mi">0</span><span class="p">);</span>
+    <span class="n">p1</span> <span class="o">*</span> <span class="n">p2</span>
 <span class="p">}</span>
 </pre></td></tr></tbody></table></code></pre>
 </div>
@@ -10756,7 +10696,7 @@ frs: qnr lhk lsr
 </div>
 <div id="footer">
     <div id="footer-text">
-        Generated from <a href="https://github.com/mr-kaffee/aoc-2023/">github.com/mr-kaffee/aoc-2023/</a> on 2023-12-30 15:22:19 UTC
+        Generated from <a href="https://github.com/mr-kaffee/aoc-2023/">github.com/mr-kaffee/aoc-2023/</a> on 2024-01-01 13:18:03 UTC
         with <a href="https://asciidoctor.org">asciidoctor</a>.
     </div>
 </div>
