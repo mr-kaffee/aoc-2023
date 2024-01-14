@@ -8,7 +8,7 @@ pub type SolT = usize;
 // end::prelude[]
 
 // tag::input[]
-mod input {
+pub mod input {
     use crate::SolT;
 
     #[derive(Debug, PartialEq, Eq)]

@@ -31,24 +31,67 @@ pub mod input {
 // end::input[]
 
 // tag::star_1[]
-const EAST: u8 = 0;
-const NORTH: u8 = 1;
-const WEST: u8 = 2;
-const SOUTH: u8 = 3;
+pub const EAST: u8 = 0;
+pub const NORTH: u8 = 1;
+pub const WEST: u8 = 2;
+pub const SOUTH: u8 = 3;
 
-const EAST_WEST: u8 = 0;
-const NORTH_SOUTH: u8 = 1;
+pub const EAST_WEST: u8 = 0;
+pub const NORTH_SOUTH: u8 = 1;
 
-pub fn count_energized(
+#[cfg(feature = "bfs")]
+struct Queue<T>(std::collections::VecDeque<T>);
+
+#[cfg(feature = "bfs")]
+impl<T> Queue<T> {
+    fn from<const N: usize>(arr: [T; N]) -> Self {
+        Self(std::collections::VecDeque::from(arr))
+    }
+
+    fn push(&mut self, value: T) {
+        self.0.push_back(value);
+    }
+
+    fn pop(&mut self) -> Option<T> {
+        self.0.pop_front()
+    }
+}
+
+#[cfg(not(feature = "bfs"))]
+struct Queue<T>(Vec<T>);
+
+#[cfg(not(feature = "bfs"))]
+impl<T> Queue<T> {
+    fn from<const N: usize>(arr: [T; N]) -> Self {
+        Self(Vec::from(arr))
+    }
+
+    fn push(&mut self, value: T) {
+        self.0.push(value);
+    }
+
+    fn pop(&mut self) -> Option<T> {
+        self.0.pop()
+    }
+}
+
+pub fn simulate_beam(
     data: &[u8],
     (w, h): (usize, usize),
     ((col, row), heading): ((usize, usize), u8),
-) -> usize {
-    let mut queue = Vec::from([((col, row), heading)]);
+    steps: usize,
+) -> (Vec<u8>, usize) {
+    let mut queue = Queue::from([(1, (col, row), heading)]);
     let mut seen = vec![0u8; w * h];
     seen[col + row * w] |= 1 << heading;
 
-    while let Some(((col, row), heading)) = queue.pop() {
+    let mut max_steps = 0;
+    while let Some((cur_steps, (col, row), heading)) = queue.pop() {
+        max_steps = max_steps.max(cur_steps);
+        if cur_steps >= steps {
+            continue;
+        }
+
         let deltas: &[u8] = match (data[col + row * (w + 1)], heading & 1) {
             (b'.', _) | (b'-', EAST_WEST) | (b'|', NORTH_SOUTH) => &[0], // pass-through
             (b'-', _) | (b'|', _) => &[1, 3],                            // split, turn left & right
@@ -68,12 +111,20 @@ pub fn count_energized(
             };
             if col < w && row < h && (seen[col + row * w] & (1 << heading)) == 0 {
                 seen[col + row * w] |= 1 << heading;
-                queue.push(((col, row), heading));
+                queue.push((cur_steps + 1, (col, row), heading));
             }
         }
     }
 
-    seen.into_iter().filter(|&v| v > 0).count()
+    (seen, max_steps)
+}
+
+pub fn count_energized(data: &[u8], dims: (usize, usize), beam: ((usize, usize), u8)) -> usize {
+    simulate_beam(data, dims, beam, usize::MAX)
+        .0
+        .into_iter()
+        .filter(|&v| v > 0)
+        .count()
 }
 
 pub fn star_1(&PuzzleData(data, w, h): &PuzzleData) -> usize {

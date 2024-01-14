@@ -33,12 +33,12 @@ pub fn star<F: Fn(&str) -> Option<SolT>>(data: &str, map: &F) -> SolT {
 // end::star_1[]
 
 // tag::star_2[]
-const DIGITS: &[&str] = &[
+const DIGITS: [&str; 10] = [
     "zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine",
 ];
 
 pub fn map_2(line: &str) -> Option<SolT> {
-    map_1(line).or_else(|| (0..DIGITS.len()).find(|&digit| line.starts_with(DIGITS[digit])))
+    map_1(line).or_else(|| DIGITS.iter().position(|digit| line.starts_with(digit)))
 }
 // end::star_2[]
 

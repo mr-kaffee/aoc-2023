@@ -4,7 +4,7 @@ https://rust-lang.org[Rust] solution to https://adventofcode.com/2023/day/8[AoC|
 
 === Input
 
-The input is parsed into a tuple of a byte array representing directions and a hash map representing the map.
+The input is parsed into a tuple of a byte array representing directions, a vector of tuples consisting of a label and an optional pair of indices to the left and right node representing the map, and a hash map with labels as keys and indices to the vector as value (mainly used to build the vector representation of the map). The vector allows for fast lookups later on, which reduces the overall solution time roughly by a factor of four.
 
 [source,rust,numbered]
 ----

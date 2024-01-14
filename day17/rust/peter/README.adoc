@@ -19,23 +19,23 @@ We need to navigate crucibles on a path that minimizes heat loss. each block of 
 
 Obviously, we cannot just take the location on the map as the graph's nodes. There is at least two ways to model the graph for the problem:
 
-* Nodes are defined by location, current heading, and steps since last change of heading; any node that can be reached by by changing direction (if allowed) and moving the minimum number of steps or moving 1 step in the same direction (if allowed) is an adjacent
-* Nodes are defined by location and current heading; any node that can be reached by changing direction and moving any valid number of steps is an adjacent
+* Nodes are defined by location, current heading (east, north, west, south), and steps since last change of heading; any node that can be reached by by changing direction (if allowed) and moving the minimum number of steps or moving 1 step in the same direction (if allowed) is an adjacent
+* Nodes are defined by location and current heading (horizontal or vertical is enough); any node that can be reached by changing direction and moving any valid number of steps is an adjacent
 
 I came up with the first variant myself and found out about the second variant reading about solution ideas of others.
 
 Since the number of steps since the last change of heading is part of a node's description in the first variant, there is a single unique predecessor for every node in the graph. This implies that we will never reach a node with any lower cost then the cost assigned to it when we first reached it. We can thus use a simplified version of Dijkstra, where nodes are settled upon expansion, instead of only settling nodes when they are popped from the queue.
 
-The second variant has a much smaller search space (allowing for a Dijkstra implementation without sets or maps), since the number of steps is not included. However, we will in general reach the same node several times and the cost is not guaranteed to be the lowest the first time. As an example, consider the situation below, where the node on the top-right is first reached from x with a cost of 43. Only after the nodes labeled with the weights [11] and [15] are expanded, the same node is reached a second time with a cost of 27 < 43.
+The second variant has a much smaller search space (allowing for a Dijkstra implementation without sets or maps), since the number of steps is not included. However, we will in general reach the same node several times and the cost is not guaranteed to be the lowest the first time. As an example, consider the situation below, where the node labeled with the weight (43) (horizontal) is first reached from x with a cost of 43. The node labeled with the weight (7) (horizontal) is also reached from x. Only after the nodes labeled with the weights [11] (vertical), [19] (horizontal), and [23] (vertical) are expanded, the same node is reached a second time with a cost of 35 < 43.
 
 ```             
        (7)    (43)
         v       v
-X 2 2 2 1 9 9 9 9 < [27]
-        1       1
-        1       1
-        1       1
- [11] > 1 1 1 1 1 < [15]
+X 2 2 2 1 9 9 9 9 1 1 1 1 < [23]
+        1       ^       1
+        1     [35]      1
+        1               1
+ [11] > 1 1 1 1 1 1 1 1 1 < [19]
 ```
 
 As a lower bound for the cost to go, I use the minimum cost that would be possible without any constraints on changing direction. This is calculated in `loss_bounds`. This A* heuristic reduced the runtime quite a bit. The heuristic is on by default. It can be switched off with the feature `no-heuristic`.

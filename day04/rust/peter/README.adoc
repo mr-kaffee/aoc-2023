@@ -17,7 +17,7 @@ include::src/lib.rs[tags=star_1]
 
 === Star 2
 
-I pass through all cards once to update the number of subsequent cards (in a nested fold). Since the outer fold does not know the total number of cards, I need to initialize enough counters with `1` (initially, every card is available once).
+I pass through all cards once to update the number of subsequent cards. Since the outer fold does not know the total number of cards, I need to initialize enough counters with `1` (initially, every card is available once).
 
 A key statement from the puzzle description for the algorithm to work is "Cards will never make you copy a card past the end of the table."
 

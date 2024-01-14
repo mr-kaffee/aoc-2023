@@ -3,7 +3,7 @@ name = "mr-kaffee-utils"
 description = "Utils for AoC, http://adventofcode.com"
 authors = ["Peter Wieland <peter@die-wielands.net>"]
 license = "MIT"
-version = "0.1.1"
+version = "0.2.0"
 edition = "2021"
 
 [dependencies]

@@ -7,3 +7,12 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+
+[dev-dependencies]
+
+png = "0.17"
+clap = { version = "4.*", features = ["derive"] }
+
+[features]
+
+bfs = []

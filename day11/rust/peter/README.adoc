@@ -4,7 +4,7 @@ https://rust-lang.org[Rust] solution to https://adventofcode.com/2023/day/11[AoC
 
 === Input
 
-I store the coordinates of each galaxy in a vector and create two more vectors with the galaxy counts in very column/row.
+I store the coordinates of each galaxy in a vector and create two more vectors with the galaxy counts in every column/row.
 
 [source,rust,numbered]
 ----

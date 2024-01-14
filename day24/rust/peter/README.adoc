@@ -61,6 +61,23 @@ Unfortunately, those equations are non-linear. But if we look at pairs of hail-s
 include::src/lib.rs[tags=star_2]
 ----
 
+=== Geometric solution
+
+Choose three hail-stones, say `A`, `B`, and `C`. Denote the locus of `A`, `B`, and `C` as `A(t) = xa + t dxa`, `B(t) = xb + t dxb`, and `C(t) = xc + t dxc`.
+
+Represent those in the inertial system of `A`, i.e., `A` is placed at the origin with zero velocity. Zero velocity is important, because this results in the rock to move through the origin at some time `t_A` to collide with `A`. The locus of the hail-stones in the inertial system of `A` are `A'(t) = 0`, `B'(t) = xb' + t dxb'`, and `C'(t) = xc' + t dxc'` with vectors `xb' = xb - xa`, `dxb' = dxb - dxa`, `xc' = xc - xa`, and `dxc' = dxc - dxa`.
+
+The locus of the rock is `R'(t) = xr' + t dxr'`. It necessarily passes through the origin for some time `t_A`. And it is supposed to intersect with the locus `B'(t)` and `C'(t)`.
+
+The rock locus `R'(t)` contains the origin and intersects with `B'(t)` (or `C'(t)` respectively) which does contain the origin, if and only if it is contained in the plane `A-B` that is spanned by `A'` (the origin) and `B'(t)` (or `A-C` spanned by `A'` and `C'(t)` respectively). Note that the surface which contains `A'(t)` and `B'(t)` (or `C'(t)` respectively) is a plane because `A'(t)` collapses to a single point (the origin) - otherwise, we would obtain nice little https://en.wikipedia.org/wiki/Paraboloid#Hyperbolic_paraboloid[Hyperbolic paraboloids].
+
+The rock locus `R'(t)` thus needs to be contained in the intersection of the two planes `A-B` and `A-C`. This determines the direction of the velocity vector `dxr''`, i.e., `dxr' = n dxr''` for some `n`. If we assume that the coordinates of `dxr'` are integers and if we choose `dxr''` such that the greatest common divisor of its three integer coordinates is `1`, then `n` will be an integer.
+
+The points of collision with `B'(t)` (or `C'(t)` respectively) can be determined by calculating `t_b` and `k_b` such that `xb' + t_b dxb' = 0 + k_b dxr''` (or `t_c` and `k_c` such that `xc' + t_c dxc' = 0 + k_c dxr''`). If the problem is well posed, this yields an integer solution for `t_b` and `k_b` with `t_b > 0` (or `t_c` and `k_c` with `t_c > 0` respectively). 
+
+The two equations `xr' + t_b dxr' = k_b dxr''` and `xr' + t_c dxr' = k_c dxr''` can be solved for `xr'` and `dxr'`: `dxr' = n dxr''` with `n = (k_c - k_b) / (t_c - t_b)` and `xr' = m dxr''` with `m = (t_c k_b - t_b k_c) / (t_c - t_b)`.
+
+
 === Tests
 
 [source,rust,numbered]

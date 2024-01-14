@@ -123,7 +123,7 @@ pub mod euclid {
         )*};
     }
 
-    impl_zero!(usize, u8, u16, u32, u64, isize, i8, i16, i32, i64);
+    impl_zero!(usize, u8, u16, u32, u64, u128, isize, i8, i16, i32, i64, i128);
 
     /// Calculate greatest common divisor
     pub fn gcd<T>(mut a: T, mut b: T) -> T
@@ -143,6 +143,114 @@ pub mod euclid {
         #[test]
         pub fn test_mul_inv_mod() {
             assert_eq!(mul_inverse_mod(1, 10), 1);
+        }
+    }
+}
+
+pub mod iterators {
+    pub trait FoldWith<T> {
+        /// Use this to compute the initial value of a fold from the iterator
+        /// that is about being fold.
+        ///
+        /// # Examples
+        /// ```
+        /// # use mr_kaffee_utils::iterators::*;
+        ///
+        /// let data: &[u64] = &[1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+        /// let res = data.iter().fold_with(
+        ///     |it| Vec::with_capacity(it.size_hint().0),
+        ///     |mut acc, v| {
+        ///         let upd = acc.last().unwrap_or(&0) + v;
+        ///         acc.push(upd);
+        ///         acc
+        ///     },
+        /// );
+        /// assert_eq!(vec![1, 3, 6, 10, 15, 21, 28, 36, 45, 55], res);
+        /// ```
+        fn fold_with<I, S, R>(self, init: I, step: S) -> R
+        where
+            I: FnMut(&Self) -> R,
+            S: FnMut(R, T) -> R;
+    }
+
+    impl<T, It> FoldWith<T> for It
+    where
+        It: Iterator<Item = T>,
+    {
+        fn fold_with<I, S, R>(self, mut init: I, step: S) -> R
+        where
+            I: FnMut(&Self) -> R,
+            S: FnMut(R, T) -> R,
+        {
+            let initial = init(&self);
+            self.fold(initial, step)
+        }
+    }
+
+    /// Alias for [`Result`] with same type used for [`Result::Ok`] and
+    /// [`Result::Err`]
+    pub type Alt<T> = Result<T, T>;
+
+    /// Convenience method to construct a [`Result::Ok`] value of the first
+    /// parameter if the second parameter is true, otherwise construct and
+    /// [`Result::Err`] value.
+    pub fn ok_if<T>(value: T, ok: bool) -> Alt<T> {
+        if ok {
+            Ok(value)
+        } else {
+            Err(value)
+        }
+    }
+
+    pub trait FoldShortCuttable<T> {
+        /// Use this for folds where all relevant information may be available
+        /// before the iterator is exhausted.
+        ///
+        /// # Examples
+        /// ```
+        /// # use mr_kaffee_utils::iterators::*;
+        ///
+        /// let data: &[u64] = &[1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+        /// let threshold = 30;
+        ///
+        /// let big = data.iter().fold_short_cuttable(0, |mut sum, v| {
+        ///     sum += v;
+        ///     ok_if(sum, sum < threshold)
+        /// }) > threshold;
+        ///
+        /// assert_eq!(true, big);
+        /// ```
+        fn fold_short_cuttable<S, R>(self, initial: R, step: S) -> R
+        where
+            S: FnMut(R, T) -> Alt<R>;
+
+        fn fold_short_cuttable_with<I, S, R>(self, mut init: I, step: S) -> R
+        where
+            I: FnMut(&Self) -> R,
+            S: FnMut(R, T) -> Alt<R>,
+            Self: Sized,
+        {
+            let initial = init(&self);
+            self.fold_short_cuttable(initial, step)
+        }
+    }
+
+    impl<T, It> FoldShortCuttable<T> for It
+    where
+        It: Iterator<Item = T>,
+    {
+        fn fold_short_cuttable<S, R>(mut self, initial: R, mut step: S) -> R
+        where
+            S: FnMut(R, T) -> Alt<R>,
+        {
+            let mut acc = initial;
+            while let Some(value) = self.next() {
+                acc = match step(acc, value) {
+                    Ok(upd) => upd,
+                    Err(acc) => return acc,
+                };
+            }
+            acc
         }
     }
 }

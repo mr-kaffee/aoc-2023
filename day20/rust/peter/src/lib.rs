@@ -178,10 +178,7 @@ impl SendCounter {
 
 pub fn star_1(
     PuzzleData {
-        bc,
-        rx: _,
-        targets,
-        types,
+        bc, targets, types, ..
     }: &PuzzleData,
 ) -> usize {
     let mut mem = init(targets, types);

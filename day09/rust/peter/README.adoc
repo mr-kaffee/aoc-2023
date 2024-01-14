@@ -28,6 +28,8 @@ I was expecting much more complicated. It took a short moment to get the signs r
 
 The head values of all iterations contribute to the prediction through an alternating sum. The head of the original data contributes positively.
 
+(Alternatively, it is possible to revert the whole list or pseudo-revert it by changing some signs. The main advantage is to avoid code duplication, I guess. I could not measure a significant difference in performance.)
+
 [source,rust,numbered]
 ----
 include::src/lib.rs[tags=star_2]
