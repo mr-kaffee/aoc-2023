@@ -4,7 +4,7 @@ use std::fs::read_to_string;
 // tag::prelude[]
 pub const IDENTIFIER: &str = "2023/11";
 
-pub type SolT = isize;
+pub type SolT = usize;
 pub type InputT = PuzzleData;
 
 pub fn read_input() -> String {
@@ -49,7 +49,7 @@ pub mod input {
 // end::input[]
 
 // tag::star_1[]
-fn calc_offsets(counts: &[usize], expansion: SolT) -> Vec<SolT> {
+pub fn calc_offsets(counts: &[usize], expansion: SolT) -> Vec<SolT> {
     counts
         .iter()
         .scan(0, |cum_sum, &cnt| {
@@ -65,12 +65,12 @@ pub fn sum_shortest_path(data: &PuzzleData, expansion: SolT) -> SolT {
     let row_offsets = calc_offsets(&data.count_in_rows, expansion);
     data.galaxies
         .iter()
-        .map(|&(col_a, row_a)| (col_offsets[col_a], row_offsets[row_a]))
+        .map(|&(col, row)| (col_offsets[col], row_offsets[row]))
         .enumerate()
         .map(|(pos, (col_a, row_a))| {
             data.galaxies[pos + 1..]
                 .iter()
-                .map(|&(col_a, row_a)| (col_offsets[col_a], row_offsets[row_a]))
+                .map(|&(col, row)| (col_offsets[col], row_offsets[row]))
                 .map(|(col_b, row_b)| {
                     col_b.max(col_a) - col_b.min(col_a) + row_b.max(row_a) - row_b.min(row_a)
                 })

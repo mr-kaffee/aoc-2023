@@ -1,6 +1,6 @@
 use input::*;
 use mr_kaffee_utils::euclid::gcd;
-use std::{collections::HashMap, fs::read_to_string, iter::successors};
+use std::{fs::read_to_string, iter::successors};
 
 // tag::prelude[]
 pub const IDENTIFIER: &str = "2023/08";
@@ -15,10 +15,14 @@ pub fn read_input() -> String {
 
 // tag::input[]
 pub mod input {
-    use std::collections::HashMap;
+    use std::collections::{hash_map::Entry, HashMap};
 
     #[derive(Debug, PartialEq, Eq)]
-    pub struct PuzzleData<'a>(pub &'a [u8], pub HashMap<&'a str, (&'a str, &'a str)>);
+    pub struct PuzzleData<'a>(
+        pub &'a [u8],
+        pub Vec<(&'a str, Option<(usize, usize)>)>,
+        pub HashMap<&'a str, usize>,
+    );
 
     impl<'a, T> From<&'a T> for PuzzleData<'a>
     where
@@ -28,7 +32,7 @@ pub mod input {
             let mut lines = s.as_ref().lines();
 
             let dirs = lines.next().unwrap().as_bytes();
-            let map = lines
+            let (map, indices) = lines
                 .skip(1)
                 .filter_map(|line| line.split_once(" = "))
                 .map(|(key, values)| {
@@ -41,8 +45,35 @@ pub mod input {
                             .unwrap(),
                     )
                 })
-                .collect();
-            Self(dirs, map)
+                .fold(
+                    (
+                        Vec::<(&str, Option<(usize, usize)>)>::new(),
+                        HashMap::<&str, usize>::new(),
+                    ),
+                    |(mut map, mut indices), (src, (left, right))| {
+                        let idx_src = find_or_insert(&mut map, &mut indices, src);
+                        let idx_left = find_or_insert(&mut map, &mut indices, left);
+                        let idx_right = find_or_insert(&mut map, &mut indices, right);
+                        map[idx_src].1 = Some((idx_left, idx_right));
+                        (map, indices)
+                    },
+                );
+
+            Self(dirs, map, indices)
+        }
+    }
+
+    fn find_or_insert<'a>(
+        map: &mut Vec<(&'a str, Option<(usize, usize)>)>,
+        indices: &mut HashMap<&'a str, usize>,
+        label: &'a str,
+    ) -> usize {
+        match indices.entry(label) {
+            Entry::Occupied(o) => *o.get(),
+            Entry::Vacant(v) => {
+                map.push((label, None));
+                *(v.insert(map.len() - 1))
+            }
         }
     }
 }
@@ -51,34 +82,34 @@ pub mod input {
 // tag::star_1[]
 pub fn map_iter<'a>(
     dirs: &'a [u8],
-    map: &'a HashMap<&'a str, (&'a str, &'a str)>,
-    node: &'a str,
-) -> impl Iterator<Item = (usize, &'a str)> + 'a {
+    map: &'a [(&'a str, Option<(usize, usize)>)],
+    node: usize,
+) -> impl Iterator<Item = (usize, usize)> + 'a {
     successors(Some((0, node)), |&(k, node)| {
-        map.get(node)
-            .map(|&(left, right)| match dirs[k % dirs.len()] {
-                b'L' => (k + 1, left),
-                _ => (k + 1, right),
-            })
+        map[node].1.map(|(left, right)| match dirs[k % dirs.len()] {
+            b'L' => (k + 1, left),
+            _ => (k + 1, right),
+        })
     })
 }
 
-pub fn star_1(PuzzleData(dirs, map): &PuzzleData) -> SolT {
-    map_iter(dirs, map, "AAA")
-        .find(|&(_, node)| node == "ZZZ")
+pub fn star_1(PuzzleData(dirs, map, indices): &PuzzleData) -> SolT {
+    map_iter(dirs, map, *indices.get("AAA").unwrap())
+        .find(|(_, node)| map[*node].0 == "ZZZ")
         .map(|(steps, _)| steps)
         .unwrap()
 }
 // end::star_1[]
 
 // tag::star_2[]
-pub fn star_2(PuzzleData(dirs, map): &PuzzleData) -> SolT {
-    map.keys()
-        .filter(|key| key.ends_with('A'))
-        .map(|&node| {
-            let mut it = map_iter(dirs, map, node)
+pub fn star_2(PuzzleData(dirs, map, _): &PuzzleData) -> SolT {
+    map.iter()
+        .enumerate()
+        .filter(|(_, (key, _))| key.ends_with('A'))
+        .map(|(pos, _)| {
+            let mut it = map_iter(dirs, map, pos)
                 .step_by(dirs.len()) // only find result that used all dirs
-                .filter(|(_, node)| node.ends_with('Z'));
+                .filter(|(_, node)| map[*node].0.ends_with('Z'));
             let (steps_0, node_0) = it.next().unwrap();
             if cfg!(feature = "check-periodicity") {
                 // the solution assumes periodicity, so let's check it
@@ -114,11 +145,12 @@ ZZZ = (ZZZ, ZZZ)
         assert_eq!(
             PuzzleData(
                 "LLR".as_bytes(),
-                HashMap::from([
-                    ("AAA", ("BBB", "BBB")),
-                    ("BBB", ("AAA", "ZZZ")),
-                    ("ZZZ", ("ZZZ", "ZZZ"))
-                ])
+                vec![
+                    ("AAA", Some((1, 1))),
+                    ("BBB", Some((0, 2))),
+                    ("ZZZ", Some((2, 2)))
+                ],
+                HashMap::from([("AAA", 0), ("BBB", 1), ("ZZZ", 2)])
             ),
             data
         );
@@ -147,23 +179,25 @@ XXX = (XXX, XXX)
     }
 
     pub fn do_understand(data: &str, n: usize) {
-        let PuzzleData(dirs, map) = data.into();
-        for node in map
-            .keys()
-            .filter(|node| node.ends_with('A'))
-            .map(|node| *node)
+        let PuzzleData(dirs, map, _) = data.into();
+        for index in map
+            .iter()
+            .enumerate()
+            .filter(|(_, (node, _))| node.ends_with('A'))
+            .map(|(index, _)| index)
         {
-            println!("Node {}", node);
+            println!("Node {}: {}", index, map[index].0);
             let mut base = None;
-            for (pos, node) in map_iter(dirs, &map, node)
+            for (pos, node) in map_iter(dirs, &map, index)
                 .step_by(dirs.len())
-                .filter(|&(_, x)| x.ends_with('Z'))
+                .filter(|&(_, x)| map[x].0.ends_with('Z'))
                 .take(n)
             {
                 let base = *base.get_or_insert(pos);
                 println!(
-                    "    reached {} at step {} = {} * {} + {} = {} * {} + {}",
+                    "    reached {}: {} at step {} = {} * {} + {} = {} * {} + {}",
                     node,
+                    map[node].0,
                     pos,
                     pos / base,
                     base,

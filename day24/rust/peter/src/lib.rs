@@ -11,6 +11,8 @@ pub fn read_input() -> String {
     read_to_string("../../../inputs/input24").unwrap()
 }
 // end::prelude[]
+#[cfg(feature = "geometric")]
+pub mod geometric;
 
 // tag::input[]
 pub type Coord = i64;

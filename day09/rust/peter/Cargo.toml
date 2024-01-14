@@ -6,4 +6,17 @@ license = "MIT"
 version = "0.1.0"
 edition = "2021"
 
+[dev-dependencies]
+
+criterion = { version = "0.4", features = ["html_reports"] }
+
 [dependencies]
+
+[features]
+
+reverse = []
+no-sign = []
+
+[[bench]]
+name = "day09"
+harness = false

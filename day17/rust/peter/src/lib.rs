@@ -219,39 +219,38 @@ pub fn optimize(grid: &[u8], w: usize, h: usize, s_max: u8, s_min: u8) -> SolT {
     let heuristic = &loss_bounds_heuristic(grid, w, h);
 
     let start_cost = SolT::MAX - heuristic((0, 0));
-    let starts: [(usize, NodeT); 2] = [(start_cost, ((0, 0), 0)), (start_cost, ((0, 0), 3))];
+    let starts: [(usize, NodeT); 2] = [(start_cost, ((0, 0), 0)), (start_cost, ((0, 0), 1))];
 
     let target_pos = (w - 1, h - 1);
 
     let mut queue = BinaryHeap::new();
     let mut settled = vec![0u8; w * h];
-    let mut costs = vec![0; w * h * 4];
-    for (cost, ((c, r), hd)) in starts.into_iter() {
-        queue.push((cost, ((c, r), hd)));
-        costs[c + r * w + (hd as usize) * w * h] = cost;
+    let mut costs = vec![0; w * h * 2];
+    for (cost, ((c, r), o)) in starts.into_iter() {
+        queue.push((cost, ((c, r), o)));
+        costs[c + r * w + (o as usize) * w * h] = cost;
     }
 
     #[cfg(feature = "plot")]
     let mut parents = HashMap::new();
 
-    while let Some((cost_0, ((c0, r0), hd0))) = queue.pop() {
+    while let Some((cost_0, ((c0, r0), o0))) = queue.pop() {
         if (c0, r0) == target_pos {
             #[cfg(feature = "plot")]
-            println!("{}", to_string(w, h, ((c0, r0), hd0), &settled, &parents));
+            println!("{}", to_string(w, h, ((c0, r0), o0), &settled, &parents));
             return SolT::MAX - cost_0;
         }
 
-        if settled[c0 + r0 * w] & (1 << hd0) == 0 {
-            settled[c0 + r0 * w] |= 1 << hd0;
+        if settled[c0 + r0 * w] & (1 << o0) == 0 {
+            settled[c0 + r0 * w] |= 1 << o0;
         } else {
             continue;
         }
 
-        for (cost_1, ((c1, r1), hd1)) in [1, 3]
+        for (cost_1, ((c1, r1), o1)) in [1, 3]
             .iter()
-            .map(move |&dh| (hd0 + dh) & 3)
-            .flat_map(|hd1| {
-                let (dc, dr) = D[hd1 as usize];
+            .map(move |&dh| D[(o0 as usize + dh) & 3])
+            .flat_map(|(dc, dr)| {
                 successors(Some((0, c0, r0)), move |(weight, c, r)| {
                     let (c, r) = (c.wrapping_add_signed(dc), r.wrapping_add_signed(dr));
                     (c < w && r < h)
@@ -262,18 +261,18 @@ pub fn optimize(grid: &[u8], w: usize, h: usize, s_max: u8, s_min: u8) -> SolT {
                 .map(move |(weight, c1, r1)| {
                     (
                         cost_0 - weight + heuristic((c0, r0)) - heuristic((c1, r1)),
-                        ((c1, r1), hd1),
+                        ((c1, r1), !o0 & 1),
                     )
                 })
             })
-            .filter(|(_, ((r1, c1), hd1))| settled[r1 + c1 * w] & (1 << hd1) == 0)
+            .filter(|(_, ((r1, c1), o1))| settled[r1 + c1 * w] & (1 << o1) == 0)
         {
-            let cost_1_prev = &mut costs[c1 + r1 * w + (hd1 as usize) * w * h];
+            let cost_1_prev = &mut costs[c1 + r1 * w + (o1 as usize) * w * h];
             if cost_1 > *cost_1_prev {
                 *cost_1_prev = cost_1;
-                queue.push((cost_1, ((c1, r1), hd1)));
+                queue.push((cost_1, ((c1, r1), o1)));
                 #[cfg(feature = "plot")]
-                parents.insert(((c1, r1), hd1), ((c0, r0), hd0));
+                parents.insert(((c1, r1), o1), ((c0, r0), o0));
             }
         }
     }

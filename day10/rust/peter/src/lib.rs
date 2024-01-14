@@ -21,11 +21,11 @@ pub mod input {
     #[derive(Debug)]
     pub struct PuzzleData(pub Grid);
 
-    impl<T> From<&T> for PuzzleData
+    impl<T> From<T> for PuzzleData
     where
-        T: AsRef<[u8]> + ?Sized,
+        T: AsRef<[u8]>,
     {
-        fn from(s: &T) -> Self {
+        fn from(s: T) -> Self {
             Self(s.make_grid(Some(b'.')))
         }
     }

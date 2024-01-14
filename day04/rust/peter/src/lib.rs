@@ -42,15 +42,15 @@ pub fn star_1(data: &str) -> SolT {
 pub fn star_2(data: &str) -> SolT {
     count_winners(data)
         .enumerate()
-        .fold(vec![], |mut counts, (pos, wins)| {
+        .fold((0, vec![]), |(sum, mut counts), (pos, wins)| {
             counts.resize(counts.len().max(pos + wins + 1), 1);
-            (pos + 1..=pos + wins).fold(counts, |mut counts, pos_upd| {
-                counts[pos_upd] += counts[pos];
-                counts
-            })
+            let cur_count = counts[pos];
+            for upd_count in &mut counts[pos + 1..=pos + wins] {
+                *upd_count += cur_count;
+            }
+            (sum + cur_count, counts)
         })
-        .iter()
-        .sum()
+        .0
 }
 // end::star_2[]
 

@@ -82,7 +82,7 @@ pub trait MinCut<W, L> {
 }
 
 pub trait Merge {
-    /// Merge `t` into `s'. This will result in deleting `t`.
+    /// Merge `t` into `s`. This will result in deleting `t`.
     fn merge(&mut self, s: usize, t: usize);
 }
 
@@ -134,7 +134,7 @@ where
             .map(|&l| (l, vec![l]))
             .collect::<HashMap<_, _>>();
         let mut best = None;
-        for _ in 0..self.len() - 1 {
+        for _ in 0..self.len().saturating_sub(1) {
             let (w, s_idx, t_idx) = self.min_cut_phase();
             let t_labels = merged.remove(self.label(t_idx)).unwrap();
 
@@ -167,10 +167,21 @@ pub mod adjacency_matrix {
         slice::Iter,
     };
 
+    #[derive(Debug, Clone)]
     /// `Graph` implementation using an adjacency matrix
     pub struct AdjacencyMatrix<W, L> {
         pub(crate) matrix: Vec<Vec<W>>,
         pub(crate) labels: Vec<L>,
+    }
+
+    impl<W, L> FromIterator<((L, L), W)> for AdjacencyMatrix<W, L>
+    where
+        W: Copy + Default,
+        L: Copy + Eq + Hash,
+    {
+        fn from_iter<T: IntoIterator<Item = ((L, L), W)>>(iter: T) -> Self {
+            iter.into()
+        }
     }
 
     impl<W, L, T> From<T> for AdjacencyMatrix<W, L>
@@ -260,7 +271,7 @@ pub mod adjacency_matrix {
     }
 
     impl<W, L> AdjacencyMatrix<W, L> {
-        fn remove(&mut self, idx: usize) {
+        pub fn remove(&mut self, idx: usize) {
             self.matrix.swap_remove(idx);
             for row in self.matrix.iter_mut() {
                 row.swap_remove(idx);
@@ -291,9 +302,21 @@ pub mod adjacency_list {
     use super::{Adjacents, Graph, Merge, Weight};
     use std::{collections::HashMap, hash::Hash, iter::Copied, ops::AddAssign, slice::Iter};
 
+    #[derive(Debug, Clone)]
     pub struct AdjacencyList<W, L> {
         pub(crate) adjacents: Vec<Vec<(usize, W)>>,
         pub(crate) labels: Vec<L>,
+    }
+
+    impl<W, L> FromIterator<((L, L), W)> for AdjacencyList<W, L>
+    where
+        W: Copy,
+        L: Copy + Eq + Hash,
+    {
+        /// See [`AdjacencyList::from`]
+        fn from_iter<T: IntoIterator<Item = ((L, L), W)>>(iter: T) -> Self {
+            iter.into()
+        }
     }
 
     impl<W, L, T> From<T> for AdjacencyList<W, L>
@@ -302,17 +325,27 @@ pub mod adjacency_list {
         L: Copy + Eq + Hash,
         T: IntoIterator<Item = ((L, L), W)>,
     {
+        /**
+         * Create an adjacency list from an iterator over edges.
+         *
+         * It is an error if the iterator yields two edge connecting the
+         * same vertices or an edge connecting a vertex to itself. This
+         * will result in an inconsistent adjacency list.
+         *
+         * You can verify consistency with [`AdjacencyList::consistent`]
+         */
         fn from(value: T) -> Self {
+            let it = value.into_iter();
             let mut indices = HashMap::new();
-            let mut labels = Vec::new();
-            let mut adjacents = Vec::new();
+            let mut labels = Vec::with_capacity(it.size_hint().0);
+            let mut adjacents = Vec::with_capacity(it.size_hint().0);
 
-            for ((s, t), w) in value.into_iter() {
+            for ((s, t), w) in it {
                 let s_idx = *indices.entry(s).or_insert(labels.len());
                 adjacents.resize(adjacents.len().max(s_idx + 1), Vec::new());
                 labels.resize(labels.len().max(s_idx + 1), s);
 
-                let t_idx = *indices.entry(t).or_insert(adjacents.len());
+                let t_idx = *indices.entry(t).or_insert(labels.len());
                 adjacents.resize(adjacents.len().max(t_idx + 1), Vec::new());
                 labels.resize(labels.len().max(t_idx + 1), t);
 
@@ -372,7 +405,7 @@ pub mod adjacency_list {
     }
 
     impl<W, L> AdjacencyList<W, L> {
-        fn remove(&mut self, idx: usize) -> Vec<(usize, W)> {
+        pub fn remove(&mut self, idx: usize) -> Vec<(usize, W)> {
             // remove row
             let mut removed = self.adjacents.swap_remove(idx);
             let n = self.adjacents.len();
@@ -406,6 +439,56 @@ pub mod adjacency_list {
             self.labels.swap_remove(idx);
 
             removed
+        }
+
+        /**
+         * Return a consistent adjacency list as `Ok` value or the labels of a
+         * duplicate edge or a self-referential edge in an `Err` value. The
+         * second label is `None`, if the edge is self-referential.
+         *
+         * # Examples
+         * ```
+         * # use mr_kaffee_2023_25::min_cut::adjacency_list::AdjacencyList;
+         *
+         * let edges = [(("a", "b"), 1), (("b", "c"), 1), (("c", "a"), 2)];
+         * let graph = AdjacencyList::from(edges).consistent().unwrap();
+         *
+         * let edges = [(("a", "b"), 1), (("b", "c"), 1), (("b", "a"), 2)];
+         * let duplicate = AdjacencyList::from(edges).consistent().unwrap_err();
+         * assert!(("a", Some("b")) == duplicate || ("b", Some("a")) == duplicate);
+         *
+         * let edges = [(("a", "b"), 1), (("b", "c"), 1), (("a", "a"), 2)];
+         * let duplicate = AdjacencyList::from(edges).consistent().unwrap_err();
+         * assert!(("a", None) == duplicate);
+         * ```
+         */
+        pub fn consistent(mut self) -> Result<Self, (L, Option<L>)> {
+            match self
+                .adjacents
+                .iter()
+                .enumerate()
+                .find_map(|(s_idx, adjacents)| {
+                    adjacents
+                        .iter()
+                        .enumerate()
+                        .find(|&(k, (t_idx, _))| {
+                            adjacents[0..k].iter().any(|(idx, _)| idx == t_idx)
+                        })
+                        .map(|(_, &(t_idx, _))| (s_idx.min(t_idx), s_idx.max(t_idx)))
+                        .map(|(s_idx, t_idx)| {
+                            (
+                                self.labels.swap_remove(t_idx),
+                                if s_idx == t_idx {
+                                    None
+                                } else {
+                                    Some(self.labels.swap_remove(s_idx))
+                                },
+                            )
+                        })
+                }) {
+                Some(val) => Err(val),
+                None => Ok(self),
+            }
         }
     }
 
@@ -481,7 +564,7 @@ mod tests {
     #[test]
     pub fn test_min_cut_phase() {
         do_test_min_cut_phase(AdjacencyMatrix::from(EDGES));
-        // do_test_min_cut_phase(AdjacencyList::from(EDGES));
+        do_test_min_cut_phase(AdjacencyList::from(EDGES));
     }
 
     pub fn do_test_merge<G>(mut g: G)
