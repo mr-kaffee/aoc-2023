@@ -230,6 +230,7 @@
 <li><a href="#_input_19">Input</a></li>
 <li><a href="#_star_1_23">Star 1</a></li>
 <li><a href="#_star_2_22">Star 2</a></li>
+<li><a href="#_geometric_solution">Geometric solution</a></li>
 <li><a href="#_tests_23">Tests</a></li>
 </ul>
 </li>
@@ -796,12 +797,12 @@
 5
 6
 7
-</pre></td><td class="code"><pre><span class="k">const</span> <span class="n">DIGITS</span><span class="p">:</span> <span class="o">&amp;</span><span class="p">[</span><span class="o">&amp;</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="o">&amp;</span><span class="p">[</span>
+</pre></td><td class="code"><pre><span class="k">const</span> <span class="n">DIGITS</span><span class="p">:</span> <span class="p">[</span><span class="o">&amp;</span><span class="nb">str</span><span class="p">;</span> <span class="mi">10</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span>
     <span class="s">"zero"</span><span class="p">,</span> <span class="s">"one"</span><span class="p">,</span> <span class="s">"two"</span><span class="p">,</span> <span class="s">"three"</span><span class="p">,</span> <span class="s">"four"</span><span class="p">,</span> <span class="s">"five"</span><span class="p">,</span> <span class="s">"six"</span><span class="p">,</span> <span class="s">"seven"</span><span class="p">,</span> <span class="s">"eight"</span><span class="p">,</span> <span class="s">"nine"</span><span class="p">,</span>
 <span class="p">];</span>
 
 <span class="k">pub</span> <span class="k">fn</span> <span class="nf">map_2</span><span class="p">(</span><span class="n">line</span><span class="p">:</span> <span class="o">&amp;</span><span class="nb">str</span><span class="p">)</span> <span class="k">-&gt;</span> <span class="nb">Option</span><span class="o">&lt;</span><span class="n">SolT</span><span class="o">&gt;</span> <span class="p">{</span>
-    <span class="nf">map_1</span><span class="p">(</span><span class="n">line</span><span class="p">)</span><span class="nf">.or_else</span><span class="p">(||</span> <span class="p">(</span><span class="mi">0</span><span class="o">..</span><span class="n">DIGITS</span><span class="nf">.len</span><span class="p">())</span><span class="nf">.find</span><span class="p">(|</span><span class="o">&amp;</span><span class="n">digit</span><span class="p">|</span> <span class="n">line</span><span class="nf">.starts_with</span><span class="p">(</span><span class="n">DIGITS</span><span class="p">[</span><span class="n">digit</span><span class="p">])))</span>
+    <span class="nf">map_1</span><span class="p">(</span><span class="n">line</span><span class="p">)</span><span class="nf">.or_else</span><span class="p">(||</span> <span class="n">DIGITS</span><span class="nf">.iter</span><span class="p">()</span><span class="nf">.position</span><span class="p">(|</span><span class="n">digit</span><span class="p">|</span> <span class="n">line</span><span class="nf">.starts_with</span><span class="p">(</span><span class="n">digit</span><span class="p">)))</span>
 <span class="p">}</span>
 </pre></td></tr></tbody></table></code></pre>
 </div>
@@ -1600,7 +1601,7 @@ Game 5: 6 red, 1 blue, 3 green; 2 blue, 1 red, 2 green
 <div class="sect2">
 <h3 id="_star_2_6">Star 2</h3>
 <div class="paragraph">
-<p>I pass through all cards once to update the number of subsequent cards (in a nested fold). Since the outer fold does not know the total number of cards, I need to initialize enough counters with <code>1</code> (initially, every card is available once).</p>
+<p>I pass through all cards once to update the number of subsequent cards. Since the outer fold does not know the total number of cards, I need to initialize enough counters with <code>1</code> (initially, every card is available once).</p>
 </div>
 <div class="paragraph">
 <p>A key statement from the puzzle description for the algorithm to work is "Cards will never make you copy a card past the end of the table."</p>
@@ -1623,15 +1624,15 @@ Game 5: 6 red, 1 blue, 3 green; 2 blue, 1 red, 2 green
 </pre></td><td class="code"><pre><span class="k">pub</span> <span class="k">fn</span> <span class="nf">star_2</span><span class="p">(</span><span class="n">data</span><span class="p">:</span> <span class="o">&amp;</span><span class="nb">str</span><span class="p">)</span> <span class="k">-&gt;</span> <span class="n">SolT</span> <span class="p">{</span>
     <span class="nf">count_winners</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
         <span class="nf">.enumerate</span><span class="p">()</span>
-        <span class="nf">.fold</span><span class="p">(</span><span class="nd">vec!</span><span class="p">[],</span> <span class="p">|</span><span class="k">mut</span> <span class="n">counts</span><span class="p">,</span> <span class="p">(</span><span class="n">pos</span><span class="p">,</span> <span class="n">wins</span><span class="p">)|</span> <span class="p">{</span>
+        <span class="nf">.fold</span><span class="p">((</span><span class="mi">0</span><span class="p">,</span> <span class="nd">vec!</span><span class="p">[]),</span> <span class="p">|(</span><span class="n">sum</span><span class="p">,</span> <span class="k">mut</span> <span class="n">counts</span><span class="p">),</span> <span class="p">(</span><span class="n">pos</span><span class="p">,</span> <span class="n">wins</span><span class="p">)|</span> <span class="p">{</span>
             <span class="n">counts</span><span class="nf">.resize</span><span class="p">(</span><span class="n">counts</span><span class="nf">.len</span><span class="p">()</span><span class="nf">.max</span><span class="p">(</span><span class="n">pos</span> <span class="o">+</span> <span class="n">wins</span> <span class="o">+</span> <span class="mi">1</span><span class="p">),</span> <span class="mi">1</span><span class="p">);</span>
-            <span class="p">(</span><span class="n">pos</span> <span class="o">+</span> <span class="mi">1</span><span class="o">..=</span><span class="n">pos</span> <span class="o">+</span> <span class="n">wins</span><span class="p">)</span><span class="nf">.fold</span><span class="p">(</span><span class="n">counts</span><span class="p">,</span> <span class="p">|</span><span class="k">mut</span> <span class="n">counts</span><span class="p">,</span> <span class="n">pos_upd</span><span class="p">|</span> <span class="p">{</span>
-                <span class="n">counts</span><span class="p">[</span><span class="n">pos_upd</span><span class="p">]</span> <span class="o">+=</span> <span class="n">counts</span><span class="p">[</span><span class="n">pos</span><span class="p">];</span>
-                <span class="n">counts</span>
-            <span class="p">})</span>
+            <span class="k">let</span> <span class="n">cur_count</span> <span class="o">=</span> <span class="n">counts</span><span class="p">[</span><span class="n">pos</span><span class="p">];</span>
+            <span class="k">for</span> <span class="n">upd_count</span> <span class="k">in</span> <span class="o">&amp;</span><span class="k">mut</span> <span class="n">counts</span><span class="p">[</span><span class="n">pos</span> <span class="o">+</span> <span class="mi">1</span><span class="o">..=</span><span class="n">pos</span> <span class="o">+</span> <span class="n">wins</span><span class="p">]</span> <span class="p">{</span>
+                <span class="o">*</span><span class="n">upd_count</span> <span class="o">+=</span> <span class="n">cur_count</span><span class="p">;</span>
+            <span class="p">}</span>
+            <span class="p">(</span><span class="n">sum</span> <span class="o">+</span> <span class="n">cur_count</span><span class="p">,</span> <span class="n">counts</span><span class="p">)</span>
         <span class="p">})</span>
-        <span class="nf">.iter</span><span class="p">()</span>
-        <span class="nf">.sum</span><span class="p">()</span>
+        <span class="na">.0</span>
 <span class="p">}</span>
 </pre></td></tr></tbody></table></code></pre>
 </div>
@@ -2535,7 +2536,7 @@ Distance:  9  40  200
 28
 29
 30
-</pre></td><td class="code"><pre><span class="k">mod</span> <span class="n">input</span> <span class="p">{</span>
+</pre></td><td class="code"><pre><span class="k">pub</span> <span class="k">mod</span> <span class="n">input</span> <span class="p">{</span>
     <span class="k">use</span> <span class="k">crate</span><span class="p">::</span><span class="n">SolT</span><span class="p">;</span>
 
     <span class="nd">#[derive(Debug,</span> <span class="nd">PartialEq,</span> <span class="nd">Eq)]</span>
@@ -2874,7 +2875,7 @@ QQQJA 483
 <div class="sect2">
 <h3 id="_input_7">Input</h3>
 <div class="paragraph">
-<p>The input is parsed into a tuple of a byte array representing directions and a hash map representing the map.</p>
+<p>The input is parsed into a tuple of a byte array representing directions, a vector of tuples consisting of a label and an optional pair of indices to the left and right node representing the map, and a hash map with labels as keys and indices to the vector as value (mainly used to build the vector representation of the map). The vector allows for fast lookups later on, which reduces the overall solution time roughly by a factor of four.</p>
 </div>
 <div class="listingblock">
 <div class="content">
@@ -2910,11 +2911,46 @@ QQQJA 483
 30
 31
 32
+33
+34
+35
+36
+37
+38
+39
+40
+41
+42
+43
+44
+45
+46
+47
+48
+49
+50
+51
+52
+53
+54
+55
+56
+57
+58
+59
+60
+61
+62
+63
 </pre></td><td class="code"><pre><span class="k">pub</span> <span class="k">mod</span> <span class="n">input</span> <span class="p">{</span>
-    <span class="k">use</span> <span class="nn">std</span><span class="p">::</span><span class="nn">collections</span><span class="p">::</span><span class="n">HashMap</span><span class="p">;</span>
+    <span class="k">use</span> <span class="nn">std</span><span class="p">::</span><span class="nn">collections</span><span class="p">::{</span><span class="nn">hash_map</span><span class="p">::</span><span class="n">Entry</span><span class="p">,</span> <span class="n">HashMap</span><span class="p">};</span>
 
     <span class="nd">#[derive(Debug,</span> <span class="nd">PartialEq,</span> <span class="nd">Eq)]</span>
-    <span class="k">pub</span> <span class="k">struct</span> <span class="n">PuzzleData</span><span class="o">&lt;</span><span class="nv">'a</span><span class="o">&gt;</span><span class="p">(</span><span class="k">pub</span> <span class="o">&amp;</span><span class="nv">'a</span> <span class="p">[</span><span class="nb">u8</span><span class="p">],</span> <span class="k">pub</span> <span class="n">HashMap</span><span class="o">&lt;&amp;</span><span class="nv">'a</span> <span class="nb">str</span><span class="p">,</span> <span class="p">(</span><span class="o">&amp;</span><span class="nv">'a</span> <span class="nb">str</span><span class="p">,</span> <span class="o">&amp;</span><span class="nv">'a</span> <span class="nb">str</span><span class="p">)</span><span class="o">&gt;</span><span class="p">);</span>
+    <span class="k">pub</span> <span class="k">struct</span> <span class="n">PuzzleData</span><span class="o">&lt;</span><span class="nv">'a</span><span class="o">&gt;</span><span class="p">(</span>
+        <span class="k">pub</span> <span class="o">&amp;</span><span class="nv">'a</span> <span class="p">[</span><span class="nb">u8</span><span class="p">],</span>
+        <span class="k">pub</span> <span class="nb">Vec</span><span class="o">&lt;</span><span class="p">(</span><span class="o">&amp;</span><span class="nv">'a</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">Option</span><span class="o">&lt;</span><span class="p">(</span><span class="nb">usize</span><span class="p">,</span> <span class="nb">usize</span><span class="p">)</span><span class="o">&gt;</span><span class="p">)</span><span class="o">&gt;</span><span class="p">,</span>
+        <span class="k">pub</span> <span class="n">HashMap</span><span class="o">&lt;&amp;</span><span class="nv">'a</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">usize</span><span class="o">&gt;</span><span class="p">,</span>
+    <span class="p">);</span>
 
     <span class="k">impl</span><span class="o">&lt;</span><span class="nv">'a</span><span class="p">,</span> <span class="n">T</span><span class="o">&gt;</span> <span class="nb">From</span><span class="o">&lt;&amp;</span><span class="nv">'a</span> <span class="n">T</span><span class="o">&gt;</span> <span class="k">for</span> <span class="n">PuzzleData</span><span class="o">&lt;</span><span class="nv">'a</span><span class="o">&gt;</span>
     <span class="k">where</span>
@@ -2924,7 +2960,7 @@ QQQJA 483
             <span class="k">let</span> <span class="k">mut</span> <span class="n">lines</span> <span class="o">=</span> <span class="n">s</span><span class="nf">.as_ref</span><span class="p">()</span><span class="nf">.lines</span><span class="p">();</span>
 
             <span class="k">let</span> <span class="n">dirs</span> <span class="o">=</span> <span class="n">lines</span><span class="nf">.next</span><span class="p">()</span><span class="nf">.unwrap</span><span class="p">()</span><span class="nf">.as_bytes</span><span class="p">();</span>
-            <span class="k">let</span> <span class="n">map</span> <span class="o">=</span> <span class="n">lines</span>
+            <span class="k">let</span> <span class="p">(</span><span class="n">map</span><span class="p">,</span> <span class="n">indices</span><span class="p">)</span> <span class="o">=</span> <span class="n">lines</span>
                 <span class="nf">.skip</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
                 <span class="nf">.filter_map</span><span class="p">(|</span><span class="n">line</span><span class="p">|</span> <span class="n">line</span><span class="nf">.split_once</span><span class="p">(</span><span class="s">" = "</span><span class="p">))</span>
                 <span class="nf">.map</span><span class="p">(|(</span><span class="n">key</span><span class="p">,</span> <span class="n">values</span><span class="p">)|</span> <span class="p">{</span>
@@ -2937,8 +2973,35 @@ QQQJA 483
                             <span class="nf">.unwrap</span><span class="p">(),</span>
                     <span class="p">)</span>
                 <span class="p">})</span>
-                <span class="nf">.collect</span><span class="p">();</span>
-            <span class="k">Self</span><span class="p">(</span><span class="n">dirs</span><span class="p">,</span> <span class="n">map</span><span class="p">)</span>
+                <span class="nf">.fold</span><span class="p">(</span>
+                    <span class="p">(</span>
+                        <span class="nn">Vec</span><span class="p">::</span><span class="o">&lt;</span><span class="p">(</span><span class="o">&amp;</span><span class="nb">str</span><span class="p">,</span> <span class="nb">Option</span><span class="o">&lt;</span><span class="p">(</span><span class="nb">usize</span><span class="p">,</span> <span class="nb">usize</span><span class="p">)</span><span class="o">&gt;</span><span class="p">)</span><span class="o">&gt;</span><span class="p">::</span><span class="nf">new</span><span class="p">(),</span>
+                        <span class="nn">HashMap</span><span class="p">::</span><span class="o">&lt;&amp;</span><span class="nb">str</span><span class="p">,</span> <span class="nb">usize</span><span class="o">&gt;</span><span class="p">::</span><span class="nf">new</span><span class="p">(),</span>
+                    <span class="p">),</span>
+                    <span class="p">|(</span><span class="k">mut</span> <span class="n">map</span><span class="p">,</span> <span class="k">mut</span> <span class="n">indices</span><span class="p">),</span> <span class="p">(</span><span class="n">src</span><span class="p">,</span> <span class="p">(</span><span class="n">left</span><span class="p">,</span> <span class="n">right</span><span class="p">))|</span> <span class="p">{</span>
+                        <span class="k">let</span> <span class="n">idx_src</span> <span class="o">=</span> <span class="nf">find_or_insert</span><span class="p">(</span><span class="o">&amp;</span><span class="k">mut</span> <span class="n">map</span><span class="p">,</span> <span class="o">&amp;</span><span class="k">mut</span> <span class="n">indices</span><span class="p">,</span> <span class="n">src</span><span class="p">);</span>
+                        <span class="k">let</span> <span class="n">idx_left</span> <span class="o">=</span> <span class="nf">find_or_insert</span><span class="p">(</span><span class="o">&amp;</span><span class="k">mut</span> <span class="n">map</span><span class="p">,</span> <span class="o">&amp;</span><span class="k">mut</span> <span class="n">indices</span><span class="p">,</span> <span class="n">left</span><span class="p">);</span>
+                        <span class="k">let</span> <span class="n">idx_right</span> <span class="o">=</span> <span class="nf">find_or_insert</span><span class="p">(</span><span class="o">&amp;</span><span class="k">mut</span> <span class="n">map</span><span class="p">,</span> <span class="o">&amp;</span><span class="k">mut</span> <span class="n">indices</span><span class="p">,</span> <span class="n">right</span><span class="p">);</span>
+                        <span class="n">map</span><span class="p">[</span><span class="n">idx_src</span><span class="p">]</span><span class="na">.1</span> <span class="o">=</span> <span class="nf">Some</span><span class="p">((</span><span class="n">idx_left</span><span class="p">,</span> <span class="n">idx_right</span><span class="p">));</span>
+                        <span class="p">(</span><span class="n">map</span><span class="p">,</span> <span class="n">indices</span><span class="p">)</span>
+                    <span class="p">},</span>
+                <span class="p">);</span>
+
+            <span class="k">Self</span><span class="p">(</span><span class="n">dirs</span><span class="p">,</span> <span class="n">map</span><span class="p">,</span> <span class="n">indices</span><span class="p">)</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+
+    <span class="k">fn</span> <span class="n">find_or_insert</span><span class="o">&lt;</span><span class="nv">'a</span><span class="o">&gt;</span><span class="p">(</span>
+        <span class="n">map</span><span class="p">:</span> <span class="o">&amp;</span><span class="k">mut</span> <span class="nb">Vec</span><span class="o">&lt;</span><span class="p">(</span><span class="o">&amp;</span><span class="nv">'a</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">Option</span><span class="o">&lt;</span><span class="p">(</span><span class="nb">usize</span><span class="p">,</span> <span class="nb">usize</span><span class="p">)</span><span class="o">&gt;</span><span class="p">)</span><span class="o">&gt;</span><span class="p">,</span>
+        <span class="n">indices</span><span class="p">:</span> <span class="o">&amp;</span><span class="k">mut</span> <span class="n">HashMap</span><span class="o">&lt;&amp;</span><span class="nv">'a</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">usize</span><span class="o">&gt;</span><span class="p">,</span>
+        <span class="n">label</span><span class="p">:</span> <span class="o">&amp;</span><span class="nv">'a</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="p">)</span> <span class="k">-&gt;</span> <span class="nb">usize</span> <span class="p">{</span>
+        <span class="k">match</span> <span class="n">indices</span><span class="nf">.entry</span><span class="p">(</span><span class="n">label</span><span class="p">)</span> <span class="p">{</span>
+            <span class="nn">Entry</span><span class="p">::</span><span class="nf">Occupied</span><span class="p">(</span><span class="n">o</span><span class="p">)</span> <span class="k">=&gt;</span> <span class="o">*</span><span class="n">o</span><span class="nf">.get</span><span class="p">(),</span>
+            <span class="nn">Entry</span><span class="p">::</span><span class="nf">Vacant</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="k">=&gt;</span> <span class="p">{</span>
+                <span class="n">map</span><span class="nf">.push</span><span class="p">((</span><span class="n">label</span><span class="p">,</span> <span class="nb">None</span><span class="p">));</span>
+                <span class="o">*</span><span class="p">(</span><span class="n">v</span><span class="nf">.insert</span><span class="p">(</span><span class="n">map</span><span class="nf">.len</span><span class="p">()</span> <span class="o">-</span> <span class="mi">1</span><span class="p">))</span>
+            <span class="p">}</span>
         <span class="p">}</span>
     <span class="p">}</span>
 <span class="p">}</span>
@@ -2972,24 +3035,22 @@ QQQJA 483
 17
 18
 19
-20
 </pre></td><td class="code"><pre><span class="k">pub</span> <span class="k">fn</span> <span class="n">map_iter</span><span class="o">&lt;</span><span class="nv">'a</span><span class="o">&gt;</span><span class="p">(</span>
     <span class="n">dirs</span><span class="p">:</span> <span class="o">&amp;</span><span class="nv">'a</span> <span class="p">[</span><span class="nb">u8</span><span class="p">],</span>
-    <span class="n">map</span><span class="p">:</span> <span class="o">&amp;</span><span class="nv">'a</span> <span class="n">HashMap</span><span class="o">&lt;&amp;</span><span class="nv">'a</span> <span class="nb">str</span><span class="p">,</span> <span class="p">(</span><span class="o">&amp;</span><span class="nv">'a</span> <span class="nb">str</span><span class="p">,</span> <span class="o">&amp;</span><span class="nv">'a</span> <span class="nb">str</span><span class="p">)</span><span class="o">&gt;</span><span class="p">,</span>
-    <span class="n">node</span><span class="p">:</span> <span class="o">&amp;</span><span class="nv">'a</span> <span class="nb">str</span><span class="p">,</span>
-<span class="p">)</span> <span class="k">-&gt;</span> <span class="k">impl</span> <span class="nb">Iterator</span><span class="o">&lt;</span><span class="n">Item</span> <span class="o">=</span> <span class="p">(</span><span class="nb">usize</span><span class="p">,</span> <span class="o">&amp;</span><span class="nv">'a</span> <span class="nb">str</span><span class="p">)</span><span class="o">&gt;</span> <span class="o">+</span> <span class="nv">'a</span> <span class="p">{</span>
+    <span class="n">map</span><span class="p">:</span> <span class="o">&amp;</span><span class="nv">'a</span> <span class="p">[(</span><span class="o">&amp;</span><span class="nv">'a</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">Option</span><span class="o">&lt;</span><span class="p">(</span><span class="nb">usize</span><span class="p">,</span> <span class="nb">usize</span><span class="p">)</span><span class="o">&gt;</span><span class="p">)],</span>
+    <span class="n">node</span><span class="p">:</span> <span class="nb">usize</span><span class="p">,</span>
+<span class="p">)</span> <span class="k">-&gt;</span> <span class="k">impl</span> <span class="nb">Iterator</span><span class="o">&lt;</span><span class="n">Item</span> <span class="o">=</span> <span class="p">(</span><span class="nb">usize</span><span class="p">,</span> <span class="nb">usize</span><span class="p">)</span><span class="o">&gt;</span> <span class="o">+</span> <span class="nv">'a</span> <span class="p">{</span>
     <span class="nf">successors</span><span class="p">(</span><span class="nf">Some</span><span class="p">((</span><span class="mi">0</span><span class="p">,</span> <span class="n">node</span><span class="p">)),</span> <span class="p">|</span><span class="o">&amp;</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">node</span><span class="p">)|</span> <span class="p">{</span>
-        <span class="n">map</span><span class="nf">.get</span><span class="p">(</span><span class="n">node</span><span class="p">)</span>
-            <span class="nf">.map</span><span class="p">(|</span><span class="o">&amp;</span><span class="p">(</span><span class="n">left</span><span class="p">,</span> <span class="n">right</span><span class="p">)|</span> <span class="k">match</span> <span class="n">dirs</span><span class="p">[</span><span class="n">k</span> <span class="o">%</span> <span class="n">dirs</span><span class="nf">.len</span><span class="p">()]</span> <span class="p">{</span>
-                <span class="sc">b'L'</span> <span class="k">=&gt;</span> <span class="p">(</span><span class="n">k</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">left</span><span class="p">),</span>
-                <span class="n">_</span> <span class="k">=&gt;</span> <span class="p">(</span><span class="n">k</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">right</span><span class="p">),</span>
-            <span class="p">})</span>
+        <span class="n">map</span><span class="p">[</span><span class="n">node</span><span class="p">]</span><span class="na">.1</span><span class="nf">.map</span><span class="p">(|(</span><span class="n">left</span><span class="p">,</span> <span class="n">right</span><span class="p">)|</span> <span class="k">match</span> <span class="n">dirs</span><span class="p">[</span><span class="n">k</span> <span class="o">%</span> <span class="n">dirs</span><span class="nf">.len</span><span class="p">()]</span> <span class="p">{</span>
+            <span class="sc">b'L'</span> <span class="k">=&gt;</span> <span class="p">(</span><span class="n">k</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">left</span><span class="p">),</span>
+            <span class="n">_</span> <span class="k">=&gt;</span> <span class="p">(</span><span class="n">k</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">right</span><span class="p">),</span>
+        <span class="p">})</span>
     <span class="p">})</span>
 <span class="p">}</span>
 
-<span class="k">pub</span> <span class="k">fn</span> <span class="nf">star_1</span><span class="p">(</span><span class="nf">PuzzleData</span><span class="p">(</span><span class="n">dirs</span><span class="p">,</span> <span class="n">map</span><span class="p">):</span> <span class="o">&amp;</span><span class="n">PuzzleData</span><span class="p">)</span> <span class="k">-&gt;</span> <span class="n">SolT</span> <span class="p">{</span>
-    <span class="nf">map_iter</span><span class="p">(</span><span class="n">dirs</span><span class="p">,</span> <span class="n">map</span><span class="p">,</span> <span class="s">"AAA"</span><span class="p">)</span>
-        <span class="nf">.find</span><span class="p">(|</span><span class="o">&amp;</span><span class="p">(</span><span class="n">_</span><span class="p">,</span> <span class="n">node</span><span class="p">)|</span> <span class="n">node</span> <span class="o">==</span> <span class="s">"ZZZ"</span><span class="p">)</span>
+<span class="k">pub</span> <span class="k">fn</span> <span class="nf">star_1</span><span class="p">(</span><span class="nf">PuzzleData</span><span class="p">(</span><span class="n">dirs</span><span class="p">,</span> <span class="n">map</span><span class="p">,</span> <span class="n">indices</span><span class="p">):</span> <span class="o">&amp;</span><span class="n">PuzzleData</span><span class="p">)</span> <span class="k">-&gt;</span> <span class="n">SolT</span> <span class="p">{</span>
+    <span class="nf">map_iter</span><span class="p">(</span><span class="n">dirs</span><span class="p">,</span> <span class="n">map</span><span class="p">,</span> <span class="o">*</span><span class="n">indices</span><span class="nf">.get</span><span class="p">(</span><span class="s">"AAA"</span><span class="p">)</span><span class="nf">.unwrap</span><span class="p">())</span>
+        <span class="nf">.find</span><span class="p">(|(</span><span class="n">_</span><span class="p">,</span> <span class="n">node</span><span class="p">)|</span> <span class="n">map</span><span class="p">[</span><span class="o">*</span><span class="n">node</span><span class="p">]</span><span class="na">.0</span> <span class="o">==</span> <span class="s">"ZZZ"</span><span class="p">)</span>
         <span class="nf">.map</span><span class="p">(|(</span><span class="n">steps</span><span class="p">,</span> <span class="n">_</span><span class="p">)|</span> <span class="n">steps</span><span class="p">)</span>
         <span class="nf">.unwrap</span><span class="p">()</span>
 <span class="p">}</span>
@@ -3029,13 +3090,15 @@ QQQJA 483
 17
 18
 19
-</pre></td><td class="code"><pre><span class="k">pub</span> <span class="k">fn</span> <span class="nf">star_2</span><span class="p">(</span><span class="nf">PuzzleData</span><span class="p">(</span><span class="n">dirs</span><span class="p">,</span> <span class="n">map</span><span class="p">):</span> <span class="o">&amp;</span><span class="n">PuzzleData</span><span class="p">)</span> <span class="k">-&gt;</span> <span class="n">SolT</span> <span class="p">{</span>
-    <span class="n">map</span><span class="nf">.keys</span><span class="p">()</span>
-        <span class="nf">.filter</span><span class="p">(|</span><span class="n">key</span><span class="p">|</span> <span class="n">key</span><span class="nf">.ends_with</span><span class="p">(</span><span class="sc">'A'</span><span class="p">))</span>
-        <span class="nf">.map</span><span class="p">(|</span><span class="o">&amp;</span><span class="n">node</span><span class="p">|</span> <span class="p">{</span>
-            <span class="k">let</span> <span class="k">mut</span> <span class="n">it</span> <span class="o">=</span> <span class="nf">map_iter</span><span class="p">(</span><span class="n">dirs</span><span class="p">,</span> <span class="n">map</span><span class="p">,</span> <span class="n">node</span><span class="p">)</span>
+20
+</pre></td><td class="code"><pre><span class="k">pub</span> <span class="k">fn</span> <span class="nf">star_2</span><span class="p">(</span><span class="nf">PuzzleData</span><span class="p">(</span><span class="n">dirs</span><span class="p">,</span> <span class="n">map</span><span class="p">,</span> <span class="n">_</span><span class="p">):</span> <span class="o">&amp;</span><span class="n">PuzzleData</span><span class="p">)</span> <span class="k">-&gt;</span> <span class="n">SolT</span> <span class="p">{</span>
+    <span class="n">map</span><span class="nf">.iter</span><span class="p">()</span>
+        <span class="nf">.enumerate</span><span class="p">()</span>
+        <span class="nf">.filter</span><span class="p">(|(</span><span class="n">_</span><span class="p">,</span> <span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">_</span><span class="p">))|</span> <span class="n">key</span><span class="nf">.ends_with</span><span class="p">(</span><span class="sc">'A'</span><span class="p">))</span>
+        <span class="nf">.map</span><span class="p">(|(</span><span class="n">pos</span><span class="p">,</span> <span class="n">_</span><span class="p">)|</span> <span class="p">{</span>
+            <span class="k">let</span> <span class="k">mut</span> <span class="n">it</span> <span class="o">=</span> <span class="nf">map_iter</span><span class="p">(</span><span class="n">dirs</span><span class="p">,</span> <span class="n">map</span><span class="p">,</span> <span class="n">pos</span><span class="p">)</span>
                 <span class="nf">.step_by</span><span class="p">(</span><span class="n">dirs</span><span class="nf">.len</span><span class="p">())</span> <span class="c1">// only find result that used all dirs</span>
-                <span class="nf">.filter</span><span class="p">(|(</span><span class="n">_</span><span class="p">,</span> <span class="n">node</span><span class="p">)|</span> <span class="n">node</span><span class="nf">.ends_with</span><span class="p">(</span><span class="sc">'Z'</span><span class="p">));</span>
+                <span class="nf">.filter</span><span class="p">(|(</span><span class="n">_</span><span class="p">,</span> <span class="n">node</span><span class="p">)|</span> <span class="n">map</span><span class="p">[</span><span class="o">*</span><span class="n">node</span><span class="p">]</span><span class="na">.0</span><span class="nf">.ends_with</span><span class="p">(</span><span class="sc">'Z'</span><span class="p">));</span>
             <span class="k">let</span> <span class="p">(</span><span class="n">steps_0</span><span class="p">,</span> <span class="n">node_0</span><span class="p">)</span> <span class="o">=</span> <span class="n">it</span><span class="nf">.next</span><span class="p">()</span><span class="nf">.unwrap</span><span class="p">();</span>
             <span class="k">if</span> <span class="nd">cfg!</span><span class="p">(</span><span class="n">feature</span> <span class="o">=</span> <span class="s">"check-periodicity"</span><span class="p">)</span> <span class="p">{</span>
                 <span class="c1">// the solution assumes periodicity, so let's check it</span>
@@ -3152,6 +3215,9 @@ QQQJA 483
 91
 92
 93
+94
+95
+96
 </pre></td><td class="code"><pre><span class="nd">#[cfg(test)]</span>
 <span class="k">mod</span> <span class="n">tests</span> <span class="p">{</span>
     <span class="k">use</span> <span class="nn">std</span><span class="p">::</span><span class="nn">collections</span><span class="p">::</span><span class="n">HashMap</span><span class="p">;</span>
@@ -3172,11 +3238,12 @@ ZZZ = (ZZZ, ZZZ)
         <span class="nd">assert_eq!</span><span class="p">(</span>
             <span class="nf">PuzzleData</span><span class="p">(</span>
                 <span class="s">"LLR"</span><span class="nf">.as_bytes</span><span class="p">(),</span>
-                <span class="nn">HashMap</span><span class="p">::</span><span class="nf">from</span><span class="p">([</span>
-                    <span class="p">(</span><span class="s">"AAA"</span><span class="p">,</span> <span class="p">(</span><span class="s">"BBB"</span><span class="p">,</span> <span class="s">"BBB"</span><span class="p">)),</span>
-                    <span class="p">(</span><span class="s">"BBB"</span><span class="p">,</span> <span class="p">(</span><span class="s">"AAA"</span><span class="p">,</span> <span class="s">"ZZZ"</span><span class="p">)),</span>
-                    <span class="p">(</span><span class="s">"ZZZ"</span><span class="p">,</span> <span class="p">(</span><span class="s">"ZZZ"</span><span class="p">,</span> <span class="s">"ZZZ"</span><span class="p">))</span>
-                <span class="p">])</span>
+                <span class="nd">vec!</span><span class="p">[</span>
+                    <span class="p">(</span><span class="s">"AAA"</span><span class="p">,</span> <span class="nf">Some</span><span class="p">((</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">))),</span>
+                    <span class="p">(</span><span class="s">"BBB"</span><span class="p">,</span> <span class="nf">Some</span><span class="p">((</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">))),</span>
+                    <span class="p">(</span><span class="s">"ZZZ"</span><span class="p">,</span> <span class="nf">Some</span><span class="p">((</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">)))</span>
+                <span class="p">],</span>
+                <span class="nn">HashMap</span><span class="p">::</span><span class="nf">from</span><span class="p">([(</span><span class="s">"AAA"</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="p">(</span><span class="s">"BBB"</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="p">(</span><span class="s">"ZZZ"</span><span class="p">,</span> <span class="mi">2</span><span class="p">)])</span>
             <span class="p">),</span>
             <span class="n">data</span>
         <span class="p">);</span>
@@ -3205,23 +3272,25 @@ XXX = (XXX, XXX)
     <span class="p">}</span>
 
     <span class="k">pub</span> <span class="k">fn</span> <span class="nf">do_understand</span><span class="p">(</span><span class="n">data</span><span class="p">:</span> <span class="o">&amp;</span><span class="nb">str</span><span class="p">,</span> <span class="n">n</span><span class="p">:</span> <span class="nb">usize</span><span class="p">)</span> <span class="p">{</span>
-        <span class="k">let</span> <span class="nf">PuzzleData</span><span class="p">(</span><span class="n">dirs</span><span class="p">,</span> <span class="n">map</span><span class="p">)</span> <span class="o">=</span> <span class="n">data</span><span class="nf">.into</span><span class="p">();</span>
-        <span class="k">for</span> <span class="n">node</span> <span class="k">in</span> <span class="n">map</span>
-            <span class="nf">.keys</span><span class="p">()</span>
-            <span class="nf">.filter</span><span class="p">(|</span><span class="n">node</span><span class="p">|</span> <span class="n">node</span><span class="nf">.ends_with</span><span class="p">(</span><span class="sc">'A'</span><span class="p">))</span>
-            <span class="nf">.map</span><span class="p">(|</span><span class="n">node</span><span class="p">|</span> <span class="o">*</span><span class="n">node</span><span class="p">)</span>
+        <span class="k">let</span> <span class="nf">PuzzleData</span><span class="p">(</span><span class="n">dirs</span><span class="p">,</span> <span class="n">map</span><span class="p">,</span> <span class="n">_</span><span class="p">)</span> <span class="o">=</span> <span class="n">data</span><span class="nf">.into</span><span class="p">();</span>
+        <span class="k">for</span> <span class="n">index</span> <span class="k">in</span> <span class="n">map</span>
+            <span class="nf">.iter</span><span class="p">()</span>
+            <span class="nf">.enumerate</span><span class="p">()</span>
+            <span class="nf">.filter</span><span class="p">(|(</span><span class="n">_</span><span class="p">,</span> <span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="n">_</span><span class="p">))|</span> <span class="n">node</span><span class="nf">.ends_with</span><span class="p">(</span><span class="sc">'A'</span><span class="p">))</span>
+            <span class="nf">.map</span><span class="p">(|(</span><span class="n">index</span><span class="p">,</span> <span class="n">_</span><span class="p">)|</span> <span class="n">index</span><span class="p">)</span>
         <span class="p">{</span>
-            <span class="nd">println!</span><span class="p">(</span><span class="s">"Node {}"</span><span class="p">,</span> <span class="n">node</span><span class="p">);</span>
+            <span class="nd">println!</span><span class="p">(</span><span class="s">"Node {}: {}"</span><span class="p">,</span> <span class="n">index</span><span class="p">,</span> <span class="n">map</span><span class="p">[</span><span class="n">index</span><span class="p">]</span><span class="na">.0</span><span class="p">);</span>
             <span class="k">let</span> <span class="k">mut</span> <span class="n">base</span> <span class="o">=</span> <span class="nb">None</span><span class="p">;</span>
-            <span class="k">for</span> <span class="p">(</span><span class="n">pos</span><span class="p">,</span> <span class="n">node</span><span class="p">)</span> <span class="k">in</span> <span class="nf">map_iter</span><span class="p">(</span><span class="n">dirs</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">map</span><span class="p">,</span> <span class="n">node</span><span class="p">)</span>
+            <span class="k">for</span> <span class="p">(</span><span class="n">pos</span><span class="p">,</span> <span class="n">node</span><span class="p">)</span> <span class="k">in</span> <span class="nf">map_iter</span><span class="p">(</span><span class="n">dirs</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">map</span><span class="p">,</span> <span class="n">index</span><span class="p">)</span>
                 <span class="nf">.step_by</span><span class="p">(</span><span class="n">dirs</span><span class="nf">.len</span><span class="p">())</span>
-                <span class="nf">.filter</span><span class="p">(|</span><span class="o">&amp;</span><span class="p">(</span><span class="n">_</span><span class="p">,</span> <span class="n">x</span><span class="p">)|</span> <span class="n">x</span><span class="nf">.ends_with</span><span class="p">(</span><span class="sc">'Z'</span><span class="p">))</span>
+                <span class="nf">.filter</span><span class="p">(|</span><span class="o">&amp;</span><span class="p">(</span><span class="n">_</span><span class="p">,</span> <span class="n">x</span><span class="p">)|</span> <span class="n">map</span><span class="p">[</span><span class="n">x</span><span class="p">]</span><span class="na">.0</span><span class="nf">.ends_with</span><span class="p">(</span><span class="sc">'Z'</span><span class="p">))</span>
                 <span class="nf">.take</span><span class="p">(</span><span class="n">n</span><span class="p">)</span>
             <span class="p">{</span>
                 <span class="k">let</span> <span class="n">base</span> <span class="o">=</span> <span class="o">*</span><span class="n">base</span><span class="nf">.get_or_insert</span><span class="p">(</span><span class="n">pos</span><span class="p">);</span>
                 <span class="nd">println!</span><span class="p">(</span>
-                    <span class="s">"    reached {} at step {} = {} * {} + {} = {} * {} + {}"</span><span class="p">,</span>
+                    <span class="s">"    reached {}: {} at step {} = {} * {} + {} = {} * {} + {}"</span><span class="p">,</span>
                     <span class="n">node</span><span class="p">,</span>
+                    <span class="n">map</span><span class="p">[</span><span class="n">node</span><span class="p">]</span><span class="na">.0</span><span class="p">,</span>
                     <span class="n">pos</span><span class="p">,</span>
                     <span class="n">pos</span> <span class="o">/</span> <span class="n">base</span><span class="p">,</span>
                     <span class="n">base</span><span class="p">,</span>
@@ -3298,11 +3367,11 @@ XXX = (XXX, XXX)
     <span class="nd">#[derive(Debug,</span> <span class="nd">PartialEq,</span> <span class="nd">Eq)]</span>
     <span class="k">pub</span> <span class="k">struct</span> <span class="nf">PuzzleData</span><span class="p">(</span><span class="k">pub</span> <span class="nb">Vec</span><span class="o">&lt;</span><span class="nb">Vec</span><span class="o">&lt;</span><span class="n">SolT</span><span class="o">&gt;&gt;</span><span class="p">);</span>
 
-    <span class="k">impl</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span> <span class="nb">From</span><span class="o">&lt;&amp;</span><span class="n">T</span><span class="o">&gt;</span> <span class="k">for</span> <span class="n">PuzzleData</span>
+    <span class="k">impl</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span> <span class="nb">From</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span> <span class="k">for</span> <span class="n">PuzzleData</span>
     <span class="k">where</span>
-        <span class="n">T</span><span class="p">:</span> <span class="nb">AsRef</span><span class="o">&lt;</span><span class="nb">str</span><span class="o">&gt;</span> <span class="o">+</span> <span class="o">?</span><span class="nb">Sized</span><span class="p">,</span>
+        <span class="n">T</span><span class="p">:</span> <span class="nb">AsRef</span><span class="o">&lt;</span><span class="nb">str</span><span class="o">&gt;</span><span class="p">,</span>
     <span class="p">{</span>
-        <span class="k">fn</span> <span class="nf">from</span><span class="p">(</span><span class="n">s</span><span class="p">:</span> <span class="o">&amp;</span><span class="n">T</span><span class="p">)</span> <span class="k">-&gt;</span> <span class="k">Self</span> <span class="p">{</span>
+        <span class="k">fn</span> <span class="nf">from</span><span class="p">(</span><span class="n">s</span><span class="p">:</span> <span class="n">T</span><span class="p">)</span> <span class="k">-&gt;</span> <span class="k">Self</span> <span class="p">{</span>
             <span class="k">Self</span><span class="p">(</span>
                 <span class="n">s</span><span class="nf">.as_ref</span><span class="p">()</span>
                     <span class="nf">.lines</span><span class="p">()</span>
@@ -3351,9 +3420,7 @@ XXX = (XXX, XXX)
 18
 19
 20
-21
-</pre></td><td class="code"><pre><span class="k">pub</span> <span class="k">fn</span> <span class="n">extrapolate_back</span><span class="o">&lt;</span><span class="n">T</span><span class="p">:</span> <span class="nb">AsRef</span><span class="o">&lt;</span><span class="p">[</span><span class="n">SolT</span><span class="p">]</span><span class="o">&gt;&gt;</span><span class="p">(</span><span class="n">values</span><span class="p">:</span> <span class="n">T</span><span class="p">)</span> <span class="k">-&gt;</span> <span class="n">SolT</span> <span class="p">{</span>
-    <span class="k">let</span> <span class="k">mut</span> <span class="n">values</span> <span class="o">=</span> <span class="n">values</span><span class="nf">.as_ref</span><span class="p">()</span><span class="nf">.to_owned</span><span class="p">();</span>
+</pre></td><td class="code"><pre><span class="k">pub</span> <span class="k">fn</span> <span class="nf">extrapolate_back</span><span class="p">(</span><span class="k">mut</span> <span class="n">values</span><span class="p">:</span> <span class="nb">Vec</span><span class="o">&lt;</span><span class="n">SolT</span><span class="o">&gt;</span><span class="p">)</span> <span class="k">-&gt;</span> <span class="n">SolT</span> <span class="p">{</span>
     <span class="nf">successors</span><span class="p">(</span><span class="nf">Some</span><span class="p">((</span><span class="mi">0</span><span class="p">,</span> <span class="n">values</span><span class="nf">.len</span><span class="p">())),</span> <span class="p">|</span><span class="o">&amp;</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="n">len</span><span class="p">)|</span> <span class="p">{</span>
         <span class="k">if</span> <span class="p">(</span><span class="mi">0</span><span class="o">..</span><span class="n">len</span><span class="p">)</span><span class="nf">.all</span><span class="p">(|</span><span class="n">k</span><span class="p">|</span> <span class="n">values</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
             <span class="nb">None</span>
@@ -3371,7 +3438,7 @@ XXX = (XXX, XXX)
 <span class="p">}</span>
 
 <span class="k">pub</span> <span class="k">fn</span> <span class="nf">star_1</span><span class="p">(</span><span class="nf">PuzzleData</span><span class="p">(</span><span class="n">values</span><span class="p">):</span> <span class="o">&amp;</span><span class="n">PuzzleData</span><span class="p">)</span> <span class="k">-&gt;</span> <span class="n">SolT</span> <span class="p">{</span>
-    <span class="n">values</span><span class="nf">.iter</span><span class="p">()</span><span class="nf">.map</span><span class="p">(</span><span class="n">extrapolate_back</span><span class="p">)</span><span class="nf">.sum</span><span class="p">()</span>
+    <span class="n">values</span><span class="nf">.iter</span><span class="p">()</span><span class="nf">.cloned</span><span class="p">()</span><span class="nf">.map</span><span class="p">(</span><span class="n">extrapolate_back</span><span class="p">)</span><span class="nf">.sum</span><span class="p">()</span>
 <span class="p">}</span>
 </pre></td></tr></tbody></table></code></pre>
 </div>
@@ -3384,6 +3451,9 @@ XXX = (XXX, XXX)
 </div>
 <div class="paragraph">
 <p>The head values of all iterations contribute to the prediction through an alternating sum. The head of the original data contributes positively.</p>
+</div>
+<div class="paragraph">
+<p>(Alternatively, it is possible to revert the whole list or pseudo-revert it by changing some signs. The main advantage is to avoid code duplication, I guess. I could not measure a significant difference in performance.)</p>
 </div>
 <div class="listingblock">
 <div class="content">
@@ -3408,8 +3478,39 @@ XXX = (XXX, XXX)
 19
 20
 21
-</pre></td><td class="code"><pre><span class="k">pub</span> <span class="k">fn</span> <span class="n">extrapolate_front</span><span class="o">&lt;</span><span class="n">T</span><span class="p">:</span> <span class="nb">AsRef</span><span class="o">&lt;</span><span class="p">[</span><span class="n">SolT</span><span class="p">]</span><span class="o">&gt;&gt;</span><span class="p">(</span><span class="n">values</span><span class="p">:</span> <span class="n">T</span><span class="p">)</span> <span class="k">-&gt;</span> <span class="n">SolT</span> <span class="p">{</span>
-    <span class="k">let</span> <span class="k">mut</span> <span class="n">values</span> <span class="o">=</span> <span class="n">values</span><span class="nf">.as_ref</span><span class="p">()</span><span class="nf">.to_owned</span><span class="p">();</span>
+22
+23
+24
+25
+26
+27
+28
+29
+30
+31
+32
+33
+34
+35
+36
+37
+38
+39
+40
+41
+42
+43
+44
+45
+46
+47
+48
+49
+50
+51
+52
+</pre></td><td class="code"><pre><span class="nd">#[cfg(all(not(feature</span> <span class="nd">=</span> <span class="s">"reverse"</span><span class="nd">),</span> <span class="nd">not(feature</span> <span class="nd">=</span> <span class="s">"no-sign"</span><span class="nd">)))]</span>
+<span class="k">pub</span> <span class="k">fn</span> <span class="nf">extrapolate_front</span><span class="p">(</span><span class="k">mut</span> <span class="n">values</span><span class="p">:</span> <span class="nb">Vec</span><span class="o">&lt;</span><span class="n">SolT</span><span class="o">&gt;</span><span class="p">)</span> <span class="k">-&gt;</span> <span class="n">SolT</span> <span class="p">{</span>
     <span class="nf">successors</span><span class="p">(</span><span class="nf">Some</span><span class="p">((</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">values</span><span class="nf">.len</span><span class="p">())),</span> <span class="p">|</span><span class="o">&amp;</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="n">sign</span><span class="p">,</span> <span class="n">len</span><span class="p">)|</span> <span class="p">{</span>
         <span class="k">if</span> <span class="n">len</span> <span class="o">==</span> <span class="mi">0</span> <span class="p">||</span> <span class="p">(</span><span class="mi">0</span><span class="o">..</span><span class="n">len</span><span class="p">)</span><span class="nf">.all</span><span class="p">(|</span><span class="n">k</span><span class="p">|</span> <span class="n">values</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
             <span class="nb">None</span>
@@ -3426,8 +3527,39 @@ XXX = (XXX, XXX)
     <span class="nf">.unwrap_or</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
 <span class="p">}</span>
 
+<span class="nd">#[cfg(all(not(feature</span> <span class="nd">=</span> <span class="s">"reverse"</span><span class="nd">),</span> <span class="nd">feature</span> <span class="nd">=</span> <span class="s">"no-sign"</span><span class="nd">))]</span>
+<span class="cd">/// variant that inverses the sign in the update steps to get back to</span>
+<span class="cd">/// a direct sum; this is almost reverting the list of values</span>
+<span class="k">pub</span> <span class="k">fn</span> <span class="nf">extrapolate_front</span><span class="p">(</span><span class="k">mut</span> <span class="n">values</span><span class="p">:</span> <span class="nb">Vec</span><span class="o">&lt;</span><span class="n">SolT</span><span class="o">&gt;</span><span class="p">)</span> <span class="k">-&gt;</span> <span class="n">SolT</span> <span class="p">{</span>
+    <span class="nf">successors</span><span class="p">(</span><span class="nf">Some</span><span class="p">((</span><span class="mi">0</span><span class="p">,</span> <span class="n">values</span><span class="nf">.len</span><span class="p">())),</span> <span class="p">|</span><span class="o">&amp;</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="n">len</span><span class="p">)|</span> <span class="p">{</span>
+        <span class="k">if</span> <span class="n">len</span> <span class="o">==</span> <span class="mi">0</span> <span class="p">||</span> <span class="p">(</span><span class="mi">0</span><span class="o">..</span><span class="n">len</span><span class="p">)</span><span class="nf">.all</span><span class="p">(|</span><span class="n">k</span><span class="p">|</span> <span class="n">values</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+            <span class="nb">None</span>
+        <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+            <span class="k">let</span> <span class="n">head</span> <span class="o">=</span> <span class="n">values</span><span class="p">[</span><span class="mi">0</span><span class="p">];</span>
+            <span class="k">for</span> <span class="n">k</span> <span class="k">in</span> <span class="mi">0</span><span class="o">..</span><span class="n">len</span> <span class="o">-</span> <span class="mi">1</span> <span class="p">{</span>
+                <span class="n">values</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">-=</span> <span class="n">values</span><span class="p">[</span><span class="n">k</span> <span class="o">+</span> <span class="mi">1</span><span class="p">];</span>
+            <span class="p">}</span>
+            <span class="nf">Some</span><span class="p">((</span><span class="n">result</span> <span class="o">+</span> <span class="n">head</span><span class="p">,</span> <span class="n">len</span> <span class="o">-</span> <span class="mi">1</span><span class="p">))</span>
+        <span class="p">}</span>
+    <span class="p">})</span>
+    <span class="nf">.last</span><span class="p">()</span>
+    <span class="nf">.map</span><span class="p">(|(</span><span class="n">result</span><span class="p">,</span> <span class="n">_</span><span class="p">)|</span> <span class="n">result</span><span class="p">)</span>
+    <span class="nf">.unwrap_or</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+<span class="p">}</span>
+
+<span class="nd">#[cfg(not(feature</span> <span class="nd">=</span> <span class="s">"reverse"</span><span class="nd">))]</span>
 <span class="k">pub</span> <span class="k">fn</span> <span class="nf">star_2</span><span class="p">(</span><span class="nf">PuzzleData</span><span class="p">(</span><span class="n">values</span><span class="p">):</span> <span class="o">&amp;</span><span class="n">PuzzleData</span><span class="p">)</span> <span class="k">-&gt;</span> <span class="n">SolT</span> <span class="p">{</span>
-    <span class="n">values</span><span class="nf">.iter</span><span class="p">()</span><span class="nf">.map</span><span class="p">(</span><span class="n">extrapolate_front</span><span class="p">)</span><span class="nf">.sum</span><span class="p">()</span>
+    <span class="n">values</span><span class="nf">.iter</span><span class="p">()</span><span class="nf">.cloned</span><span class="p">()</span><span class="nf">.map</span><span class="p">(</span><span class="n">extrapolate_front</span><span class="p">)</span><span class="nf">.sum</span><span class="p">()</span>
+<span class="p">}</span>
+
+<span class="nd">#[cfg(feature</span> <span class="nd">=</span> <span class="s">"reverse"</span><span class="nd">)]</span>
+<span class="cd">/// variant that reverts the list of values and extrapolates at the back</span>
+<span class="k">pub</span> <span class="k">fn</span> <span class="nf">star_2</span><span class="p">(</span><span class="nf">PuzzleData</span><span class="p">(</span><span class="n">values</span><span class="p">):</span> <span class="o">&amp;</span><span class="n">PuzzleData</span><span class="p">)</span> <span class="k">-&gt;</span> <span class="n">SolT</span> <span class="p">{</span>
+    <span class="n">values</span>
+        <span class="nf">.iter</span><span class="p">()</span>
+        <span class="nf">.map</span><span class="p">(|</span><span class="n">values</span><span class="p">|</span> <span class="n">values</span><span class="nf">.iter</span><span class="p">()</span><span class="nf">.rev</span><span class="p">()</span><span class="nf">.copied</span><span class="p">()</span><span class="nf">.collect</span><span class="p">())</span>
+        <span class="nf">.map</span><span class="p">(</span><span class="n">extrapolate_back</span><span class="p">)</span>
+        <span class="nf">.sum</span><span class="p">()</span>
 <span class="p">}</span>
 </pre></td></tr></tbody></table></code></pre>
 </div>
@@ -3476,6 +3608,7 @@ XXX = (XXX, XXX)
 37
 38
 39
+40
 </pre></td><td class="code"><pre><span class="nd">#[cfg(test)]</span>
 <span class="k">mod</span> <span class="n">tests</span> <span class="p">{</span>
     <span class="k">use</span> <span class="k">super</span><span class="p">::</span><span class="o">*</span><span class="p">;</span>
@@ -3504,9 +3637,10 @@ XXX = (XXX, XXX)
         <span class="nd">assert_eq!</span><span class="p">(</span><span class="mi">114</span><span class="p">,</span> <span class="nf">star_1</span><span class="p">(</span><span class="o">&amp;</span><span class="n">CONTENT</span><span class="nf">.into</span><span class="p">()));</span>
     <span class="p">}</span>
 
+    <span class="nd">#[cfg(not(feature</span> <span class="nd">=</span> <span class="s">"reverse"</span><span class="nd">))]</span>
     <span class="nd">#[test]</span>
     <span class="k">pub</span> <span class="k">fn</span> <span class="nf">test_extrapolate_front</span><span class="p">()</span> <span class="p">{</span>
-        <span class="k">let</span> <span class="n">front</span> <span class="o">=</span> <span class="nf">extrapolate_front</span><span class="p">([</span><span class="mi">10</span><span class="p">,</span> <span class="mi">13</span><span class="p">,</span> <span class="mi">16</span><span class="p">,</span> <span class="mi">21</span><span class="p">,</span> <span class="mi">30</span><span class="p">,</span> <span class="mi">45</span><span class="p">]);</span>
+        <span class="k">let</span> <span class="n">front</span> <span class="o">=</span> <span class="nf">extrapolate_front</span><span class="p">(</span><span class="nd">vec!</span><span class="p">[</span><span class="mi">10</span><span class="p">,</span> <span class="mi">13</span><span class="p">,</span> <span class="mi">16</span><span class="p">,</span> <span class="mi">21</span><span class="p">,</span> <span class="mi">30</span><span class="p">,</span> <span class="mi">45</span><span class="p">]);</span>
         <span class="nd">assert_eq!</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="n">front</span><span class="p">);</span>
     <span class="p">}</span>
 
@@ -3561,11 +3695,11 @@ XXX = (XXX, XXX)
     <span class="nd">#[derive(Debug)]</span>
     <span class="k">pub</span> <span class="k">struct</span> <span class="nf">PuzzleData</span><span class="p">(</span><span class="k">pub</span> <span class="n">Grid</span><span class="p">);</span>
 
-    <span class="k">impl</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span> <span class="nb">From</span><span class="o">&lt;&amp;</span><span class="n">T</span><span class="o">&gt;</span> <span class="k">for</span> <span class="n">PuzzleData</span>
+    <span class="k">impl</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span> <span class="nb">From</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span> <span class="k">for</span> <span class="n">PuzzleData</span>
     <span class="k">where</span>
-        <span class="n">T</span><span class="p">:</span> <span class="nb">AsRef</span><span class="o">&lt;</span><span class="p">[</span><span class="nb">u8</span><span class="p">]</span><span class="o">&gt;</span> <span class="o">+</span> <span class="o">?</span><span class="nb">Sized</span><span class="p">,</span>
+        <span class="n">T</span><span class="p">:</span> <span class="nb">AsRef</span><span class="o">&lt;</span><span class="p">[</span><span class="nb">u8</span><span class="p">]</span><span class="o">&gt;</span><span class="p">,</span>
     <span class="p">{</span>
-        <span class="k">fn</span> <span class="nf">from</span><span class="p">(</span><span class="n">s</span><span class="p">:</span> <span class="o">&amp;</span><span class="n">T</span><span class="p">)</span> <span class="k">-&gt;</span> <span class="k">Self</span> <span class="p">{</span>
+        <span class="k">fn</span> <span class="nf">from</span><span class="p">(</span><span class="n">s</span><span class="p">:</span> <span class="n">T</span><span class="p">)</span> <span class="k">-&gt;</span> <span class="k">Self</span> <span class="p">{</span>
             <span class="k">Self</span><span class="p">(</span><span class="n">s</span><span class="nf">.make_grid</span><span class="p">(</span><span class="nf">Some</span><span class="p">(</span><span class="sc">b'.'</span><span class="p">)))</span>
         <span class="p">}</span>
     <span class="p">}</span>
@@ -4009,7 +4143,7 @@ L--J.L7...LJS7F-7L7.
 <div class="sect2">
 <h3 id="_input_10">Input</h3>
 <div class="paragraph">
-<p>I store the coordinates of each galaxy in a vector and create two more vectors with the galaxy counts in very column/row.</p>
+<p>I store the coordinates of each galaxy in a vector and create two more vectors with the galaxy counts in every column/row.</p>
 </div>
 <div class="listingblock">
 <div class="content">
@@ -4126,7 +4260,7 @@ L--J.L7...LJS7F-7L7.
 31
 32
 33
-</pre></td><td class="code"><pre><span class="k">fn</span> <span class="nf">calc_offsets</span><span class="p">(</span><span class="n">counts</span><span class="p">:</span> <span class="o">&amp;</span><span class="p">[</span><span class="nb">usize</span><span class="p">],</span> <span class="n">expansion</span><span class="p">:</span> <span class="n">SolT</span><span class="p">)</span> <span class="k">-&gt;</span> <span class="nb">Vec</span><span class="o">&lt;</span><span class="n">SolT</span><span class="o">&gt;</span> <span class="p">{</span>
+</pre></td><td class="code"><pre><span class="k">pub</span> <span class="k">fn</span> <span class="nf">calc_offsets</span><span class="p">(</span><span class="n">counts</span><span class="p">:</span> <span class="o">&amp;</span><span class="p">[</span><span class="nb">usize</span><span class="p">],</span> <span class="n">expansion</span><span class="p">:</span> <span class="n">SolT</span><span class="p">)</span> <span class="k">-&gt;</span> <span class="nb">Vec</span><span class="o">&lt;</span><span class="n">SolT</span><span class="o">&gt;</span> <span class="p">{</span>
     <span class="n">counts</span>
         <span class="nf">.iter</span><span class="p">()</span>
         <span class="nf">.scan</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="p">|</span><span class="n">cum_sum</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">cnt</span><span class="p">|</span> <span class="p">{</span>
@@ -4142,12 +4276,12 @@ L--J.L7...LJS7F-7L7.
     <span class="k">let</span> <span class="n">row_offsets</span> <span class="o">=</span> <span class="nf">calc_offsets</span><span class="p">(</span><span class="o">&amp;</span><span class="n">data</span><span class="py">.count_in_rows</span><span class="p">,</span> <span class="n">expansion</span><span class="p">);</span>
     <span class="n">data</span><span class="py">.galaxies</span>
         <span class="nf">.iter</span><span class="p">()</span>
-        <span class="nf">.map</span><span class="p">(|</span><span class="o">&amp;</span><span class="p">(</span><span class="n">col_a</span><span class="p">,</span> <span class="n">row_a</span><span class="p">)|</span> <span class="p">(</span><span class="n">col_offsets</span><span class="p">[</span><span class="n">col_a</span><span class="p">],</span> <span class="n">row_offsets</span><span class="p">[</span><span class="n">row_a</span><span class="p">]))</span>
+        <span class="nf">.map</span><span class="p">(|</span><span class="o">&amp;</span><span class="p">(</span><span class="n">col</span><span class="p">,</span> <span class="n">row</span><span class="p">)|</span> <span class="p">(</span><span class="n">col_offsets</span><span class="p">[</span><span class="n">col</span><span class="p">],</span> <span class="n">row_offsets</span><span class="p">[</span><span class="n">row</span><span class="p">]))</span>
         <span class="nf">.enumerate</span><span class="p">()</span>
         <span class="nf">.map</span><span class="p">(|(</span><span class="n">pos</span><span class="p">,</span> <span class="p">(</span><span class="n">col_a</span><span class="p">,</span> <span class="n">row_a</span><span class="p">))|</span> <span class="p">{</span>
             <span class="n">data</span><span class="py">.galaxies</span><span class="p">[</span><span class="n">pos</span> <span class="o">+</span> <span class="mi">1</span><span class="o">..</span><span class="p">]</span>
                 <span class="nf">.iter</span><span class="p">()</span>
-                <span class="nf">.map</span><span class="p">(|</span><span class="o">&amp;</span><span class="p">(</span><span class="n">col_a</span><span class="p">,</span> <span class="n">row_a</span><span class="p">)|</span> <span class="p">(</span><span class="n">col_offsets</span><span class="p">[</span><span class="n">col_a</span><span class="p">],</span> <span class="n">row_offsets</span><span class="p">[</span><span class="n">row_a</span><span class="p">]))</span>
+                <span class="nf">.map</span><span class="p">(|</span><span class="o">&amp;</span><span class="p">(</span><span class="n">col</span><span class="p">,</span> <span class="n">row</span><span class="p">)|</span> <span class="p">(</span><span class="n">col_offsets</span><span class="p">[</span><span class="n">col</span><span class="p">],</span> <span class="n">row_offsets</span><span class="p">[</span><span class="n">row</span><span class="p">]))</span>
                 <span class="nf">.map</span><span class="p">(|(</span><span class="n">col_b</span><span class="p">,</span> <span class="n">row_b</span><span class="p">)|</span> <span class="p">{</span>
                     <span class="n">col_b</span><span class="nf">.max</span><span class="p">(</span><span class="n">col_a</span><span class="p">)</span> <span class="o">-</span> <span class="n">col_b</span><span class="nf">.min</span><span class="p">(</span><span class="n">col_a</span><span class="p">)</span> <span class="o">+</span> <span class="n">row_b</span><span class="nf">.max</span><span class="p">(</span><span class="n">row_a</span><span class="p">)</span> <span class="o">-</span> <span class="n">row_b</span><span class="nf">.min</span><span class="p">(</span><span class="n">row_a</span><span class="p">)</span>
                 <span class="p">})</span>
@@ -5798,24 +5932,118 @@ O.#..O.#.#
 46
 47
 48
-</pre></td><td class="code"><pre><span class="k">const</span> <span class="n">EAST</span><span class="p">:</span> <span class="nb">u8</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
-<span class="k">const</span> <span class="n">NORTH</span><span class="p">:</span> <span class="nb">u8</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
-<span class="k">const</span> <span class="n">WEST</span><span class="p">:</span> <span class="nb">u8</span> <span class="o">=</span> <span class="mi">2</span><span class="p">;</span>
-<span class="k">const</span> <span class="n">SOUTH</span><span class="p">:</span> <span class="nb">u8</span> <span class="o">=</span> <span class="mi">3</span><span class="p">;</span>
+49
+50
+51
+52
+53
+54
+55
+56
+57
+58
+59
+60
+61
+62
+63
+64
+65
+66
+67
+68
+69
+70
+71
+72
+73
+74
+75
+76
+77
+78
+79
+80
+81
+82
+83
+84
+85
+86
+87
+88
+89
+90
+91
+92
+93
+94
+95
+96
+97
+98
+99
+</pre></td><td class="code"><pre><span class="k">pub</span> <span class="k">const</span> <span class="n">EAST</span><span class="p">:</span> <span class="nb">u8</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+<span class="k">pub</span> <span class="k">const</span> <span class="n">NORTH</span><span class="p">:</span> <span class="nb">u8</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
+<span class="k">pub</span> <span class="k">const</span> <span class="n">WEST</span><span class="p">:</span> <span class="nb">u8</span> <span class="o">=</span> <span class="mi">2</span><span class="p">;</span>
+<span class="k">pub</span> <span class="k">const</span> <span class="n">SOUTH</span><span class="p">:</span> <span class="nb">u8</span> <span class="o">=</span> <span class="mi">3</span><span class="p">;</span>
 
-<span class="k">const</span> <span class="n">EAST_WEST</span><span class="p">:</span> <span class="nb">u8</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
-<span class="k">const</span> <span class="n">NORTH_SOUTH</span><span class="p">:</span> <span class="nb">u8</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
+<span class="k">pub</span> <span class="k">const</span> <span class="n">EAST_WEST</span><span class="p">:</span> <span class="nb">u8</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+<span class="k">pub</span> <span class="k">const</span> <span class="n">NORTH_SOUTH</span><span class="p">:</span> <span class="nb">u8</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
 
-<span class="k">pub</span> <span class="k">fn</span> <span class="nf">count_energized</span><span class="p">(</span>
+<span class="nd">#[cfg(feature</span> <span class="nd">=</span> <span class="s">"bfs"</span><span class="nd">)]</span>
+<span class="k">struct</span> <span class="n">Queue</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span><span class="p">(</span><span class="nn">std</span><span class="p">::</span><span class="nn">collections</span><span class="p">::</span><span class="n">VecDeque</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span><span class="p">);</span>
+
+<span class="nd">#[cfg(feature</span> <span class="nd">=</span> <span class="s">"bfs"</span><span class="nd">)]</span>
+<span class="k">impl</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span> <span class="n">Queue</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span> <span class="p">{</span>
+    <span class="k">fn</span> <span class="n">from</span><span class="o">&lt;</span><span class="k">const</span> <span class="n">N</span><span class="p">:</span> <span class="nb">usize</span><span class="o">&gt;</span><span class="p">(</span><span class="n">arr</span><span class="p">:</span> <span class="p">[</span><span class="n">T</span><span class="p">;</span> <span class="n">N</span><span class="p">])</span> <span class="k">-&gt;</span> <span class="k">Self</span> <span class="p">{</span>
+        <span class="k">Self</span><span class="p">(</span><span class="nn">std</span><span class="p">::</span><span class="nn">collections</span><span class="p">::</span><span class="nn">VecDeque</span><span class="p">::</span><span class="nf">from</span><span class="p">(</span><span class="n">arr</span><span class="p">))</span>
+    <span class="p">}</span>
+
+    <span class="k">fn</span> <span class="nf">push</span><span class="p">(</span><span class="o">&amp;</span><span class="k">mut</span> <span class="k">self</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="n">T</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">self</span><span class="na">.0</span><span class="nf">.push_back</span><span class="p">(</span><span class="n">value</span><span class="p">);</span>
+    <span class="p">}</span>
+
+    <span class="k">fn</span> <span class="nf">pop</span><span class="p">(</span><span class="o">&amp;</span><span class="k">mut</span> <span class="k">self</span><span class="p">)</span> <span class="k">-&gt;</span> <span class="nb">Option</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span> <span class="p">{</span>
+        <span class="k">self</span><span class="na">.0</span><span class="nf">.pop_front</span><span class="p">()</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="nd">#[cfg(not(feature</span> <span class="nd">=</span> <span class="s">"bfs"</span><span class="nd">))]</span>
+<span class="k">struct</span> <span class="n">Queue</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span><span class="p">(</span><span class="nb">Vec</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span><span class="p">);</span>
+
+<span class="nd">#[cfg(not(feature</span> <span class="nd">=</span> <span class="s">"bfs"</span><span class="nd">))]</span>
+<span class="k">impl</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span> <span class="n">Queue</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span> <span class="p">{</span>
+    <span class="k">fn</span> <span class="n">from</span><span class="o">&lt;</span><span class="k">const</span> <span class="n">N</span><span class="p">:</span> <span class="nb">usize</span><span class="o">&gt;</span><span class="p">(</span><span class="n">arr</span><span class="p">:</span> <span class="p">[</span><span class="n">T</span><span class="p">;</span> <span class="n">N</span><span class="p">])</span> <span class="k">-&gt;</span> <span class="k">Self</span> <span class="p">{</span>
+        <span class="k">Self</span><span class="p">(</span><span class="nn">Vec</span><span class="p">::</span><span class="nf">from</span><span class="p">(</span><span class="n">arr</span><span class="p">))</span>
+    <span class="p">}</span>
+
+    <span class="k">fn</span> <span class="nf">push</span><span class="p">(</span><span class="o">&amp;</span><span class="k">mut</span> <span class="k">self</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="n">T</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">self</span><span class="na">.0</span><span class="nf">.push</span><span class="p">(</span><span class="n">value</span><span class="p">);</span>
+    <span class="p">}</span>
+
+    <span class="k">fn</span> <span class="nf">pop</span><span class="p">(</span><span class="o">&amp;</span><span class="k">mut</span> <span class="k">self</span><span class="p">)</span> <span class="k">-&gt;</span> <span class="nb">Option</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span> <span class="p">{</span>
+        <span class="k">self</span><span class="na">.0</span><span class="nf">.pop</span><span class="p">()</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="k">pub</span> <span class="k">fn</span> <span class="nf">simulate_beam</span><span class="p">(</span>
     <span class="n">data</span><span class="p">:</span> <span class="o">&amp;</span><span class="p">[</span><span class="nb">u8</span><span class="p">],</span>
     <span class="p">(</span><span class="n">w</span><span class="p">,</span> <span class="n">h</span><span class="p">):</span> <span class="p">(</span><span class="nb">usize</span><span class="p">,</span> <span class="nb">usize</span><span class="p">),</span>
     <span class="p">((</span><span class="n">col</span><span class="p">,</span> <span class="n">row</span><span class="p">),</span> <span class="n">heading</span><span class="p">):</span> <span class="p">((</span><span class="nb">usize</span><span class="p">,</span> <span class="nb">usize</span><span class="p">),</span> <span class="nb">u8</span><span class="p">),</span>
-<span class="p">)</span> <span class="k">-&gt;</span> <span class="nb">usize</span> <span class="p">{</span>
-    <span class="k">let</span> <span class="k">mut</span> <span class="n">queue</span> <span class="o">=</span> <span class="nn">Vec</span><span class="p">::</span><span class="nf">from</span><span class="p">([((</span><span class="n">col</span><span class="p">,</span> <span class="n">row</span><span class="p">),</span> <span class="n">heading</span><span class="p">)]);</span>
+    <span class="n">steps</span><span class="p">:</span> <span class="nb">usize</span><span class="p">,</span>
+<span class="p">)</span> <span class="k">-&gt;</span> <span class="p">(</span><span class="nb">Vec</span><span class="o">&lt;</span><span class="nb">u8</span><span class="o">&gt;</span><span class="p">,</span> <span class="nb">usize</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">let</span> <span class="k">mut</span> <span class="n">queue</span> <span class="o">=</span> <span class="nn">Queue</span><span class="p">::</span><span class="nf">from</span><span class="p">([(</span><span class="mi">1</span><span class="p">,</span> <span class="p">(</span><span class="n">col</span><span class="p">,</span> <span class="n">row</span><span class="p">),</span> <span class="n">heading</span><span class="p">)]);</span>
     <span class="k">let</span> <span class="k">mut</span> <span class="n">seen</span> <span class="o">=</span> <span class="nd">vec!</span><span class="p">[</span><span class="mi">0u8</span><span class="p">;</span> <span class="n">w</span> <span class="o">*</span> <span class="n">h</span><span class="p">];</span>
     <span class="n">seen</span><span class="p">[</span><span class="n">col</span> <span class="o">+</span> <span class="n">row</span> <span class="o">*</span> <span class="n">w</span><span class="p">]</span> <span class="p">|</span><span class="o">=</span> <span class="mi">1</span> <span class="o">&lt;&lt;</span> <span class="n">heading</span><span class="p">;</span>
 
-    <span class="k">while</span> <span class="k">let</span> <span class="nf">Some</span><span class="p">(((</span><span class="n">col</span><span class="p">,</span> <span class="n">row</span><span class="p">),</span> <span class="n">heading</span><span class="p">))</span> <span class="o">=</span> <span class="n">queue</span><span class="nf">.pop</span><span class="p">()</span> <span class="p">{</span>
+    <span class="k">let</span> <span class="k">mut</span> <span class="n">max_steps</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+    <span class="k">while</span> <span class="k">let</span> <span class="nf">Some</span><span class="p">((</span><span class="n">cur_steps</span><span class="p">,</span> <span class="p">(</span><span class="n">col</span><span class="p">,</span> <span class="n">row</span><span class="p">),</span> <span class="n">heading</span><span class="p">))</span> <span class="o">=</span> <span class="n">queue</span><span class="nf">.pop</span><span class="p">()</span> <span class="p">{</span>
+        <span class="n">max_steps</span> <span class="o">=</span> <span class="n">max_steps</span><span class="nf">.max</span><span class="p">(</span><span class="n">cur_steps</span><span class="p">);</span>
+        <span class="k">if</span> <span class="n">cur_steps</span> <span class="o">&gt;=</span> <span class="n">steps</span> <span class="p">{</span>
+            <span class="k">continue</span><span class="p">;</span>
+        <span class="p">}</span>
+
         <span class="k">let</span> <span class="n">deltas</span><span class="p">:</span> <span class="o">&amp;</span><span class="p">[</span><span class="nb">u8</span><span class="p">]</span> <span class="o">=</span> <span class="k">match</span> <span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="n">col</span> <span class="o">+</span> <span class="n">row</span> <span class="o">*</span> <span class="p">(</span><span class="n">w</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)],</span> <span class="n">heading</span> <span class="o">&amp;</span> <span class="mi">1</span><span class="p">)</span> <span class="p">{</span>
             <span class="p">(</span><span class="sc">b'.'</span><span class="p">,</span> <span class="n">_</span><span class="p">)</span> <span class="p">|</span> <span class="p">(</span><span class="sc">b'-'</span><span class="p">,</span> <span class="n">EAST_WEST</span><span class="p">)</span> <span class="p">|</span> <span class="p">(</span><span class="sc">b'|'</span><span class="p">,</span> <span class="n">NORTH_SOUTH</span><span class="p">)</span> <span class="k">=&gt;</span> <span class="o">&amp;</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="c1">// pass-through</span>
             <span class="p">(</span><span class="sc">b'-'</span><span class="p">,</span> <span class="n">_</span><span class="p">)</span> <span class="p">|</span> <span class="p">(</span><span class="sc">b'|'</span><span class="p">,</span> <span class="n">_</span><span class="p">)</span> <span class="k">=&gt;</span> <span class="o">&amp;</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">],</span>                            <span class="c1">// split, turn left &amp; right</span>
@@ -5835,12 +6063,20 @@ O.#..O.#.#
             <span class="p">};</span>
             <span class="k">if</span> <span class="n">col</span> <span class="o">&lt;</span> <span class="n">w</span> <span class="o">&amp;&amp;</span> <span class="n">row</span> <span class="o">&lt;</span> <span class="n">h</span> <span class="o">&amp;&amp;</span> <span class="p">(</span><span class="n">seen</span><span class="p">[</span><span class="n">col</span> <span class="o">+</span> <span class="n">row</span> <span class="o">*</span> <span class="n">w</span><span class="p">]</span> <span class="o">&amp;</span> <span class="p">(</span><span class="mi">1</span> <span class="o">&lt;&lt;</span> <span class="n">heading</span><span class="p">))</span> <span class="o">==</span> <span class="mi">0</span> <span class="p">{</span>
                 <span class="n">seen</span><span class="p">[</span><span class="n">col</span> <span class="o">+</span> <span class="n">row</span> <span class="o">*</span> <span class="n">w</span><span class="p">]</span> <span class="p">|</span><span class="o">=</span> <span class="mi">1</span> <span class="o">&lt;&lt;</span> <span class="n">heading</span><span class="p">;</span>
-                <span class="n">queue</span><span class="nf">.push</span><span class="p">(((</span><span class="n">col</span><span class="p">,</span> <span class="n">row</span><span class="p">),</span> <span class="n">heading</span><span class="p">));</span>
+                <span class="n">queue</span><span class="nf">.push</span><span class="p">((</span><span class="n">cur_steps</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="p">(</span><span class="n">col</span><span class="p">,</span> <span class="n">row</span><span class="p">),</span> <span class="n">heading</span><span class="p">));</span>
             <span class="p">}</span>
         <span class="p">}</span>
     <span class="p">}</span>
 
-    <span class="n">seen</span><span class="nf">.into_iter</span><span class="p">()</span><span class="nf">.filter</span><span class="p">(|</span><span class="o">&amp;</span><span class="n">v</span><span class="p">|</span> <span class="n">v</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span><span class="nf">.count</span><span class="p">()</span>
+    <span class="p">(</span><span class="n">seen</span><span class="p">,</span> <span class="n">max_steps</span><span class="p">)</span>
+<span class="p">}</span>
+
+<span class="k">pub</span> <span class="k">fn</span> <span class="nf">count_energized</span><span class="p">(</span><span class="n">data</span><span class="p">:</span> <span class="o">&amp;</span><span class="p">[</span><span class="nb">u8</span><span class="p">],</span> <span class="n">dims</span><span class="p">:</span> <span class="p">(</span><span class="nb">usize</span><span class="p">,</span> <span class="nb">usize</span><span class="p">),</span> <span class="n">beam</span><span class="p">:</span> <span class="p">((</span><span class="nb">usize</span><span class="p">,</span> <span class="nb">usize</span><span class="p">),</span> <span class="nb">u8</span><span class="p">))</span> <span class="k">-&gt;</span> <span class="nb">usize</span> <span class="p">{</span>
+    <span class="nf">simulate_beam</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">dims</span><span class="p">,</span> <span class="n">beam</span><span class="p">,</span> <span class="nn">usize</span><span class="p">::</span><span class="n">MAX</span><span class="p">)</span>
+        <span class="na">.0</span>
+        <span class="nf">.into_iter</span><span class="p">()</span>
+        <span class="nf">.filter</span><span class="p">(|</span><span class="o">&amp;</span><span class="n">v</span><span class="p">|</span> <span class="n">v</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="nf">.count</span><span class="p">()</span>
 <span class="p">}</span>
 
 <span class="k">pub</span> <span class="k">fn</span> <span class="nf">star_1</span><span class="p">(</span><span class="o">&amp;</span><span class="nf">PuzzleData</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">w</span><span class="p">,</span> <span class="n">h</span><span class="p">):</span> <span class="o">&amp;</span><span class="n">PuzzleData</span><span class="p">)</span> <span class="k">-&gt;</span> <span class="nb">usize</span> <span class="p">{</span>
@@ -6025,10 +6261,10 @@ O.#..O.#.#
 <div class="ulist">
 <ul>
 <li>
-<p>Nodes are defined by location, current heading, and steps since last change of heading; any node that can be reached by by changing direction (if allowed) and moving the minimum number of steps or moving 1 step in the same direction (if allowed) is an adjacent</p>
+<p>Nodes are defined by location, current heading (east, north, west, south), and steps since last change of heading; any node that can be reached by by changing direction (if allowed) and moving the minimum number of steps or moving 1 step in the same direction (if allowed) is an adjacent</p>
 </li>
 <li>
-<p>Nodes are defined by location and current heading; any node that can be reached by changing direction and moving any valid number of steps is an adjacent</p>
+<p>Nodes are defined by location and current heading (horizontal or vertical is enough); any node that can be reached by changing direction and moving any valid number of steps is an adjacent</p>
 </li>
 </ul>
 </div>
@@ -6039,17 +6275,17 @@ O.#..O.#.#
 <p>Since the number of steps since the last change of heading is part of a node&#8217;s description in the first variant, there is a single unique predecessor for every node in the graph. This implies that we will never reach a node with any lower cost then the cost assigned to it when we first reached it. We can thus use a simplified version of Dijkstra, where nodes are settled upon expansion, instead of only settling nodes when they are popped from the queue.</p>
 </div>
 <div class="paragraph">
-<p>The second variant has a much smaller search space (allowing for a Dijkstra implementation without sets or maps), since the number of steps is not included. However, we will in general reach the same node several times and the cost is not guaranteed to be the lowest the first time. As an example, consider the situation below, where the node on the top-right is first reached from x with a cost of 43. Only after the nodes labeled with the weights [11] and [15] are expanded, the same node is reached a second time with a cost of 27 &lt; 43.</p>
+<p>The second variant has a much smaller search space (allowing for a Dijkstra implementation without sets or maps), since the number of steps is not included. However, we will in general reach the same node several times and the cost is not guaranteed to be the lowest the first time. As an example, consider the situation below, where the node labeled with the weight (43) (horizontal) is first reached from x with a cost of 43. The node labeled with the weight (7) (horizontal) is also reached from x. Only after the nodes labeled with the weights [11] (vertical), [19] (horizontal), and [23] (vertical) are expanded, the same node is reached a second time with a cost of 35 &lt; 43.</p>
 </div>
 <div class="listingblock">
 <div class="content">
 <pre class="rouge highlight"><code>       (7)    (43)
         v       v
-X 2 2 2 1 9 9 9 9 &lt; [27]
-        1       1
-        1       1
-        1       1
- [11] &gt; 1 1 1 1 1 &lt; [15]</code></pre>
+X 2 2 2 1 9 9 9 9 1 1 1 1 &lt; [23]
+        1       ^       1
+        1     [35]      1
+        1               1
+ [11] &gt; 1 1 1 1 1 1 1 1 1 &lt; [19]</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -6344,7 +6580,6 @@ X 2 2 2 1 9 9 9 9 &lt; [27]
 66
 67
 68
-69
 </pre></td><td class="code"><pre><span class="nd">#[cfg(not(feature</span> <span class="nd">=</span> <span class="s">"settle-early"</span><span class="nd">))]</span>
 <span class="k">pub</span> <span class="k">fn</span> <span class="nf">optimize</span><span class="p">(</span><span class="n">grid</span><span class="p">:</span> <span class="o">&amp;</span><span class="p">[</span><span class="nb">u8</span><span class="p">],</span> <span class="n">w</span><span class="p">:</span> <span class="nb">usize</span><span class="p">,</span> <span class="n">h</span><span class="p">:</span> <span class="nb">usize</span><span class="p">,</span> <span class="n">s_max</span><span class="p">:</span> <span class="nb">u8</span><span class="p">,</span> <span class="n">s_min</span><span class="p">:</span> <span class="nb">u8</span><span class="p">)</span> <span class="k">-&gt;</span> <span class="n">SolT</span> <span class="p">{</span>
     <span class="k">use</span> <span class="nn">std</span><span class="p">::</span><span class="nn">collections</span><span class="p">::</span><span class="n">BinaryHeap</span><span class="p">;</span>
@@ -6353,39 +6588,38 @@ X 2 2 2 1 9 9 9 9 &lt; [27]
     <span class="k">let</span> <span class="n">heuristic</span> <span class="o">=</span> <span class="o">&amp;</span><span class="nf">loss_bounds_heuristic</span><span class="p">(</span><span class="n">grid</span><span class="p">,</span> <span class="n">w</span><span class="p">,</span> <span class="n">h</span><span class="p">);</span>
 
     <span class="k">let</span> <span class="n">start_cost</span> <span class="o">=</span> <span class="nn">SolT</span><span class="p">::</span><span class="n">MAX</span> <span class="o">-</span> <span class="nf">heuristic</span><span class="p">((</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">));</span>
-    <span class="k">let</span> <span class="n">starts</span><span class="p">:</span> <span class="p">[(</span><span class="nb">usize</span><span class="p">,</span> <span class="n">NodeT</span><span class="p">);</span> <span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="p">[(</span><span class="n">start_cost</span><span class="p">,</span> <span class="p">((</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="mi">0</span><span class="p">)),</span> <span class="p">(</span><span class="n">start_cost</span><span class="p">,</span> <span class="p">((</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="mi">3</span><span class="p">))];</span>
+    <span class="k">let</span> <span class="n">starts</span><span class="p">:</span> <span class="p">[(</span><span class="nb">usize</span><span class="p">,</span> <span class="n">NodeT</span><span class="p">);</span> <span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="p">[(</span><span class="n">start_cost</span><span class="p">,</span> <span class="p">((</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="mi">0</span><span class="p">)),</span> <span class="p">(</span><span class="n">start_cost</span><span class="p">,</span> <span class="p">((</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="mi">1</span><span class="p">))];</span>
 
     <span class="k">let</span> <span class="n">target_pos</span> <span class="o">=</span> <span class="p">(</span><span class="n">w</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="n">h</span> <span class="o">-</span> <span class="mi">1</span><span class="p">);</span>
 
     <span class="k">let</span> <span class="k">mut</span> <span class="n">queue</span> <span class="o">=</span> <span class="nn">BinaryHeap</span><span class="p">::</span><span class="nf">new</span><span class="p">();</span>
     <span class="k">let</span> <span class="k">mut</span> <span class="n">settled</span> <span class="o">=</span> <span class="nd">vec!</span><span class="p">[</span><span class="mi">0u8</span><span class="p">;</span> <span class="n">w</span> <span class="o">*</span> <span class="n">h</span><span class="p">];</span>
-    <span class="k">let</span> <span class="k">mut</span> <span class="n">costs</span> <span class="o">=</span> <span class="nd">vec!</span><span class="p">[</span><span class="mi">0</span><span class="p">;</span> <span class="n">w</span> <span class="o">*</span> <span class="n">h</span> <span class="o">*</span> <span class="mi">4</span><span class="p">];</span>
-    <span class="k">for</span> <span class="p">(</span><span class="n">cost</span><span class="p">,</span> <span class="p">((</span><span class="n">c</span><span class="p">,</span> <span class="n">r</span><span class="p">),</span> <span class="n">hd</span><span class="p">))</span> <span class="k">in</span> <span class="n">starts</span><span class="nf">.into_iter</span><span class="p">()</span> <span class="p">{</span>
-        <span class="n">queue</span><span class="nf">.push</span><span class="p">((</span><span class="n">cost</span><span class="p">,</span> <span class="p">((</span><span class="n">c</span><span class="p">,</span> <span class="n">r</span><span class="p">),</span> <span class="n">hd</span><span class="p">)));</span>
-        <span class="n">costs</span><span class="p">[</span><span class="n">c</span> <span class="o">+</span> <span class="n">r</span> <span class="o">*</span> <span class="n">w</span> <span class="o">+</span> <span class="p">(</span><span class="n">hd</span> <span class="k">as</span> <span class="nb">usize</span><span class="p">)</span> <span class="o">*</span> <span class="n">w</span> <span class="o">*</span> <span class="n">h</span><span class="p">]</span> <span class="o">=</span> <span class="n">cost</span><span class="p">;</span>
+    <span class="k">let</span> <span class="k">mut</span> <span class="n">costs</span> <span class="o">=</span> <span class="nd">vec!</span><span class="p">[</span><span class="mi">0</span><span class="p">;</span> <span class="n">w</span> <span class="o">*</span> <span class="n">h</span> <span class="o">*</span> <span class="mi">2</span><span class="p">];</span>
+    <span class="k">for</span> <span class="p">(</span><span class="n">cost</span><span class="p">,</span> <span class="p">((</span><span class="n">c</span><span class="p">,</span> <span class="n">r</span><span class="p">),</span> <span class="n">o</span><span class="p">))</span> <span class="k">in</span> <span class="n">starts</span><span class="nf">.into_iter</span><span class="p">()</span> <span class="p">{</span>
+        <span class="n">queue</span><span class="nf">.push</span><span class="p">((</span><span class="n">cost</span><span class="p">,</span> <span class="p">((</span><span class="n">c</span><span class="p">,</span> <span class="n">r</span><span class="p">),</span> <span class="n">o</span><span class="p">)));</span>
+        <span class="n">costs</span><span class="p">[</span><span class="n">c</span> <span class="o">+</span> <span class="n">r</span> <span class="o">*</span> <span class="n">w</span> <span class="o">+</span> <span class="p">(</span><span class="n">o</span> <span class="k">as</span> <span class="nb">usize</span><span class="p">)</span> <span class="o">*</span> <span class="n">w</span> <span class="o">*</span> <span class="n">h</span><span class="p">]</span> <span class="o">=</span> <span class="n">cost</span><span class="p">;</span>
     <span class="p">}</span>
 
     <span class="nd">#[cfg(feature</span> <span class="nd">=</span> <span class="s">"plot"</span><span class="nd">)]</span>
     <span class="k">let</span> <span class="k">mut</span> <span class="n">parents</span> <span class="o">=</span> <span class="nn">HashMap</span><span class="p">::</span><span class="nf">new</span><span class="p">();</span>
 
-    <span class="k">while</span> <span class="k">let</span> <span class="nf">Some</span><span class="p">((</span><span class="n">cost_0</span><span class="p">,</span> <span class="p">((</span><span class="n">c0</span><span class="p">,</span> <span class="n">r0</span><span class="p">),</span> <span class="n">hd0</span><span class="p">)))</span> <span class="o">=</span> <span class="n">queue</span><span class="nf">.pop</span><span class="p">()</span> <span class="p">{</span>
+    <span class="k">while</span> <span class="k">let</span> <span class="nf">Some</span><span class="p">((</span><span class="n">cost_0</span><span class="p">,</span> <span class="p">((</span><span class="n">c0</span><span class="p">,</span> <span class="n">r0</span><span class="p">),</span> <span class="n">o0</span><span class="p">)))</span> <span class="o">=</span> <span class="n">queue</span><span class="nf">.pop</span><span class="p">()</span> <span class="p">{</span>
         <span class="k">if</span> <span class="p">(</span><span class="n">c0</span><span class="p">,</span> <span class="n">r0</span><span class="p">)</span> <span class="o">==</span> <span class="n">target_pos</span> <span class="p">{</span>
             <span class="nd">#[cfg(feature</span> <span class="nd">=</span> <span class="s">"plot"</span><span class="nd">)]</span>
-            <span class="nd">println!</span><span class="p">(</span><span class="s">"{}"</span><span class="p">,</span> <span class="nf">to_string</span><span class="p">(</span><span class="n">w</span><span class="p">,</span> <span class="n">h</span><span class="p">,</span> <span class="p">((</span><span class="n">c0</span><span class="p">,</span> <span class="n">r0</span><span class="p">),</span> <span class="n">hd0</span><span class="p">),</span> <span class="o">&amp;</span><span class="n">settled</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">parents</span><span class="p">));</span>
+            <span class="nd">println!</span><span class="p">(</span><span class="s">"{}"</span><span class="p">,</span> <span class="nf">to_string</span><span class="p">(</span><span class="n">w</span><span class="p">,</span> <span class="n">h</span><span class="p">,</span> <span class="p">((</span><span class="n">c0</span><span class="p">,</span> <span class="n">r0</span><span class="p">),</span> <span class="n">o0</span><span class="p">),</span> <span class="o">&amp;</span><span class="n">settled</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">parents</span><span class="p">));</span>
             <span class="k">return</span> <span class="nn">SolT</span><span class="p">::</span><span class="n">MAX</span> <span class="o">-</span> <span class="n">cost_0</span><span class="p">;</span>
         <span class="p">}</span>
 
-        <span class="k">if</span> <span class="n">settled</span><span class="p">[</span><span class="n">c0</span> <span class="o">+</span> <span class="n">r0</span> <span class="o">*</span> <span class="n">w</span><span class="p">]</span> <span class="o">&amp;</span> <span class="p">(</span><span class="mi">1</span> <span class="o">&lt;&lt;</span> <span class="n">hd0</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span> <span class="p">{</span>
-            <span class="n">settled</span><span class="p">[</span><span class="n">c0</span> <span class="o">+</span> <span class="n">r0</span> <span class="o">*</span> <span class="n">w</span><span class="p">]</span> <span class="p">|</span><span class="o">=</span> <span class="mi">1</span> <span class="o">&lt;&lt;</span> <span class="n">hd0</span><span class="p">;</span>
+        <span class="k">if</span> <span class="n">settled</span><span class="p">[</span><span class="n">c0</span> <span class="o">+</span> <span class="n">r0</span> <span class="o">*</span> <span class="n">w</span><span class="p">]</span> <span class="o">&amp;</span> <span class="p">(</span><span class="mi">1</span> <span class="o">&lt;&lt;</span> <span class="n">o0</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span> <span class="p">{</span>
+            <span class="n">settled</span><span class="p">[</span><span class="n">c0</span> <span class="o">+</span> <span class="n">r0</span> <span class="o">*</span> <span class="n">w</span><span class="p">]</span> <span class="p">|</span><span class="o">=</span> <span class="mi">1</span> <span class="o">&lt;&lt;</span> <span class="n">o0</span><span class="p">;</span>
         <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
             <span class="k">continue</span><span class="p">;</span>
         <span class="p">}</span>
 
-        <span class="k">for</span> <span class="p">(</span><span class="n">cost_1</span><span class="p">,</span> <span class="p">((</span><span class="n">c1</span><span class="p">,</span> <span class="n">r1</span><span class="p">),</span> <span class="n">hd1</span><span class="p">))</span> <span class="k">in</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">]</span>
+        <span class="k">for</span> <span class="p">(</span><span class="n">cost_1</span><span class="p">,</span> <span class="p">((</span><span class="n">c1</span><span class="p">,</span> <span class="n">r1</span><span class="p">),</span> <span class="n">o1</span><span class="p">))</span> <span class="k">in</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">]</span>
             <span class="nf">.iter</span><span class="p">()</span>
-            <span class="nf">.map</span><span class="p">(</span><span class="k">move</span> <span class="p">|</span><span class="o">&amp;</span><span class="n">dh</span><span class="p">|</span> <span class="p">(</span><span class="n">hd0</span> <span class="o">+</span> <span class="n">dh</span><span class="p">)</span> <span class="o">&amp;</span> <span class="mi">3</span><span class="p">)</span>
-            <span class="nf">.flat_map</span><span class="p">(|</span><span class="n">hd1</span><span class="p">|</span> <span class="p">{</span>
-                <span class="k">let</span> <span class="p">(</span><span class="n">dc</span><span class="p">,</span> <span class="n">dr</span><span class="p">)</span> <span class="o">=</span> <span class="n">D</span><span class="p">[</span><span class="n">hd1</span> <span class="k">as</span> <span class="nb">usize</span><span class="p">];</span>
+            <span class="nf">.map</span><span class="p">(</span><span class="k">move</span> <span class="p">|</span><span class="o">&amp;</span><span class="n">dh</span><span class="p">|</span> <span class="n">D</span><span class="p">[(</span><span class="n">o0</span> <span class="k">as</span> <span class="nb">usize</span> <span class="o">+</span> <span class="n">dh</span><span class="p">)</span> <span class="o">&amp;</span> <span class="mi">3</span><span class="p">])</span>
+            <span class="nf">.flat_map</span><span class="p">(|(</span><span class="n">dc</span><span class="p">,</span> <span class="n">dr</span><span class="p">)|</span> <span class="p">{</span>
                 <span class="nf">successors</span><span class="p">(</span><span class="nf">Some</span><span class="p">((</span><span class="mi">0</span><span class="p">,</span> <span class="n">c0</span><span class="p">,</span> <span class="n">r0</span><span class="p">)),</span> <span class="k">move</span> <span class="p">|(</span><span class="n">weight</span><span class="p">,</span> <span class="n">c</span><span class="p">,</span> <span class="n">r</span><span class="p">)|</span> <span class="p">{</span>
                     <span class="k">let</span> <span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="n">r</span><span class="p">)</span> <span class="o">=</span> <span class="p">(</span><span class="n">c</span><span class="nf">.wrapping_add_signed</span><span class="p">(</span><span class="n">dc</span><span class="p">),</span> <span class="n">r</span><span class="nf">.wrapping_add_signed</span><span class="p">(</span><span class="n">dr</span><span class="p">));</span>
                     <span class="p">(</span><span class="n">c</span> <span class="o">&lt;</span> <span class="n">w</span> <span class="o">&amp;&amp;</span> <span class="n">r</span> <span class="o">&lt;</span> <span class="n">h</span><span class="p">)</span>
@@ -6396,18 +6630,18 @@ X 2 2 2 1 9 9 9 9 &lt; [27]
                 <span class="nf">.map</span><span class="p">(</span><span class="k">move</span> <span class="p">|(</span><span class="n">weight</span><span class="p">,</span> <span class="n">c1</span><span class="p">,</span> <span class="n">r1</span><span class="p">)|</span> <span class="p">{</span>
                     <span class="p">(</span>
                         <span class="n">cost_0</span> <span class="o">-</span> <span class="n">weight</span> <span class="o">+</span> <span class="nf">heuristic</span><span class="p">((</span><span class="n">c0</span><span class="p">,</span> <span class="n">r0</span><span class="p">))</span> <span class="o">-</span> <span class="nf">heuristic</span><span class="p">((</span><span class="n">c1</span><span class="p">,</span> <span class="n">r1</span><span class="p">)),</span>
-                        <span class="p">((</span><span class="n">c1</span><span class="p">,</span> <span class="n">r1</span><span class="p">),</span> <span class="n">hd1</span><span class="p">),</span>
+                        <span class="p">((</span><span class="n">c1</span><span class="p">,</span> <span class="n">r1</span><span class="p">),</span> <span class="o">!</span><span class="n">o0</span> <span class="o">&amp;</span> <span class="mi">1</span><span class="p">),</span>
                     <span class="p">)</span>
                 <span class="p">})</span>
             <span class="p">})</span>
-            <span class="nf">.filter</span><span class="p">(|(</span><span class="n">_</span><span class="p">,</span> <span class="p">((</span><span class="n">r1</span><span class="p">,</span> <span class="n">c1</span><span class="p">),</span> <span class="n">hd1</span><span class="p">))|</span> <span class="n">settled</span><span class="p">[</span><span class="n">r1</span> <span class="o">+</span> <span class="n">c1</span> <span class="o">*</span> <span class="n">w</span><span class="p">]</span> <span class="o">&amp;</span> <span class="p">(</span><span class="mi">1</span> <span class="o">&lt;&lt;</span> <span class="n">hd1</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span>
+            <span class="nf">.filter</span><span class="p">(|(</span><span class="n">_</span><span class="p">,</span> <span class="p">((</span><span class="n">r1</span><span class="p">,</span> <span class="n">c1</span><span class="p">),</span> <span class="n">o1</span><span class="p">))|</span> <span class="n">settled</span><span class="p">[</span><span class="n">r1</span> <span class="o">+</span> <span class="n">c1</span> <span class="o">*</span> <span class="n">w</span><span class="p">]</span> <span class="o">&amp;</span> <span class="p">(</span><span class="mi">1</span> <span class="o">&lt;&lt;</span> <span class="n">o1</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span>
         <span class="p">{</span>
-            <span class="k">let</span> <span class="n">cost_1_prev</span> <span class="o">=</span> <span class="o">&amp;</span><span class="k">mut</span> <span class="n">costs</span><span class="p">[</span><span class="n">c1</span> <span class="o">+</span> <span class="n">r1</span> <span class="o">*</span> <span class="n">w</span> <span class="o">+</span> <span class="p">(</span><span class="n">hd1</span> <span class="k">as</span> <span class="nb">usize</span><span class="p">)</span> <span class="o">*</span> <span class="n">w</span> <span class="o">*</span> <span class="n">h</span><span class="p">];</span>
+            <span class="k">let</span> <span class="n">cost_1_prev</span> <span class="o">=</span> <span class="o">&amp;</span><span class="k">mut</span> <span class="n">costs</span><span class="p">[</span><span class="n">c1</span> <span class="o">+</span> <span class="n">r1</span> <span class="o">*</span> <span class="n">w</span> <span class="o">+</span> <span class="p">(</span><span class="n">o1</span> <span class="k">as</span> <span class="nb">usize</span><span class="p">)</span> <span class="o">*</span> <span class="n">w</span> <span class="o">*</span> <span class="n">h</span><span class="p">];</span>
             <span class="k">if</span> <span class="n">cost_1</span> <span class="o">&gt;</span> <span class="o">*</span><span class="n">cost_1_prev</span> <span class="p">{</span>
                 <span class="o">*</span><span class="n">cost_1_prev</span> <span class="o">=</span> <span class="n">cost_1</span><span class="p">;</span>
-                <span class="n">queue</span><span class="nf">.push</span><span class="p">((</span><span class="n">cost_1</span><span class="p">,</span> <span class="p">((</span><span class="n">c1</span><span class="p">,</span> <span class="n">r1</span><span class="p">),</span> <span class="n">hd1</span><span class="p">)));</span>
+                <span class="n">queue</span><span class="nf">.push</span><span class="p">((</span><span class="n">cost_1</span><span class="p">,</span> <span class="p">((</span><span class="n">c1</span><span class="p">,</span> <span class="n">r1</span><span class="p">),</span> <span class="n">o1</span><span class="p">)));</span>
                 <span class="nd">#[cfg(feature</span> <span class="nd">=</span> <span class="s">"plot"</span><span class="nd">)]</span>
-                <span class="n">parents</span><span class="nf">.insert</span><span class="p">(((</span><span class="n">c1</span><span class="p">,</span> <span class="n">r1</span><span class="p">),</span> <span class="n">hd1</span><span class="p">),</span> <span class="p">((</span><span class="n">c0</span><span class="p">,</span> <span class="n">r0</span><span class="p">),</span> <span class="n">hd0</span><span class="p">));</span>
+                <span class="n">parents</span><span class="nf">.insert</span><span class="p">(((</span><span class="n">c1</span><span class="p">,</span> <span class="n">r1</span><span class="p">),</span> <span class="n">o1</span><span class="p">),</span> <span class="p">((</span><span class="n">c0</span><span class="p">,</span> <span class="n">r0</span><span class="p">),</span> <span class="n">o0</span><span class="p">));</span>
             <span class="p">}</span>
         <span class="p">}</span>
     <span class="p">}</span>
@@ -7563,9 +7797,6 @@ hdj{m&gt;838:A,pv}
 33
 34
 35
-36
-37
-38
 </pre></td><td class="code"><pre><span class="nd">#[derive(Debug,</span> <span class="nd">Default,</span> <span class="nd">PartialEq,</span> <span class="nd">Eq)]</span>
 <span class="k">struct</span> <span class="nf">SendCounter</span><span class="p">(</span><span class="nb">usize</span><span class="p">,</span> <span class="nb">usize</span><span class="p">);</span>
 
@@ -7589,10 +7820,7 @@ hdj{m&gt;838:A,pv}
 
 <span class="k">pub</span> <span class="k">fn</span> <span class="nf">star_1</span><span class="p">(</span>
     <span class="n">PuzzleData</span> <span class="p">{</span>
-        <span class="n">bc</span><span class="p">,</span>
-        <span class="n">rx</span><span class="p">:</span> <span class="n">_</span><span class="p">,</span>
-        <span class="n">targets</span><span class="p">,</span>
-        <span class="n">types</span><span class="p">,</span>
+        <span class="n">bc</span><span class="p">,</span> <span class="n">targets</span><span class="p">,</span> <span class="n">types</span><span class="p">,</span> <span class="o">..</span>
     <span class="p">}:</span> <span class="o">&amp;</span><span class="n">PuzzleData</span><span class="p">,</span>
 <span class="p">)</span> <span class="k">-&gt;</span> <span class="nb">usize</span> <span class="p">{</span>
     <span class="k">let</span> <span class="k">mut</span> <span class="n">mem</span> <span class="o">=</span> <span class="nf">init</span><span class="p">(</span><span class="n">targets</span><span class="p">,</span> <span class="n">types</span><span class="p">);</span>
@@ -10258,6 +10486,30 @@ hdj{m&gt;838:A,pv}
 </div>
 </div>
 <div class="sect2">
+<h3 id="_geometric_solution">Geometric solution</h3>
+<div class="paragraph">
+<p>Choose three hail-stones, say <code>A</code>, <code>B</code>, and <code>C</code>. Denote the locus of <code>A</code>, <code>B</code>, and <code>C</code> as <code>A(t) = xa + t dxa</code>, <code>B(t) = xb + t dxb</code>, and <code>C(t) = xc + t dxc</code>.</p>
+</div>
+<div class="paragraph">
+<p>Represent those in the inertial system of <code>A</code>, i.e., <code>A</code> is placed at the origin with zero velocity. Zero velocity is important, because this results in the rock to move through the origin at some time <code>t_A</code> to collide with <code>A</code>. The locus of the hail-stones in the inertial system of <code>A</code> are <code>A'(t) = 0</code>, <code>B'(t) = xb' + t dxb'</code>, and <code>C'(t) = xc' + t dxc'</code> with vectors <code>xb' = xb - xa</code>, <code>dxb' = dxb - dxa</code>, <code>xc' = xc - xa</code>, and <code>dxc' = dxc - dxa</code>.</p>
+</div>
+<div class="paragraph">
+<p>The locus of the rock is <code>R'(t) = xr' + t dxr'</code>. It necessarily passes through the origin for some time <code>t_A</code>. And it is supposed to intersect with the locus <code>B'(t)</code> and <code>C'(t)</code>.</p>
+</div>
+<div class="paragraph">
+<p>The rock locus <code>R'(t)</code> contains the origin and intersects with <code>B'(t)</code> (or <code>C'(t)</code> respectively) which does contain the origin, if and only if it is contained in the plane <code>A-B</code> that is spanned by <code>A'</code> (the origin) and <code>B'(t)</code> (or <code>A-C</code> spanned by <code>A'</code> and <code>C'(t)</code> respectively). Note that the surface which contains <code>A'(t)</code> and <code>B'(t)</code> (or <code>C'(t)</code> respectively) is a plane because <code>A'(t)</code> collapses to a single point (the origin) - otherwise, we would obtain nice little <a href="https://en.wikipedia.org/wiki/Paraboloid#Hyperbolic_paraboloid">Hyperbolic paraboloids</a>.</p>
+</div>
+<div class="paragraph">
+<p>The rock locus <code>R'(t)</code> thus needs to be contained in the intersection of the two planes <code>A-B</code> and <code>A-C</code>. This determines the direction of the velocity vector <code>dxr''</code>, i.e., <code>dxr' = n dxr''</code> for some <code>n</code>. If we assume that the coordinates of <code>dxr'</code> are integers and if we choose <code>dxr''</code> such that the greatest common divisor of its three integer coordinates is <code>1</code>, then <code>n</code> will be an integer.</p>
+</div>
+<div class="paragraph">
+<p>The points of collision with <code>B'(t)</code> (or <code>C'(t)</code> respectively) can be determined by calculating <code>t_b</code> and <code>k_b</code> such that <code>xb' + t_b dxb' = 0 + k_b dxr''</code> (or <code>t_c</code> and <code>k_c</code> such that <code>xc' + t_c dxc' = 0 + k_c dxr''</code>). If the problem is well posed, this yields an integer solution for <code>t_b</code> and <code>k_b</code> with <code>t_b &gt; 0</code> (or <code>t_c</code> and <code>k_c</code> with <code>t_c &gt; 0</code> respectively).</p>
+</div>
+<div class="paragraph">
+<p>The two equations <code>xr' + t_b dxr' = k_b dxr''</code> and <code>xr' + t_c dxr' = k_c dxr''</code> can be solved for <code>xr'</code> and <code>dxr'</code>: <code>dxr' = n dxr''</code> with <code>n = (k_c - k_b) / (t_c - t_b)</code> and <code>xr' = m dxr''</code> with <code>m = (t_c k_b - t_b k_c) / (t_c - t_b)</code>.</p>
+</div>
+</div>
+<div class="sect2">
 <h3 id="_tests_23">Tests</h3>
 <div class="listingblock">
 <div class="content">
@@ -10696,7 +10948,7 @@ frs: qnr lhk lsr
 </div>
 <div id="footer">
     <div id="footer-text">
-        Generated from <a href="https://github.com/mr-kaffee/aoc-2023/">github.com/mr-kaffee/aoc-2023/</a> on 2024-01-01 13:18:03 UTC
+        Generated from <a href="https://github.com/mr-kaffee/aoc-2023/">github.com/mr-kaffee/aoc-2023/</a> on 2024-01-14 11:09:35 UTC
         with <a href="https://asciidoctor.org">asciidoctor</a>.
     </div>
 </div>
